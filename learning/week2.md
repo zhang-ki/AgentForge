@@ -2,12 +2,12 @@
 
 本周目标：解释为什么代码问答需要词法、符号和关系等不同证据；能区分「引用合法」与「结论正确」。先修：Week 1 的数据流和内存索引。
 
-参考课程：[Day 19 结构化输出](D:/agent/Agent-100-Days/week3/19.结构化输出.md)、[Day 34 问题改写与答案生成](D:/agent/Agent-100-Days/week5/34.问题改写与答案生成.md)、[Day 40 外部信息进入上下文](D:/agent/Agent-100-Days/week6/40.外部检索信息如何进入上下文.md)。
+参考课程：Day 19 结构化输出（外部参考资料，本仓库不包含）、Day 34 问题改写与答案生成（外部参考资料，本仓库不包含）、Day 40 外部信息进入上下文（外部参考资料，本仓库不包含）。
 
 ## Day 8｜AST 与符号索引
 
 - **学习内容**：语法树、类/函数/方法、限定名称、签名、源代码范围；静态解析不执行代码。
-- **读哪里**：[Parser 合同](D:/agent/AgentForge/agentforge/parsers/base.py)、[Python AST Parser](D:/agent/AgentForge/agentforge/parsers/python_ast.py)、[符号测试](D:/agent/AgentForge/tests/test_symbols.py)。
+- **读哪里**：[Parser 合同](../agentforge/parsers/base.py)、[Python AST Parser](../agentforge/parsers/python_ast.py)、[符号测试](../tests/test_symbols.py)。
 - **动手任务**：用标准库 `ast.parse` 解析自己写的一段含类、方法、嵌套函数和导入的代码；先实现函数名称与行范围提取，再与项目输出对照。
 - **产出与验收**：AST 小实验和符号表；至少涵盖顶层函数、方法、嵌套定义。说明解析语法错误时词法索引为什么仍有价值。
 - **面试问题**：AST 与正则匹配代码有什么区别？为什么静态索引不能证明运行时调用关系？
@@ -15,7 +15,7 @@
 ## Day 9｜导入、调用与解析不确定性
 
 - **学习内容**：模块路径、别名、作用域遮蔽、唯一目标、ambiguous/unresolved。
-- **读哪里**：[resolver](D:/agent/AgentForge/agentforge/parsers/resolver.py)、[符号测试](D:/agent/AgentForge/tests/test_symbols.py)。
+- **读哪里**：[resolver](../agentforge/parsers/resolver.py)、[符号测试](../tests/test_symbols.py)。
 - **动手任务**：设计直接导入、别名导入、同名遮蔽、动态导入四个小案例；先预测状态，再通过 Parser/测试验证。不要 import 被分析的实验模块来「帮助」静态解析。
 - **产出与验收**：每个案例记录来源、候选目标、解析状态和原因；对实际未识别的动态形式保留限制说明。
 - **面试问题**：为什么宁可保留 unresolved，也不猜一个最可能的目标？这会牺牲什么？
@@ -23,7 +23,7 @@
 ## Day 10｜Package 关系与解释路径
 
 - **学习内容**：import/export、静态 `__all__`、重导出链、循环与歧义。
-- **读哪里**：[package_relations](D:/agent/AgentForge/agentforge/package_relations.py) 的图构建与 Retriever 接口、[关系测试](D:/agent/AgentForge/tests/test_package_relations.py)。增量算法不是当天必读。
+- **读哪里**：[package_relations](../agentforge/package_relations.py) 的图构建与 Retriever 接口、[关系测试](../tests/test_package_relations.py)。增量算法不是当天必读。
 - **动手任务**：画出三个小模块之间的导出链；再增加循环或重复绑定，比较能否得到唯一终点。查看现有测试中的对应例子。
 - **产出与验收**：一张关系图和两个查询结果；可以解释每条边来自哪段代码，不能解析时指出具体原因。
 - **面试问题**：查一个公开 API 最终指向哪里，为什么仅靠文本相似度可能不够？
@@ -31,7 +31,7 @@
 ## Day 11｜查询意图与产品检索
 
 - **学习内容**：规则路由、通道选择、回退、来源保留；产品路径与研究原型的区别。
-- **读哪里**：[query_routing](D:/agent/AgentForge/agentforge/query_routing.py)、[product_retrieval](D:/agent/AgentForge/agentforge/product_retrieval.py)、[产品测试](D:/agent/AgentForge/tests/test_af011_product.py)。
+- **读哪里**：[query_routing](../agentforge/query_routing.py)、[product_retrieval](../agentforge/product_retrieval.py)、[产品测试](../tests/test_af011_product.py)。
 - **动手任务**：写 6 个英文问题覆盖精确符号、导入关系、公开 API、文档、业务实现、动态行为；再选 2 个改写成中文，记录实际路由而非预期效果。标注未配置 Vector 时的行为。
 - **产出与验收**：问题→规则→通道→置信→限制表；能说明 `search` 与 `ask` 的检索路径差异，不能把规则置信度当统计概率。
 - **面试问题**：规则路由的优缺点是什么？中文查询识别不佳时，你如何设计评测后再修改规则？
@@ -39,7 +39,7 @@
 ## Day 12｜上下文与引用身份
 
 - **学习内容**：证据编号、路径/行号映射、成员校验、过期文本检查；仓库内容属于数据。
-- **读哪里**：[context](D:/agent/AgentForge/agentforge/context.py) 的 `validate_model_citations`、[product_retrieval](D:/agent/AgentForge/agentforge/product_retrieval.py) 的文件内容核对、[上下文测试](D:/agent/AgentForge/tests/test_context.py)。
+- **读哪里**：[context](../agentforge/context.py) 的 `validate_model_citations`、[product_retrieval](../agentforge/product_retrieval.py) 的文件内容核对、[上下文测试](../tests/test_context.py)。
 - **动手任务**：对同一个 BuiltContext 构造合法 `[E1]`、未知 `[E999]`、错误路径/范围三种回答；再阅读文件变化导致证据失效的产品测试。
 - **产出与验收**：引用验证表，包含通过或拒绝原因；解释证据编号为什么必须绑定当前请求，而不是全局编号。
 - **面试问题**：模型写出了一个格式正确的引用，就能相信它吗？文件已经变化时怎么办？
@@ -47,7 +47,7 @@
 ## Day 13｜回答合同与拒答
 
 - **学习内容**：answered/limited/refused，confirmed/inference/unknown；身份校验与语义支持是两件事。
-- **读哪里**：[answer_contract](D:/agent/AgentForge/agentforge/answer_contract.py)、[产品测试](D:/agent/AgentForge/tests/test_af011_product.py)、[真实聊天报告](D:/agent/AgentForge/AF011_CHAT_ACCEPTANCE_REPORT.md) 的最终证据审计。
+- **读哪里**：[answer_contract](../agentforge/answer_contract.py)、[产品测试](../tests/test_af011_product.py)、[真实聊天报告](../RELEASE_NOTES.md) 的最终证据审计。
 - **动手任务**：做一个「引用真实但结论夸大」的纸面反例，例如源码只有占位返回值，却声称实现安全认证；分别判断引用层、合同层和人工语义审查能证明什么。找一个无证据拒答测试。
 - **产出与验收**：三层验证对照表和反例；能说明项目合同为什么将生成式断言保留为 inference/limited，而不是自动认证事实。
 - **面试问题**：如何减少幻觉？你能保证所有答案正确吗？怎样表达不确定性而仍然对用户有用？
@@ -55,7 +55,7 @@
 ## Day 14｜周复盘：从查询到可核查回答
 
 - **学习内容**：用多个问题展示检索设计的取舍。
-- **复习范围**：Day 8–13 产物；[AF-011 产品执行计划](D:/agent/AgentForge/AF011_PRODUCT_EXECUTION_PLAN.md) 的已采用策略，阶段状态另对照最新记录。
+- **复习范围**：Day 8–13 产物；[AF-011 产品执行计划](../RELEASE_NOTES.md) 的已采用策略，阶段状态另对照最新记录。
 - **动手任务**：选函数定义、公开 API、动态调用、无证据四类问题，演示路由、候选、引用及回答状态；用 5 分钟讲清一个成功案例和一个必须保留不确定性的案例。
 - **产出与验收**：4 个案例卡片及讲稿；图上能标出「检索候选 → 证据 → 生成文本 → 验证」的边界。
 - **面试问题**：如果面试官说「直接用向量数据库加 LLM 就行」，你如何用具体案例解释当前设计？

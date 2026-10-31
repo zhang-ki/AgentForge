@@ -1,10 +1,10 @@
+.agentforge/
 .agentforge/data/
 __pycache__/
 *.py[cod]
 tests/.tmp/
-.agentforge/launcher/
 
-# 本地状态、凭证、模型及临时环境；不排除测试 fixture 或整个 coverage 目录
+# 本地状态、凭证、模型及临时环境；测试 fixtures 保持可跟踪
 .env
 .env.*
 !.env.example
@@ -37,15 +37,30 @@ venv/
 .coverage
 .coverage.*
 htmlcov/
-coverage/TEST_COVERAGE_FINAL.data
-coverage/GIT_RELEASE_OFFLINE_TEST_LOG.txt
-# 仅在隐私复核与可复现测试解决前暂时排除下列历史记录；保留本地原件
-/AF009GR2_DECISION.md
-/AF009GR3_EVALUATION.md
-/AF009GR3_RESULTS.json
-/AF009GR4_RESULTS.json
-/AF009GR5_EVALUATION.md
-/AF009GR5_RESULTS.json
-/AF010PRE_RESULTS.json
-/AF010S2_RESULTS.json
+/coverage/
+/AF*.json
+/AF*.md
+/AF*.log
+/AF*.txt
+/AF*.sql
+/AF*_*.py
+/AF*_*.ps1
+!/AF009GR3_HOST_RUNNER.py
+!/AF011_CHAT_HOST_ACCEPTANCE.py
+!/AF012_B2_HOST_DATABASE_CHECK.py
+!/AF012_B2_HOST_MULTITURN_CHECK.py
+!/AF012_B2_PG_RESTART_CHECK.py
+!/AF012_B2_FINAL_LONG_HOST.py
+!/AF012_B2_FINAL_DESKTOP_HOST.py
+!/AF012_MVP_HOST_ACCEPTANCE.py
+!/AF012_MVP_PG_RESTART_CHECK.py
+!/AF012_MVP_HOST_ACCEPTANCE.ps1
+!/AF012_MVP_PG_RESTART_CHECK.ps1
+/GIT_RELEASE_AUDIT.*
+/DATABASE_ARCHITECTURE_REVIEW.*
+/FINAL_ACCEPTANCE_*
+/TEST_ACCEPTANCE_*
+/TEST_CLEANUP_*
+/TEST_COVERAGE_*
 /STATUS.md
+tatus --short

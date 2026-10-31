@@ -38,8 +38,10 @@ RESULT_PATH = ROOT / "AF011_CHAT_ACCEPTANCE_RESULTS.json"
 REPORT_PATH = ROOT / "AF011_CHAT_ACCEPTANCE_REPORT.md"
 TEMP_ROOT = ROOT / "tests" / ".tmp"
 SOURCE_FIXTURE = ROOT / "tests" / "fixtures" / "synthetic_repo"
-MODEL_PATH = Path(r"D:\agent\models\qwen3.5-4b\Qwen3.5-4B-Q4_K_M.gguf")
-RUNTIME_PATH = Path(r"D:\agent\models\qwen3.5-4b\.runtime\llama-b11424")
+MODEL_ROOT = Path(os.environ.get("AGENTFORGE_MODEL_ROOT", ROOT.parent / "models")).resolve()
+CHAT_MODEL_ROOT = MODEL_ROOT / "qwen3.5-4b"
+MODEL_PATH = CHAT_MODEL_ROOT / "Qwen3.5-4B-Q4_K_M.gguf"
+RUNTIME_PATH = CHAT_MODEL_ROOT / ".runtime" / "llama-b11424"
 EXPECTED_HASHES = {
     MODEL_PATH: "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
     RUNTIME_PATH / "llama-server.exe": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
@@ -284,7 +286,7 @@ def _write_report(history: dict) -> None:
             "## 一键宿主执行", "",
             "在平台允许 loopback 的普通 Windows PowerShell 中执行：", "",
             "```powershell",
-            "cd D:\\agent\\AgentForge",
+            "cd <AgentForge project directory>",
             "python -X utf8 -B AF011_CHAT_HOST_ACCEPTANCE.py",
             "```",
             "",

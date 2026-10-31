@@ -2,12 +2,12 @@
 
 本周目标：形成能演示、能追问、能说明个人贡献的项目材料。先修：前 3 周的主链路、证据验证、评测与工具循环。
 
-参考课程：[Day 53 Agent 失败模式](D:/agent/Agent-100-Days/week8/53.Agent%20的失败模式.md)、[Day 99 可观测性](D:/agent/Agent-100-Days/week15/99.监控与可观测性.md)、[Day 101 安全](D:/agent/Agent-100-Days/week15/101.安全与权限控制.md)、[Day 102 性能](D:/agent/Agent-100-Days/week15/102.性能优化.md)。
+参考课程：Day 53 Agent 失败模式（外部参考资料，本仓库不包含）、Day 99 可观测性（外部参考资料，本仓库不包含）、Day 101 安全（外部参考资料，本仓库不包含）、Day 102 性能（外部参考资料，本仓库不包含）。
 
 ## Day 22｜本地模型协议与真实故障
 
 - **学习内容**：服务就绪、连接/读取/总超时、响应结构、最终文本与 reasoning、生成上限、引用解析。
-- **读哪里**：[聊天 Provider](D:/agent/AgentForge/agentforge/providers/llama_server.py)、[Provider 测试](D:/agent/AgentForge/tests/test_providers.py)、[聊天验收测试](D:/agent/AgentForge/tests/test_af011_chat_acceptance.py)、[真实聊天报告](D:/agent/AgentForge/AF011_CHAT_ACCEPTANCE_REPORT.md)。
+- **读哪里**：[聊天 Provider](../agentforge/providers/llama_server.py)、[Provider 测试](../tests/test_providers.py)、[聊天验收测试](../tests/test_af011_chat_acceptance.py)、[真实聊天报告](../RELEASE_NOTES.md)。
 - **动手任务**：选择历史的 reasoning-only 或引用协议失败，画出失败层次；通过现有 Mock 案例复现对应响应处理，再与最后一次 PASS 的记录比较。不要直接运行会启动模型的 Host Runner。
 - **产出与验收**：故障分析卡：现象→证据→根因→修复→验证→限制；能说明 HTTP 200 为什么不代表得到了可展示答案。
 - **面试问题**：本地模型服务已经启动，为何请求仍失败？没有 final content 时你会怎样定位？
@@ -15,7 +15,7 @@
 ## Day 23｜安全边界与失败后的行为
 
 - **学习内容**：最小权限、文件句柄验证、符号链接/硬链接、提示注入、认证与日志。
-- **读哪里**：[SECURITY](D:/agent/AgentForge/SECURITY.md)、[safeio](D:/agent/AgentForge/agentforge/safeio.py)、[边界测试](D:/agent/AgentForge/tests/test_boundaries.py)、[质量边界测试](D:/agent/AgentForge/tests/test_quality_boundaries.py)。
+- **读哪里**：[SECURITY](../SECURITY.md)、[safeio](../agentforge/safeio.py)、[边界测试](../tests/test_boundaries.py)、[质量边界测试](../tests/test_quality_boundaries.py)。
 - **动手任务**：画四条信任边界：用户→CLI、仓库→扫描器、证据→模型、模型→工具执行器；各选一个负例说明由哪层控制。阅读历史硬链接问题，区分目录条目统计与实际句柄检查。
 - **产出与验收**：四条边界与对应控制表；能解释只读源仓库不等于程序完全不写数据，以及检索文档中的指令不能扩大权限。
 - **面试问题**：系统声称只读，究竟哪些地方能写？如果仓库 README 要求执行命令，系统会怎么处理？
@@ -23,7 +23,7 @@
 ## Day 24｜测试层次、覆盖率与实验可信度
 
 - **学习内容**：单元/集成/真实端到端、Mock 的价值与局限、行覆盖与分支覆盖、skip 状态。
-- **读哪里**：[TEST_STRATEGY](D:/agent/AgentForge/TEST_STRATEGY.md)、[覆盖率报告](D:/agent/AgentForge/TEST_COVERAGE_REPORT.md)、[集成测试](D:/agent/AgentForge/tests/test_integration.py)、[验收结果](D:/agent/AgentForge/TEST_ACCEPTANCE_RESULTS.json)。
+- **读哪里**：[TEST_STRATEGY](../TEST_STRATEGY.md)、[覆盖率报告](../RELEASE_NOTES.md)、[集成测试](../tests/test_integration.py)、[验收结果](../RELEASE_NOTES.md)。
 - **动手任务**：从切块、检索、Provider、工具循环各选一个测试，解释它验证与未验证的事项；运行与自己练习相关的测试并记录实际结果。阅读历史覆盖率即可，不要求重装覆盖率工具。
 - **产出与验收**：四层验证矩阵及本人运行记录；不能用 Mock 成功冒充真实网络成功，不能把权限 skip 算作通过。
 - **面试问题**：覆盖率 90% 能说明系统可靠吗？怎样用少量但有针对性的测试发现边界问题？
@@ -31,7 +31,7 @@
 ## Day 25｜一个小改进：先定义问题，再实现
 
 - **学习内容**：可测量需求、对照基线、最小改动、回归范围。
-- **读哪里**：按所选任务读 [query_routing](D:/agent/AgentForge/agentforge/query_routing.py)、[retriever](D:/agent/AgentForge/agentforge/retriever.py) 或 [chunker](D:/agent/AgentForge/agentforge/chunker.py)。
+- **读哪里**：按所选任务读 [query_routing](../agentforge/query_routing.py)、[retriever](../agentforge/retriever.py) 或 [chunker](../agentforge/chunker.py)。
 - **动手任务**：默认做一个**个人练习版中文意图路由**：仅覆盖「函数定义、导入关系、文档」三类与不确定回退；先写 6 个开发例和 4 个未参与开发的检查例，再独立实现规则。只放在个人练习目录，不改生产路由。如果这项已经熟练，可换成检索评分解释器，但仍只选一项。
 - **产出与验收**：需求、基线结果、规则实现、开发集结果；记录明确不支持的句式。2 小时内无法完成就缩小支持范围，不扩大为聊天平台。
 - **面试问题**：这项改动解决哪个具体问题？你做了哪些部分，如何避免只对已知例子有效？
@@ -39,7 +39,7 @@
 ## Day 26｜验证改进、性能与下一步
 
 - **学习内容**：独立检查、误判分析、规模与延迟、测量和推断分开。
-- **读哪里**：Day 25 练习及其对应生产模块；进阶选读 [S4 规模报告](D:/agent/AgentForge/AF010S4_EVALUATION.md)，不要求运行规模脚本。
+- **读哪里**：Day 25 练习及其对应生产模块；进阶选读 [S4 规模报告](../RELEASE_NOTES.md)，不要求运行规模脚本。
 - **动手任务**：冻结 Day 25 规则后运行 4 个检查例，记录混淆与回退。若失败，保留原结果，修订后另建新检查例，不继续声称旧集合独立。另用自建 10/100 个小文件的内存索引做 3 次轻量计时，固定文件长度和查询，记录索引与查询耗时。
 - **产出与验收**：小改进验证报告和带环境/样本量/重复次数的性能表；解释只能说明这个工作负载，不能外推大型仓库或生产并发。时间不够时优先完成改进验证，性能测量列为选做。
 - **面试问题**：收益没达到预期怎么处理？如果仓库从百个文件变成十万个文件，你先测什么、改什么？
@@ -47,9 +47,9 @@
 ## Day 27｜项目演示与简历素材
 
 - **学习内容**：面试表达中的问题、决策、证据、贡献和边界。
-- **读哪里**：[面试准备单](D:/agent/AgentForge/learning/INTERVIEW.md) 与自己的学习产物。
-- **动手任务**：准备 60 秒概述、3 分钟设计讲解、8 分钟演示。演示包含成功定位、无证据拒答、一次失败定位和个人小改进。写 2–3 条简历素材，每条标注「本人实现/本人复现/项目历史」。
-- **产出与验收**：演示顺序、讲稿、简历素材草稿、5 个最可能的追问；所有数字可指向具体记录。尚未实测的内容不写成成果。
+- **读哪里**：[面试准备单](INTERVIEW.md) 与自己的学习产物。
+- **动手任务**：准备 60 秒概述、3 分钟设计讲解、8 分钟演示。演示包含代码证据、无证据处理、持久会话切换、SQLite/PostgreSQL/Chroma 分工、审批式 Memory 和一次失败定位。写 2–3 条简历素材，每条标注「本人实现/本人复现/项目历史」。
+- **产出与验收**：演示顺序、讲稿、简历素材草稿、5 个最可能的追问；所有数字可指向具体记录。项目历史验收不自动成为个人经历；尚未实测的内容不写成成果。
 - **面试问题**：这个项目你个人完成了什么？最困难的技术决策是什么？如果重做会删掉什么？
 
 ## Day 28｜模拟面试与最终复盘
@@ -66,8 +66,8 @@
 
 | 维度 | 检查方式 |
 |---|---|
-| 数据流 | 不看源码画出扫描→索引→检索→上下文→Provider→验证 |
-| 检索取舍 | 用具体案例解释词法、符号、向量、RRF 的差异 |
+| 数据流 | 不看源码画出扫描→SQLite 代码索引→检索/Chroma 候选核验→会话上下文→Provider→回答验证/持久化 |
+| 检索取舍 | 用具体案例解释词法、符号、Chroma 向量候选与显式 RRF 的差异；说明 RRF 不在默认产品链路 |
 | 证据验证 | 演示无证据、伪造引用、真实引用但错误断言的区别 |
 | Agent 控制 | 说明并演示参数拒绝、停止条件、预算耗尽 |
 | 工程与实验 | 解释一项测试、一次失败、一次实验的适用范围 |

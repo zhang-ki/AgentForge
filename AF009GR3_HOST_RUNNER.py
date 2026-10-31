@@ -26,11 +26,9 @@ import uuid
 PROJECT_ROOT = Path(__file__).resolve().parent
 RESULT_PATH = PROJECT_ROOT / "AF009GR5_RESULTS.json"
 TEMP_ROOT = PROJECT_ROOT / "tests" / ".tmp"
-
-MODEL_PATH = Path(
-    r"D:\agent\models\qwen3-embedding-0.6b-gguf\Qwen3-Embedding-0.6B-Q8_0.gguf"
-)
-RUNTIME_PATH = Path(r"D:\agent\models\qwen3.5-4b\.runtime\llama-b11424")
+MODEL_ROOT = Path(os.environ.get("AGENTFORGE_MODEL_ROOT", PROJECT_ROOT.parent / "models")).resolve()
+MODEL_PATH = MODEL_ROOT / "qwen3-embedding-0.6b-gguf" / "Qwen3-Embedding-0.6B-Q8_0.gguf"
+RUNTIME_PATH = MODEL_ROOT / "qwen3.5-4b" / ".runtime" / "llama-b11424"
 EXPECTED_HASHES = {
     MODEL_PATH: "06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
     RUNTIME_PATH / "llama-server.exe": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",

@@ -1,7 +1,23 @@
 [project]
 name = "agentforge"
-version = "0.1.0"
-description = "Local read-only lexical RAG MVP"
+version = "1.0.0"
+description = "Local code question-answering with evidence-first retrieval"
 requires-python = ">=3.10"
 dependencies = []
+
+[project.optional-dependencies]
+sessions = [
+    "SQLAlchemy>=2.0,<3",
+    "psycopg[binary]>=3.2,<4",
+    "alembic>=1.13,<2",
+]
+chroma = [
+    "chromadb>=1.5,<2",
+]
+persistence = [
+    "SQLAlchemy>=2.0,<3",
+    "psycopg[binary]>=3.2,<4",
+    "alembic>=1.13,<2",
+    "chromadb>=1.5,<2",
+]
 

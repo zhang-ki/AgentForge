@@ -1,7 +1,13 @@
 ﻿try {
     . "$PSScriptRoot\common.ps1"
-    $exe = 'D:\agent\models\qwen3.5-4b\.runtime\llama-b11424\llama-server.exe'
-    $model = 'D:\agent\models\qwen3.5-4b\Qwen3.5-4B-Q4_K_M.gguf'
+    $modelRoot = if ($env:AGENTFORGE_MODEL_ROOT) {
+        [System.IO.Path]::GetFullPath($env:AGENTFORGE_MODEL_ROOT)
+    } else {
+        Join-Path (Split-Path -Parent $ProjectRoot) 'models'
+    }
+    $chatRoot = Join-Path $modelRoot 'qwen3.5-4b'
+    $exe = Join-Path $chatRoot '.runtime\llama-b11424\llama-server.exe'
+    $model = Join-Path $chatRoot 'Qwen3.5-4B-Q4_K_M.gguf'
     if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "找不到运行程序：$exe" }
     if (-not (Test-Path -LiteralPath $model -PathType Leaf)) { throw "找不到模型文件：$model" }
     try {

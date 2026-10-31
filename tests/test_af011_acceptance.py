@@ -6,7 +6,7 @@ from agentforge.product_acceptance import evaluate_product_tasks, load_and_valid
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DATASET = ROOT / "tests" / "fixtures" / "af011_product_tasks_v3.json"
+DATASET = ROOT / "tests" / "fixtures" / "af011_product_tasks_v4.json"
 
 
 class AF011AcceptanceTests(unittest.TestCase):
@@ -25,7 +25,7 @@ class AF011AcceptanceTests(unittest.TestCase):
 
     def test_task_dataset_is_valid_and_split_groups_are_disjoint(self):
         data = load_and_validate_tasks(DATASET, ROOT)
-        self.assertEqual(data["dataset_version"], "af011-agentforge-source-tasks-v3")
+        self.assertEqual(data["dataset_version"], "af011-agentforge-source-tasks-v4")
         self.assertEqual(data["label_source"], "ai_evidence_review")
         self.assertFalse(data["human_reviewed"])
         self.assertEqual(len(data["tasks"]), 20)

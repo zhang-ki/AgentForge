@@ -1,0 +1,80 @@
+{
+  "schema": "agentforge-github-release-v1",
+  "release": "MVP 1.0",
+  "tag_name": "v1.0.0-mvp",
+  "target_repository": "https://github.com/zhang-ki/AgentForge.git",
+  "status": "ready_for_commit",
+  "git": {
+    "branch": "main",
+    "base_commit": "069e0c4813230b48cd770a0cdd0327679cbd9e6f",
+    "release_commit": null,
+    "tag_created": false,
+    "origin": "https://github.com/zhang-ki/AgentForge.git",
+    "remote_main_before": "069e0c4813230b48cd770a0cdd0327679cbd9e6f",
+    "remote_check_source": "GitHub repository branch API",
+    "remote_main_after": null,
+    "pushed": false
+  },
+  "tests": {
+    "real_model_run": "not_run_by_instruction",
+    "focused": {"status": "passed", "tests_run": 53, "failures": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+    "full_offline": {
+      "status": "passed_with_skips",
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "tests_run": 344,
+      "passed": 336,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 8,
+      "exit_code": 0,
+      "skip_reasons": {
+        "chromadb_optional_integration_tests": 2,
+        "windows_link_creation_permissions": 6
+      }
+    },
+    "import_config_cli_help_alembic": {
+      "status": "passed",
+      "exit_code": 0,
+      "checks": ["package import and 1.0.0 version", "pyproject configuration", "CLI help", "Alembic migration head af012mvp_002"]
+    },
+    "power_shell_script_parse": {"status": "passed", "exit_code": 0, "scripts": 7},
+    "diff_whitespace_check": {"status": "passed_after_fix", "exit_code": 0, "finding": "An extra blank line at EOF in agentforge/cli.py was removed; both worktree and staged diff checks pass."}
+  },
+  "release_snapshot": {
+    "file_count_in_resulting_tree": 276,
+    "staged_change_path_count": 148,
+    "staged_added_or_modified_paths": 73,
+    "staged_removed_paths": 75,
+    "removed_historical_files_preserved_locally": 75,
+    "missing_local_historical_files": [],
+    "excluded_categories": [
+      "local .agentforge data and virtual environment",
+      "SQLite/PostgreSQL/Chroma user data and credentials",
+      "GGUF models and llama-server binaries/runtime",
+      "raw host acceptance results and machine-specific diagnostics",
+      "coverage data, logs, and Python cache files",
+      "personal repository content"
+    ],
+    "sensitive_scan": {
+      "status": "passed_after_manual_candidate_review",
+      "checked_staged_text_paths": 73,
+      "absolute_local_path_matches": 0,
+      "private_key_token_jwt_uri_or_personal_email_matches": 0,
+      "credential_like_candidates": [
+        {"path": "tests/test_providers.py", "line": 15, "classification": "synthetic test placeholder; not a credential"}
+      ],
+      "confirmed_sensitive_matches": 0,
+      "forbidden_local_asset_paths": 0,
+      "limitations": "Pattern scanning and manual review do not prove absence of every possible sensitive value; existing remote history was not rewritten."
+    }
+  },
+  "notes": [
+    "Existing GitHub main was observed at the local base commit before changes; the requested tag v1.0.0-mvp was absent at that time.",
+    "Native git remote resolution previously failed in this execution environment; GitHub connector provided the read-only main-branch SHA.",
+    "The current full suite is 344 run, 336 passed, 0 failed, 0 errors, 8 skipped. Six Windows link tests were blocked by OS permissions; two optional Chroma integration tests were skipped because the isolated interpreter lacks chromadb.",
+    "An initial full run before the final SECURITY anchor correction failed (1 failure, 1 error, 8 skips); the corrected run above passed. Do not mix those run counts.",
+    "No force push, reset, or history rewrite is permitted.",
+    "Seventy-five historical AF/coverage paths are removed from the current release tree and remain present in the local working directory; no prior commit was rewritten.",
+    "The staged release snapshot contains 276 files; 73 paths are added or modified and 75 paths are removed from the current tree."
+  ]
+}

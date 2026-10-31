@@ -1,4 +1,4 @@
-"""A small, local, read-only repository search and answer tool."""
+"""Local repository search and evidence-first code question answering."""
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 

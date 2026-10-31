@@ -66,25 +66,21 @@ class ProvisionalDatasetTests(unittest.TestCase):
         self.assertEqual(40, report["query_total"])
         self.assertEqual(20, report["no_evidence_query_count"])
 
-    def test_real_experiment_artifacts_remain_provisional_and_cleanup_is_recorded(self):
-        result_path = ROOT / "AF009FA_RRF_RESULTS.json"
-        service_path = ROOT / "AF009FA_SERVICE_RUN.json"
-        result = json.loads(result_path.read_text(encoding="utf-8"))
-        service = json.loads(service_path.read_text(encoding="utf-8"))
-        self.assertEqual("provisional_ai_experiment_only", result["status"])
-        self.assertIs(result["human_reviewed"], False)
-        self.assertIs(result["production_threshold_approved"], False)
-        self.assertEqual((20, 20), (
-            result["dataset"]["calibration_count"], result["dataset"]["validation_count"],
-        ))
-        self.assertEqual(
-            result["calibration"]["selected"]["rule"], result["validation"]["rule"]
-        )
-        self.assertEqual("completed_and_cleaned", service["status"])
-        self.assertTrue(service["cleanup"]["process_stopped"])
-        self.assertEqual(0, service["cleanup"]["port_listener_count_for_pid_after_stop"])
-        self.assertTrue(service["cleanup"]["temporary_runtime_removed"])
-        self.assertFalse((ROOT / "tests" / ".tmp" / "af009fa-runtime").exists())
+    def test_research_only_rrf_and_calibration_do_not_enable_production_behavior(self):
+        rows = [
+            {"query_id": "p", "top_score": 0.9, "top_2_margin": 0.2, "no_evidence": False},
+            {"query_id": "n", "top_score": 0.3, "top_2_margin": 0.1, "no_evidence": True},
+        ]
+        report = calibrate_abstention(rows, thresholds=(0.5, 0.7))
+        self.assertEqual("exploratory_provisional_ai_only", report["status"])
+        self.assertNotIn("production_threshold_enabled", report)
+        with IndexStore(":memory:") as store:
+            index_repository(CORPUS, store)
+            self.assertTrue(search(store, "rotate session", top_k=3))
+            # RRF remains an explicit research object; ordinary search is unchanged.
+            before = search(store, "rotate session", top_k=3)
+            RrfRetriever(store, vector_retriever=None).search("rotate session", top_k=3)
+            self.assertEqual(before, search(store, "rotate session", top_k=3))
 
 
 class CalibrationTests(unittest.TestCase):

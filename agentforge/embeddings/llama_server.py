@@ -5,6 +5,7 @@ from ipaddress import ip_address
 import json
 import math
 import socket
+import time
 from urllib.parse import urlsplit
 
 from .base import EmbeddingError, normalize_vector
@@ -103,6 +104,52 @@ class LlamaServerEmbeddingProvider:
 
     def embed_document(self, text: str):
         return self._embed(text, role="document")
+
+    def health(self, *, timeout: float = 2.0) -> str:
+        """Check the model-specific llama.cpp health contract without inference."""
+        timeout = self._validate_timeout(timeout, "health_timeout")
+        connection = HTTPConnection(self._host, self._port, timeout=timeout)
+        try:
+            connection.request("GET", "/health", headers={"Accept": "application/json"})
+            response = connection.getresponse()
+            raw = response.read(64 * 1024 + 1)
+            if len(raw) > 64 * 1024:
+                raise EmbeddingError("Embedding health response exceeds the configured size limit.")
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                raise EmbeddingError("Embedding health response is not valid JSON.") from None
+            if response.status == 200 and isinstance(payload, dict) and payload.get("status") == "ok":
+                return "ready"
+            message = payload.get("error", {}).get("message") if isinstance(payload, dict) else None
+            if response.status == 503 and message == "Loading model":
+                return "loading"
+            raise EmbeddingError(f"Embedding health contract rejected HTTP {response.status}.")
+        except socket.timeout:
+            raise EmbeddingError("Embedding health request timed out.") from None
+        except EmbeddingError:
+            raise
+        except (OSError, HTTPException) as exc:
+            raise EmbeddingError(f"Embedding health endpoint is unavailable ({type(exc).__name__}).") from None
+        finally:
+            connection.close()
+
+    def wait_ready(self, *, timeout: float = 120.0, poll_interval: float = 1.0) -> float:
+        """Bounded model-readiness polling; it never sends an embedding request."""
+        timeout = self._validate_timeout(timeout, "readiness_timeout")
+        poll_interval = self._validate_timeout(poll_interval, "poll_interval")
+        started = time.monotonic()
+        deadline = started + timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining < 0.1:
+                raise EmbeddingError("Embedding model readiness timed out.")
+            if self.health(timeout=min(2.0, remaining)) == "ready":
+                return round(time.monotonic() - started, 6)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise EmbeddingError("Embedding model readiness timed out.")
+            time.sleep(min(poll_interval, remaining))
 
     def _embed(self, text: str, *, role: str):
         if not isinstance(text, str) or not text.strip():

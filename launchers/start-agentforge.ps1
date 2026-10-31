@@ -1,17 +1,26 @@
 ﻿try {
     . "$PSScriptRoot\common.ps1"
     Set-Location -LiteralPath $ProjectRoot
-    if (-not (Get-Command python.exe -ErrorAction SilentlyContinue)) { throw '找不到 Python，请安装 Python 3.10 或以上并加入 PATH。' }
+    $Python = Join-Path $ProjectRoot '.agentforge\af012-venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) { throw '找不到 AF-012 项目环境，请先完成数据库依赖安装。' }
     $env:AGENTFORGE_LLAMA_API_KEY = Get-LauncherKey $false
-    Write-Host 'AgentForge 本地代码问答。请先保持千问服务窗口运行。'
-    Write-Host '使用当前已有索引；输入 exit 退出。每个问题独立提交，不保留聊天上下文。'
-    Write-Host '示例：What does function refresh_access_token return for session_id? Cite the exact source.'
-    while ($true) {
-        $query = Read-Host '请输入问题'
-        if ($null -eq $query -or $query.Trim() -eq 'exit') { break }
-        if ([string]::IsNullOrWhiteSpace($query)) { continue }
-        & python.exe -X utf8 -B -m agentforge ask $query --provider llama-server --base-url "http://127.0.0.1:$Port/v1/chat/completions" --model $ModelName --read-timeout 120
-        if ($LASTEXITCODE -ne 0) { Write-Host "请求失败（退出码 $LASTEXITCODE）。确认服务已加载，并查看上方错误。" }
-        Write-Host ''
+    $env:AGENTFORGE_DB_PASSWORD = Get-ConversationDatabaseKey
+    if (-not $env:AGENTFORGE_EMBEDDING_BASE_URL) {
+        $env:AGENTFORGE_EMBEDDING_BASE_URL = 'http://127.0.0.1:58067'
     }
+    if (-not $env:AGENTFORGE_EMBEDDING_MODEL_ID) {
+        $env:AGENTFORGE_EMBEDDING_MODEL_ID = 'Qwen/Qwen3-Embedding-0.6B-GGUF@370f27d7550e0def9b39c1f16d3fbaa13aa67728:Q8_0#06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439'
+    }
+    if (-not $env:AGENTFORGE_EMBEDDING_API_MODEL) {
+        $env:AGENTFORGE_EMBEDDING_API_MODEL = 'qwen3-embedding-0.6b-q8_0-agentforge'
+    }
+    if (-not $env:AGENTFORGE_EMBEDDING_DIMENSION) {
+        $env:AGENTFORGE_EMBEDDING_DIMENSION = '1024'
+    }
+    Write-Host '请保持 PostgreSQL 和千问服务窗口运行。'
+    & $Python -X utf8 -B -m agentforge session migrate
+    if ($LASTEXITCODE -ne 0) { throw '数据库连接或迁移失败；未启动会话。' }
+    & $Python -X utf8 -B -m agentforge.conversation_console
+    if ($LASTEXITCODE -ne 0) { throw '会话启动失败，请查看上方说明。' }
 } catch { Write-Host "启动失败：$($_.Exception.Message)"; exit 1 }
+finally { Remove-Item Env:AGENTFORGE_DB_PASSWORD -ErrorAction SilentlyContinue }

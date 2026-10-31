@@ -155,16 +155,25 @@ class PreproductFixtureTests(unittest.TestCase):
         self.assertFalse(report["product_entry_decision"]["production_threshold_enabled"])
         self.assertFalse(report["product_entry_decision"]["default_retriever_modified"])
 
-    def test_frozen_historical_and_formal_files_keep_known_hashes(self):
+    def test_frozen_fixture_files_keep_known_hashes_and_formal_files_are_untouched(self):
         expected = {
             "tests/fixtures/retrieval_eval.json": "B3276E4309C08FAA8B8961DB8DDD457A6ABA7491C134E606FC037B0B1342AF87",
             "tests/fixtures/retrieval_eval_generalization_v1.json": "607C0BE6DB9CAB0003E6D57A14E028758B27C248F79F125F6E818861F4D8CBF1",
             "tests/fixtures/retrieval_eval_generalization_split_v1.json": "78E367FCEC916C0BF062C8433367ADF5FC41E3BD4713CB4541AC9C8B69D12FDD",
-            "AF009GR5_RESULTS.json": "DABAA96701259C6AA21FE95BE3F113906CDED0A3F671AED33F419067B6F1E3A2",
-            ".agentforge/data/index.sqlite3": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296",
-            ".agentforge/data/read_only_evidence.json": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733",
         }
+        # The live index belongs to the user and changes when repositories are
+        # switched. Check isolation against its current state, not an old demo.
+        protected = [ROOT / ".agentforge/data/index.sqlite3",
+                     ROOT / ".agentforge/data/read_only_evidence.json"]
+        before = {p: _sha256(p) for p in protected if p.exists()}
+        from agentforge.indexer import index_repository
+        from agentforge.store import IndexStore
+        with IndexStore(":memory:") as store:
+            indexed = index_repository(ROOT / "tests/fixtures/synthetic_repo", store)
+            self.assertGreater(indexed["files"], 0)
+            self.assertGreater(indexed["chunks"], 0)
         self.assertEqual(expected, {path: _sha256(ROOT / path) for path in expected})
+        self.assertEqual(before, {p: _sha256(p) for p in before})
 
 
 if __name__ == "__main__":

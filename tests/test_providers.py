@@ -1,11 +1,13 @@
 import json
 import socket
 import unittest
+import hashlib
 from unittest.mock import Mock, patch
 
 from agentforge.context import build_context
 from agentforge.errors import CitationValidationError, ProviderError
 from agentforge.providers.llama_server import LlamaServerClient, LlamaServerProvider
+from agentforge.conversation_context import MemoryCandidate, MemorySourceReference
 from tests.test_context import result
 
 
@@ -254,6 +256,29 @@ class LlamaClientTests(unittest.TestCase):
             provider.answer(context)
         client.chat.return_value = "Ordinary uncited text is allowed."
         self.assertEqual(provider.answer(context).citations, ())
+
+    def test_conversation_provider_injects_approved_memory_with_source_identity(self):
+        context = build_context("Explain this example", [result()])
+        client = Mock()
+        client.chat.return_value = "Supported answer [E1]"
+        provider = LlamaServerProvider(client, "synthetic")
+        source_hash = hashlib.sha256(b"source message").hexdigest()
+        memory = MemoryCandidate("repo-1", "Name parameters before the formula.", True,
+            "memory-123", "preference", 3,
+            (MemorySourceReference("message-456", 7, "user", source_hash),))
+        conversation = {"conversation_id": "conversation-1", "repository_id": "repo-1",
+            "history": (), "memories": (memory,)}
+
+        answer = provider.answer(context, conversation=conversation)
+
+        self.assertEqual("Supported answer [E1]", answer.text)
+        self.assertEqual(("memory-123",), conversation["injected_memory_ids"])
+        messages = client.chat.call_args.args[0]
+        serialized = "\n".join(item["content"] for item in messages)
+        self.assertIn("Memory ID: memory-123", serialized)
+        self.assertIn("message_id=message-456", serialized)
+        self.assertIn("Name parameters before the formula.", serialized)
+        self.assertIn("not repository evidence", messages[0]["content"])
 
     def test_citation_failure_keeps_http_success_and_records_sanitized_diagnostic(self):
         context = build_context("example", [result()])

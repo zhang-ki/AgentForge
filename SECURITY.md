@@ -1,44 +1,65 @@
-# 安全边界与已知限制
+# Security and data handling
 
-## 本轮操作范围
+## Repository access
 
-本轮重新确认 D:\agent\AgentForge 是没有隐藏条目的普通空目录，并在其中成功创建、关闭、删除唯一写权限探针。用户已明确授权复用这个空目录。所有后续源文件、测试文件和运行数据都位于该项目中。
+Indexing requires an explicit repository path; there is no implicit home-directory scan.
 
-D:\agent\Agentexpr 只做存在性检查，没有枚举、读取内容或写操作。没有读取旧项目的 Git 状态，因此不声称掌握其前后内容哈希或未提交状态。
+The scanner enforces file-type, size, depth, path-boundary, and traversal limits.
 
-## 源仓库读取
+Safe file access checks symbolic links, reparse points, hard links, and file identity.
 
-必须显式指定一个目录。规范化每个路径并核对其属于根目录；拒绝源根目录本身为链接或 reparse point。遍历不跟随链接，重新核验待遍历目录，拒绝每一层的 reparse point。文件读取前再次检查路径、文件类型和硬链接计数。
+Indexed files are only read; repository source is never modified.
 
-Windows 读取使用只读 CreateFileW，并请求打开最终 reparse 对象本身。在读取任何字节前检查句柄属性和 GetFinalPathNameByHandleW 返回的最终路径，阻止越界句柄读取；仅共享读取，不共享写入或删除。读取前后核对文件身份、大小和修改时间。其他平台使用 O_NOFOLLOW（平台支持时）及路径检查；本轮未测试其他操作系统。
+Repository files, names, and documentation are treated as untrusted data.
 
-这些措施并非对恶意并发文件系统替换的完整形式证明。现有索引代表上次成功读取的快照；扫描期间发生的任意外部修改不能保证全部反映，必要时重新索引。真正的 NTFS ACL 拒绝读取、攻击性竞态以及所有 reparse tag 均未穷尽验证。
+They are not imported or executed during indexing.
 
-## 排除与资源限制
+## Agent permissions
 
-不进入 .git、.venv、venv、node_modules、构建、缓存、.ssh、.aws、.azure、.gcloud、.agentforge 及疑似秘密目录。跳过 .env、常见私钥/证书/凭证文件、SQLite 文件及日志、常见模型/二进制后缀。
+The built-in Agent is a finite, read-only tool loop.
 
-对剩余普通文件只做有界读取：拒绝 NUL/控制字节、无法严格解码的 UTF-8，以及部分常见秘密内容模式。已通过名称排除的文件不会打开读取。测试秘密内容全部人工构造，不来自用户仓库。
+Its allowlist provides index, search, read, and symbol inspection only.
 
-启发式规则可能误报，也可能漏掉不常见文件名或编码在普通源码中的秘密。索引存有源码片段，数据库没有加密。用户应只对获授权的仓库运行 index，并按自己的磁盘访问策略保护项目数据目录。
+It has no shell, arbitrary code execution, network, or patch/write tool.
 
-文件数、目录条目、单文件字节、总字节、总分块数都有上限。由于上限或目录不可读导致不完整扫描时，命令明确失败并保留之前的索引。旧索引仍是旧快照，不能把失败更新视为重新确认。
+Tool inputs are validated against the current repository and bounded limits.
 
-## 数据隔离
+## Local services and credentials
 
-唯一磁盘数据库路径为 D:\agent\AgentForge\.agentforge\data\index.sqlite3；SQLite 临时数据使用内存，事务日志只在同一目录。启动检查数据目录、数据库及已存在日志文件不是符号链接、reparse point 或共享硬链接。运行目录已被 .gitignore 忽略。
+Local Qwen services are accessed only through explicit loopback endpoints.
 
-源仓库只使用枚举、属性查询和只读文件句柄。数据库中的动态值通过 SQL 参数绑定。只读命令使用 SQLite mode=ro 和 query_only。单元测试可用 :memory:，不能指定其他磁盘数据库位置。
+The client does not use system proxies, follow redirects, or retry failed chats.
 
-## 不可信内容与引用
+Requests use explicit connection/read limits and bounded response sizes.
 
-README、注释、代码、检索片段和模型响应均是数据。产品不包含 shell、任意命令、动态代码执行、补丁应用、自动构建或测试工具。离线回答会标明摘录属于不可信仓库内容，任何其中的指令均不会执行。
+The read-only Agent does not execute shell commands or executable instructions found in repository data.
 
-来源标识和行号来自实际索引分块。上下文保留完整分块并检查相对路径及范围。Provider 的引用必须精确属于该上下文；预算估算没有假冒精确 Tokenizer。
+The client requires explicit model/endpoint configuration and runtime credentials.
 
-## 本机 HTTP 客户端
+Windows launcher secrets are encrypted for the current Windows account.
 
-只接受 HTTP、明确的回环 IP 字面量及 /v1/chat/completions 路径；拒绝 DNS 主机名、非回环地址、URL 凭证、查询、片段和 IPv6 scope。客户端不使用代理、不跟随任何 3xx，不下载、不启动进程，也不自动管理模型服务。连接、读取和响应大小均有限制。
+The local HTTP client rejects all 3xx redirects and does not use proxies.
 
-本轮没有请求任何真实服务。Mock 测试证明了客户端所测分支的行为，不能替代真实 llama-server 的兼容性、模型质量或性能验收。
+## Data stores
 
+SQLite is authoritative for the current code snapshot; PostgreSQL for conversations and memory.
+
+Chroma vectors are candidates; every result is checked against authoritative data.
+
+Data paths and credentials are excluded from version control through `.gitignore`.
+
+No migration automatically replaces the user's code index.
+
+## Answer integrity
+
+Evidence IDs are scoped to one request and map to paths, lines, and exact source excerpts.
+
+Citation validation proves source identity and location, not semantic entailment.
+
+Untrusted repository content, history, and memory cannot expand tool permissions.
+
+## Reporting issues
+
+Do not include API keys, passwords, private source, database backups, or model files in public reports.
+
+Use a minimal synthetic repository for reproducible examples when possible.

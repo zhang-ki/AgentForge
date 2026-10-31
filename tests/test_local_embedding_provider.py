@@ -119,6 +119,31 @@ class LlamaServerEmbeddingProviderTests(unittest.TestCase):
             "failures": 1,
         }, self.provider.request_counts)
 
+    def test_health_contract_distinguishes_loading_and_ready_without_embedding(self):
+        loading = self._connection(FakeResponse(503, b'{"error":{"message":"Loading model"}}'))
+        ready = self._connection(FakeResponse(200, b'{"status":"ok"}'))
+        with patch("agentforge.embeddings.llama_server.HTTPConnection", side_effect=[loading, ready]):
+            self.assertEqual("loading", self.provider.health())
+            self.assertEqual("ready", self.provider.health())
+        self.assertEqual([call("GET", "/health", headers={"Accept": "application/json"})],
+                         loading.request.call_args_list)
+        self.assertEqual([call("GET", "/health", headers={"Accept": "application/json"})],
+                         ready.request.call_args_list)
+        self.assertEqual(0, self.provider.request_counts["attempts"])
+        loading.close.assert_called_once()
+        ready.close.assert_called_once()
+
+    def test_wait_ready_polls_loading_but_unknown_health_fails_closed(self):
+        with patch.object(self.provider, "health", side_effect=["loading", "ready"]), \
+             patch("agentforge.embeddings.llama_server.time.sleep") as sleep:
+            elapsed = self.provider.wait_ready(timeout=2, poll_interval=0.1)
+        self.assertGreaterEqual(elapsed, 0)
+        sleep.assert_called_once()
+        self.assertEqual(0, self.provider.request_counts["attempts"])
+        with patch.object(self.provider, "health", side_effect=EmbeddingError("unknown health")):
+            with self.assertRaisesRegex(EmbeddingError, "unknown health"):
+                self.provider.wait_ready(timeout=1, poll_interval=0.1)
+
     def test_invalid_json_shape_empty_nonfinite_and_wrong_dimension_are_rejected(self):
         invalid = (
             FakeResponse(body=b"not-json"),
