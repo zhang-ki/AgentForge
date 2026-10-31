@@ -19,8 +19,8 @@
 - [x] Full offline regression test (344 run, 336 pass, 0 fail/error, 8 skipped; skips listed in machine results).
 - [x] Review staged file list, staged diff, ignore/exclusion result, and secret/path scan (276 final tree files; 73 added/modified; 75 removed; zero confirmed sensitive matches).
 - [x] Confirm release commit and local `v1.0.0-mvp` tag (tag points to release commit and uses noreply identity).
-- [ ] Push `main` and the release tag; verify remote refs. **Blocked:** this environment could not connect to `github.com:443`; remote remained at the base commit and the tag is absent remotely.
+- [x] Push `main` and the `v1.0.0-mvp` tag; GitHub API verified remote `main` at `c28b164946ac35b0b76497696d95b2521ec0f0b0` and the tag target at release commit `73bd11992acce90d4d0bc06ef7f242dca5c285f1`.
 
-The local release is committed. After network access is available, run `git push origin main refs/tags/v1.0.0-mvp` from the project directory, then verify the remote `main` SHA and tag target.
+The user-provided push output reported 89 Git objects (125.15 KiB) written. These are pack-transfer counts, not a literal count of files.
 
 Execution facts and command exit codes are in `GITHUB_RELEASE_RESULTS.json`.
