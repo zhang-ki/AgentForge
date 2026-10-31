@@ -1,0 +1,172 @@
+{
+  "dataset_version": "agentforge-retrieval-v1-expansion-candidates",
+  "parent_dataset_version": "agentforge-retrieval-v1",
+  "parent_dataset_sha256": "B3276E4309C08FAA8B8961DB8DDD457A6ABA7491C134E606FC037B0B1342AF87",
+  "review_status": "pending_human_review",
+  "label_rule": "Provisional candidate labels prepared from line-addressable synthetic fixture evidence. They are excluded from the manually reviewed v1 baseline until a human reviews each query, relevance set, exclusion rationale and no-evidence assertion.",
+  "queries": [
+    {
+      "id": "candidate-business-continuity",
+      "category": "business_concept_without_shared_terms",
+      "query": "Where does the application recover a returning person's approved identity without another login prompt?",
+      "relevant_paths": ["docs/continuity.md", "pkg/session.py"],
+      "relevant_symbols": [],
+      "evidence": [
+        {"path": "docs/continuity.md", "start_line": 1, "end_line": 3, "reason": "The document directly describes resuming an approved principal without a fresh credential prompt."},
+        {"path": "pkg/session.py", "start_line": 9, "end_line": 11, "reason": "restore_identity_from_lease returns the principal from an existing lease."}
+      ],
+      "inclusion_reason": "Both the policy explanation and its direct implementation answer the concept query.",
+      "exclusion_reason": "Session rotation and storage files do not explain identity restoration from a lease.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-cross-file-renewal",
+      "category": "cross_file_import_reference",
+      "query": "Which request handler imports and calls the stale session key rotation function?",
+      "symbol_query": {"qualified_name": "pkg.handlers.handle_expired_session"},
+      "relevant_paths": ["pkg/handlers.py"],
+      "relevant_symbols": [{"path": "pkg/handlers.py", "qualified_name": "pkg.handlers.handle_expired_session"}],
+      "evidence": [
+        {"path": "pkg/handlers.py", "start_line": 3, "end_line": 8, "reason": "The file imports rotate_session_key and calls it from handle_expired_session."}
+      ],
+      "inclusion_reason": "The question asks for the call site rather than the callee definition.",
+      "exclusion_reason": "pkg/session.py defines the callee but is not the importing request handler.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-renewal-implementation",
+      "category": "business_concept_to_implementation",
+      "query": "How is an expired session key replaced with a fresh synthetic key?",
+      "symbol_query": {"name": "rotate_session_key"},
+      "relevant_paths": ["pkg/session.py"],
+      "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.rotate_session_key"}],
+      "evidence": [
+        {"path": "pkg/session.py", "start_line": 4, "end_line": 6, "reason": "The function and docstring directly implement key replacement."}
+      ],
+      "inclusion_reason": "The function is the direct implementation requested.",
+      "exclusion_reason": "The handler is only a caller and does not implement the transformation.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-lookup",
+      "category": "duplicate_symbol_disambiguation",
+      "query": "Which lookup returns a token record for a key?",
+      "symbol_query": {"qualified_name": "pkg.token_cache.lookup"},
+      "relevant_paths": ["pkg/token_cache.py"],
+      "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.lookup"}],
+      "evidence": [
+        {"path": "pkg/token_cache.py", "start_line": 4, "end_line": 6, "reason": "This lookup returns a token record keyed by the argument."}
+      ],
+      "inclusion_reason": "The token semantics uniquely select this same-named function.",
+      "exclusion_reason": "pkg/preferences.py::lookup returns a display preference, not a token record.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-preference-lookup",
+      "category": "duplicate_symbol_disambiguation",
+      "query": "Which lookup returns a display preference by name?",
+      "symbol_query": {"qualified_name": "pkg.preferences.lookup"},
+      "relevant_paths": ["pkg/preferences.py"],
+      "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.lookup"}],
+      "evidence": [
+        {"path": "pkg/preferences.py", "start_line": 4, "end_line": 6, "reason": "This lookup returns a preference record for a display preference name."}
+      ],
+      "inclusion_reason": "The preference semantics uniquely select this same-named function.",
+      "exclusion_reason": "pkg/token_cache.py::lookup handles token records instead.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-policy-save",
+      "category": "similar_names_different_meaning",
+      "query": "Where is a selected token policy stored?",
+      "symbol_query": {"name": "save_token_choice"},
+      "relevant_paths": ["pkg/token_cache.py"],
+      "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.save_token_choice"}],
+      "evidence": [
+        {"path": "pkg/token_cache.py", "start_line": 9, "end_line": 11, "reason": "save_token_choice returns a token_policy record."}
+      ],
+      "inclusion_reason": "The token policy phrase maps to save_token_choice.",
+      "exclusion_reason": "save_theme_choice has a similar shape but stores a display theme.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-theme-save",
+      "category": "similar_names_different_meaning",
+      "query": "Where is the chosen display theme stored?",
+      "symbol_query": {"name": "save_theme_choice"},
+      "relevant_paths": ["pkg/preferences.py"],
+      "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.save_theme_choice"}],
+      "evidence": [
+        {"path": "pkg/preferences.py", "start_line": 9, "end_line": 11, "reason": "save_theme_choice returns a theme record."}
+      ],
+      "inclusion_reason": "The display theme phrase maps to save_theme_choice.",
+      "exclusion_reason": "save_token_choice stores a token policy rather than visual preferences.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-storage-separation",
+      "category": "documentation_evidence",
+      "query": "Where is it documented that token records and display themes are separate features?",
+      "relevant_paths": ["docs/storage.md"],
+      "relevant_symbols": [],
+      "evidence": [
+        {"path": "docs/storage.md", "start_line": 1, "end_line": 3, "reason": "The document explicitly distinguishes token cache records from display preferences."}
+      ],
+      "inclusion_reason": "The query asks for documentation and this is the direct explanatory passage.",
+      "exclusion_reason": "The two implementation modules each describe only one side of the distinction.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-password-reset",
+      "category": "no_sufficient_evidence",
+      "query": "Which function sends a password reset email?",
+      "symbol_query": {"name": "send_password_reset_email"},
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "no_evidence": true,
+      "evidence": [],
+      "inclusion_reason": "Adds a plausible account-management request absent from the fixture.",
+      "exclusion_reason": "No indexed file declares or documents email or password reset behavior.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-account-delete",
+      "category": "no_sufficient_evidence",
+      "query": "Where is permanent user account deletion implemented?",
+      "symbol_query": {"name": "delete_account"},
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "no_evidence": true,
+      "evidence": [],
+      "inclusion_reason": "Adds a plausible identity feature absent from the fixture.",
+      "exclusion_reason": "The fixture covers session continuity but contains no deletion operation.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-avatar-upload",
+      "category": "no_sufficient_evidence",
+      "query": "How does the repository resize and upload profile avatar images?",
+      "symbol_query": {"name": "upload_avatar"},
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "no_evidence": true,
+      "evidence": [],
+      "inclusion_reason": "Adds an unrelated but realistic profile feature absent from the fixture.",
+      "exclusion_reason": "No indexed source or documentation contains image or upload behavior.",
+      "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-invoice-refund",
+      "category": "no_sufficient_evidence",
+      "query": "Which code refunds a paid invoice and reverses the ledger entry?",
+      "symbol_query": {"name": "refund_invoice"},
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "no_evidence": true,
+      "evidence": [],
+      "inclusion_reason": "Adds an unrelated billing request to probe semantic false acceptance.",
+      "exclusion_reason": "The fixture contains no billing, payment, invoice or ledger implementation.",
+      "review_status": "pending_human_review"
+    }
+  ]
+}

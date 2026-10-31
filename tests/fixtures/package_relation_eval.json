@@ -1,0 +1,1264 @@
+{
+  "dataset_version": "agentforge-package-relations-v1",
+  "fixture_version": "package-relation-repo-v1",
+  "review_status": "provisional_ai",
+  "label_rule": "Synthetic fixture-design labels: a path is relevant only when the cited source directly establishes the requested definition, import, export, reexport, alias, resolution, or documentation fact; retrieval output never defines ground truth.",
+  "human_reviewed": false,
+  "queries": [
+    {
+      "id": "PRS1-001",
+      "query": "Which package reexports dispatch under the public name send?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "alias-export",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "send"
+      },
+      "evidence": [
+        {
+          "path": "atlas/__init__.py",
+          "start_line": 3,
+          "end_line": 11,
+          "reason": "Alias import and static __all__ establish the public name."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-002",
+      "query": "Where does the public atlas send name resolve?",
+      "category": "resolution",
+      "split": "calibration",
+      "leakage_group": "alias-export",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/impl.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "atlas/impl.py",
+          "qualified_name": "atlas.impl.dispatch"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "atlas.impl.dispatch"
+      },
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "atlas",
+        "symbol_name": "send"
+      },
+      "evidence": [
+        {
+          "path": "atlas/impl.py",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "The multi-level reexport chain terminates at dispatch."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-003",
+      "query": "Does atlas publicly reexport dispatch under its original name?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "alias-export",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-004",
+      "query": "Does beacon publicly export an alias named send?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "alias-export",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "beacon",
+        "symbol_name": "send"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-005",
+      "query": "Which package exports the locally defined PackageInfo class?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "local-export",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/__init__.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "atlas/__init__.py",
+          "qualified_name": "atlas.PackageInfo"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "atlas.PackageInfo"
+      },
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "PackageInfo"
+      },
+      "evidence": [
+        {
+          "path": "atlas/__init__.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "Class is local to package initializer and listed in static __all__."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-006",
+      "query": "Where is atlas PackageInfo defined?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "local-export",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "atlas",
+        "symbol_name": "PackageInfo"
+      },
+      "evidence": [
+        {
+          "path": "atlas/__init__.py",
+          "start_line": 7,
+          "end_line": 8,
+          "reason": "PackageInfo definition is local."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-007",
+      "query": "Does atlas export MissingPolicy?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "local-export",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "MissingPolicy"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-008",
+      "query": "Does plain publicly export hidden?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "local-export",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "plain",
+        "symbol_name": "hidden"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-009",
+      "query": "Which module imports dispatch from atlas.impl?",
+      "category": "import_symbol",
+      "split": "calibration",
+      "leakage_group": "facade-chain",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/facade.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "atlas.facade",
+        "target_module": "atlas.impl",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [
+        {
+          "path": "atlas/facade.py",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Facade performs the relative symbol import."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-010",
+      "query": "Which package initializer exposes send through the facade chain?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "facade-chain",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "send"
+      },
+      "evidence": [
+        {
+          "path": "atlas/__init__.py",
+          "start_line": 3,
+          "end_line": 11,
+          "reason": "Initializer aliases facade.dispatch and lists send."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-011",
+      "query": "Does atlas.facade import a function named cancel?",
+      "category": "import_symbol",
+      "split": "calibration",
+      "leakage_group": "facade-chain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "atlas.facade",
+        "symbol_name": "cancel"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-012",
+      "query": "Is archive_bundle reexported by atlas?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "facade-chain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "atlas",
+        "symbol_name": "archive_bundle"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-013",
+      "query": "Which package publicly reexports the monitoring dispatch function?",
+      "category": "reexport",
+      "split": "validation",
+      "leakage_group": "same-name",
+      "no_evidence": false,
+      "relevant_paths": [
+        "beacon/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "beacon",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [
+        {
+          "path": "beacon/__init__.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "Beacon initializer imports and lists dispatch."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-014",
+      "query": "Where does beacon.dispatch resolve?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "same-name",
+      "no_evidence": false,
+      "relevant_paths": [
+        "beacon/impl.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "beacon/impl.py",
+          "qualified_name": "beacon.impl.dispatch"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "beacon.impl.dispatch"
+      },
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "beacon",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [
+        {
+          "path": "beacon/impl.py",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "Beacon dispatch definition handles alerts."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-015",
+      "query": "Does beacon.dispatch resolve to atlas.impl?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "same-name",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "beacon",
+        "target_module": "atlas.impl",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-016",
+      "query": "Does atlas.send resolve to beacon.impl?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "same-name",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "atlas",
+        "target_module": "beacon.impl",
+        "symbol_name": "send"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-017",
+      "query": "Which module aliases atlas.impl as atlas_core?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "consumer-alias",
+      "no_evidence": false,
+      "relevant_paths": [
+        "consumer.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "consumer",
+        "target_module": "atlas.impl",
+        "symbol_name": "atlas_core"
+      },
+      "evidence": [
+        {
+          "path": "consumer.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Explicit module alias."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-018",
+      "query": "Which module imports atlas.send as ship?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "consumer-alias",
+      "no_evidence": false,
+      "relevant_paths": [
+        "consumer.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "consumer",
+        "target_module": "atlas",
+        "symbol_name": "ship"
+      },
+      "evidence": [
+        {
+          "path": "consumer.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Explicit from-import alias."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-019",
+      "query": "Does consumer alias beacon.dispatch as ship?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "consumer-alias",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "consumer",
+        "target_module": "beacon",
+        "symbol_name": "ship"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-020",
+      "query": "Does consumer publicly export ship?",
+      "category": "export",
+      "split": "calibration",
+      "leakage_group": "consumer-alias",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "consumer",
+        "symbol_name": "ship"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-021",
+      "query": "Which initializer imports LocalPolicy with a relative import?",
+      "category": "import_symbol",
+      "split": "validation",
+      "leakage_group": "relative-import",
+      "no_evidence": false,
+      "relevant_paths": [
+        "atlas/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "atlas",
+        "target_module": "atlas.local",
+        "symbol_name": "LocalPolicy"
+      },
+      "evidence": [
+        {
+          "path": "atlas/__init__.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Relative symbol import."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-022",
+      "query": "Which initializer imports hidden from its internal module?",
+      "category": "import_symbol",
+      "split": "validation",
+      "leakage_group": "relative-import",
+      "no_evidence": false,
+      "relevant_paths": [
+        "plain/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "plain",
+        "target_module": "plain.internal",
+        "symbol_name": "hidden"
+      },
+      "evidence": [
+        {
+          "path": "plain/__init__.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Relative import exists even though it is not public."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-023",
+      "query": "Does plain reexport hidden through static __all__?",
+      "category": "reexport",
+      "split": "validation",
+      "leakage_group": "relative-import",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "plain",
+        "symbol_name": "hidden"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-024",
+      "query": "Does atlas import beacon.dispatch?",
+      "category": "import_symbol",
+      "split": "validation",
+      "leakage_group": "relative-import",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "atlas",
+        "target_module": "beacon.impl",
+        "symbol_name": "dispatch"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-025",
+      "query": "Which package has a cyclic unresolved reexport for pivot?",
+      "category": "cycle",
+      "split": "calibration",
+      "leakage_group": "cycle",
+      "no_evidence": false,
+      "relevant_paths": [
+        "cycle/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "cycle",
+        "symbol_name": "pivot",
+        "resolution_status": "unresolved"
+      },
+      "evidence": [
+        {
+          "path": "cycle/__init__.py",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "Package enters left/right cycle."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-026",
+      "query": "Which module imports pivot from cycle.right?",
+      "category": "import_symbol",
+      "split": "calibration",
+      "leakage_group": "cycle",
+      "no_evidence": false,
+      "relevant_paths": [
+        "cycle/left.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "cycle.left",
+        "target_module": "cycle.right",
+        "symbol_name": "pivot"
+      },
+      "evidence": [
+        {
+          "path": "cycle/left.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Left imports pivot from right."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-027",
+      "query": "Does cycle.pivot resolve to a concrete definition?",
+      "category": "resolution",
+      "split": "calibration",
+      "leakage_group": "cycle",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "cycle",
+        "symbol_name": "pivot",
+        "resolution_status": "resolved"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-028",
+      "query": "Does cycle define pivot locally?",
+      "category": "export",
+      "split": "calibration",
+      "leakage_group": "cycle",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "cycle",
+        "symbol_name": "pivot"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-029",
+      "query": "Which initializer uses a star import from stars.items?",
+      "category": "star_import",
+      "split": "validation",
+      "leakage_group": "star",
+      "no_evidence": false,
+      "relevant_paths": [
+        "stars/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "stars",
+        "target_module": "stars.items",
+        "symbol_name": "*",
+        "resolution_status": "uncertain"
+      },
+      "evidence": [
+        {
+          "path": "stars/__init__.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Literal star import."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-030",
+      "query": "Where is the alpha function defined?",
+      "category": "exact_symbol",
+      "split": "validation",
+      "leakage_group": "star",
+      "no_evidence": false,
+      "relevant_paths": [
+        "stars/items.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "stars/items.py",
+          "qualified_name": "stars.items.alpha"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "stars.items.alpha"
+      },
+      "package_query": null,
+      "evidence": [
+        {
+          "path": "stars/items.py",
+          "start_line": 1,
+          "end_line": 2,
+          "reason": "Function definition."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "source_or_document",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-031",
+      "query": "Can stars.alpha be deterministically resolved through the star import?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "star",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "stars",
+        "symbol_name": "alpha"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-032",
+      "query": "Does stars publicly reexport beta?",
+      "category": "reexport",
+      "split": "validation",
+      "leakage_group": "star",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "stars",
+        "symbol_name": "beta"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-033",
+      "query": "Which package has a dynamically constructed __all__?",
+      "category": "dynamic_export",
+      "split": "calibration",
+      "leakage_group": "dynamic",
+      "no_evidence": false,
+      "relevant_paths": [
+        "dynamic/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "dynamic",
+        "symbol_name": "<dynamic __all__>",
+        "resolution_status": "uncertain"
+      },
+      "evidence": [
+        {
+          "path": "dynamic/__init__.py",
+          "start_line": 4,
+          "end_line": 8,
+          "reason": "__all__ is assigned from a call."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-034",
+      "query": "Which module performs a dynamic import whose target cannot be statically determined?",
+      "category": "dynamic_import",
+      "split": "calibration",
+      "leakage_group": "dynamic",
+      "no_evidence": false,
+      "relevant_paths": [
+        "dynamic/items.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "dynamic.items",
+        "resolution_status": "uncertain"
+      },
+      "evidence": [
+        {
+          "path": "dynamic/items.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "import_module receives a variable."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-035",
+      "query": "Is dynamic.visible deterministically exported?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "dynamic",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "dynamic",
+        "symbol_name": "visible",
+        "resolution_status": "resolved"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-036",
+      "query": "Is dynamic.plugin a statically resolved imported module?",
+      "category": "import_module",
+      "split": "calibration",
+      "leakage_group": "dynamic",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "dynamic.items",
+        "target_module": "dynamic.plugin",
+        "resolution_status": "resolved"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-037",
+      "query": "Which document states that archive_bundle is only a future public name?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "docs-boundary",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/api.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "evidence": [
+        {
+          "path": "docs/api.md",
+          "start_line": 1,
+          "end_line": 4,
+          "reason": "Documentation explicitly states absence of implementation."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "source_or_document",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-038",
+      "query": "Which package imports hidden without declaring a public export?",
+      "category": "import_symbol",
+      "split": "validation",
+      "leakage_group": "docs-boundary",
+      "no_evidence": false,
+      "relevant_paths": [
+        "plain/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "plain",
+        "symbol_name": "hidden"
+      },
+      "evidence": [
+        {
+          "path": "plain/__init__.py",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "Ordinary import exists and comment explains no __all__."
+        }
+      ],
+      "inclusion_reason": "The cited static source directly establishes the requested package relationship.",
+      "exclusion_reason": "Same-named symbols and indirect mentions outside the cited relation are excluded.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "grounded",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-039",
+      "query": "Which package implements and exports archive_bundle?",
+      "category": "missing_capability",
+      "split": "validation",
+      "leakage_group": "docs-boundary",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "symbol_name": "archive_bundle"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "PRS1-040",
+      "query": "Does a documentation mention make archive_bundle a package export?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "docs-boundary",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "symbol_name": "archive_bundle"
+      },
+      "evidence": [],
+      "inclusion_reason": "No qualifying static relation exists in the complete frozen fixture.",
+      "exclusion_reason": "Similar names, documentation mentions, ordinary imports, and uncertain relations do not satisfy the requested relationship.",
+      "scope_checked": "Complete tests/fixtures/package_relation_repo snapshot.",
+      "difficulty": "near_domain",
+      "expected_evidence_type": "package_relation",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "dataset_version": "agentforge-retrieval-v1",
+  "label_rule": "Handwritten fixture ground truth: a file is relevant only when its code or documentation directly contains the implementation, declaration, or call site needed by the query. Symbol labels are repository-relative path plus exact qualified name. Empty labels mean the fixture contains no sufficient evidence.",
+  "queries": [
+    {
+      "id": "exact-function",
+      "category": "exact_function_name",
+      "query": "rotate_session_key",
+      "symbol_query": {"name": "rotate_session_key"},
+      "relevant_paths": ["pkg/session.py"],
+      "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.rotate_session_key"}]
+    },
+    {
+      "id": "exact-class",
+      "category": "exact_class_name",
+      "query": "SessionCoordinator",
+      "symbol_query": {"name": "SessionCoordinator", "kind": "class"},
+      "relevant_paths": ["pkg/session.py"],
+      "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.SessionCoordinator"}]
+    },
+    {
+      "id": "exact-method",
+      "category": "exact_method_name",
+      "query": "SessionCoordinator renew method",
+      "symbol_query": {"qualified_name": "pkg.session.SessionCoordinator.renew", "kind": "method"},
+      "relevant_paths": ["pkg/session.py"],
+      "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.SessionCoordinator.renew"}]
+    },
+    {
+      "id": "qualified-name",
+      "category": "qualified_name",
+      "query": "pkg.session.restore_identity_from_lease",
+      "symbol_query": {"qualified_name": "pkg.session.restore_identity_from_lease"},
+      "relevant_paths": ["pkg/session.py"],
+      "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.restore_identity_from_lease"}]
+    },
+    {
+      "id": "duplicate-name",
+      "category": "duplicate_symbol_name",
+      "query": "lookup",
+      "symbol_query": {"name": "lookup"},
+      "relevant_paths": ["pkg/preferences.py", "pkg/token_cache.py"],
+      "relevant_symbols": [
+        {"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.lookup"},
+        {"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.lookup"}
+      ]
+    },
+    {
+      "id": "cross-file-call-site",
+      "category": "cross_file_import_reference",
+      "query": "where is rotate_session_key imported and called",
+      "symbol_query": {"qualified_name": "pkg.handlers.handle_expired_session"},
+      "relevant_paths": ["pkg/handlers.py"],
+      "relevant_symbols": [{"path": "pkg/handlers.py", "qualified_name": "pkg.handlers.handle_expired_session"}]
+    },
+    {
+      "id": "business-concept",
+      "category": "business_concept_without_shared_terms",
+      "query": "How can someone continue using an account after being away without signing in again?",
+      "relevant_paths": ["docs/continuity.md", "pkg/session.py"],
+      "relevant_symbols": [],
+      "symbol_not_applicable_reason": "The current structured API supports exact symbol filters, not natural-language semantic lookup."
+    },
+    {
+      "id": "similar-name-disambiguation",
+      "category": "similar_names_different_meaning",
+      "query": "save_token_choice",
+      "symbol_query": {"name": "save_token_choice"},
+      "relevant_paths": ["pkg/token_cache.py"],
+      "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.save_token_choice"}],
+      "distractor_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.save_theme_choice"}]
+    },
+    {
+      "id": "no-evidence",
+      "category": "no_sufficient_evidence",
+      "query": "purge_satellite_orbit",
+      "symbol_query": {"name": "purge_satellite_orbit"},
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "no_evidence": true
+    }
+  ]
+}

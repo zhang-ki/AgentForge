@@ -1,0 +1,7 @@
+[project]
+name = "agentforge"
+version = "0.1.0"
+description = "Local read-only lexical RAG MVP"
+requires-python = ">=3.10"
+dependencies = []
+

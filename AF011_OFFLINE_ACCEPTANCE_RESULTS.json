@@ -1,0 +1,1732 @@
+{
+  "stage": "AF-011-offline-product-acceptance",
+  "dataset_version": "af011-agentforge-source-tasks-v1",
+  "label_source": "deterministic_source_assertions",
+  "human_reviewed": false,
+  "repository": "D:\\agent\\AgentForge",
+  "index": {
+    "database": ":memory:",
+    "index_version": 3,
+    "repository": "D:\\agent\\AgentForge",
+    "indexed_at": "2026-10-26T15:54:34.304366+00:00",
+    "files": 258,
+    "chunks": 1968,
+    "symbol_index_available": true,
+    "vector_index_available": true,
+    "symbols": 1024,
+    "references": 7841,
+    "parse_failures": 1,
+    "vectors": 0,
+    "added": 258,
+    "changed": 0,
+    "unchanged": 0,
+    "removed": 0,
+    "parsed_python_files": 178,
+    "parse_failure_paths": [
+      {
+        "path": "tests/fixtures/symbol_repo/broken.py",
+        "error": "SyntaxError: invalid syntax at line 3"
+      }
+    ],
+    "skipped": 9,
+    "skip_reasons": {
+      "excluded_directory": 4,
+      "file_size_limit": 2,
+      "secret_like_content": 3
+    }
+  },
+  "task_count": 20,
+  "splits": {
+    "calibration": {
+      "query_count": 10,
+      "positive_count": 6,
+      "no_evidence_count": 4,
+      "recall_at": {
+        "1": 0.5,
+        "5": 0.666667,
+        "10": 0.666667
+      },
+      "mrr": 0.555556,
+      "route_accuracy": 1.0,
+      "citation_valid_count": 10,
+      "citation_valid_rate": 1.0,
+      "strict_refusal_count": 0,
+      "safe_no_evidence_count": 4,
+      "safe_no_evidence_rate": 1.0,
+      "candidate_nonempty_count_on_no_evidence": 4,
+      "end_to_end_success_count": 8,
+      "end_to_end_success_rate": 0.8,
+      "mean_latency_seconds": 3.373946
+    },
+    "validation": {
+      "query_count": 10,
+      "positive_count": 6,
+      "no_evidence_count": 4,
+      "recall_at": {
+        "1": 0.333333,
+        "5": 0.333333,
+        "10": 0.333333
+      },
+      "mrr": 0.333333,
+      "route_accuracy": 1.0,
+      "citation_valid_count": 10,
+      "citation_valid_rate": 1.0,
+      "strict_refusal_count": 0,
+      "safe_no_evidence_count": 4,
+      "safe_no_evidence_rate": 1.0,
+      "candidate_nonempty_count_on_no_evidence": 4,
+      "end_to_end_success_count": 6,
+      "end_to_end_success_rate": 0.6,
+      "mean_latency_seconds": 3.391082
+    }
+  },
+  "query_results": [
+    {
+      "id": "AF011-C01",
+      "split": "calibration",
+      "leakage_group": "agent-loop-definition",
+      "category": "exact_symbol",
+      "query": "AgentLoop",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": null,
+      "relevant": [
+        "agentforge/agent_loop.py"
+      ],
+      "ranked": [
+        "agentforge/agent_loop.py",
+        "tests/test_agent_loop.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "ARCHITECTURE.md",
+        "agentforge/cli.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "agentforge/agent_loop.py:256-385",
+          "channels": [
+            "symbols",
+            "lexical"
+          ],
+          "resolution_status": "resolved"
+        },
+        {
+          "citation": "tests/test_agent_loop.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "ARCHITECTURE.md:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/cli.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Offline mode returns verified evidence excerpts but does not infer a code conclusion.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.727969
+    },
+    {
+      "id": "AF011-C02",
+      "split": "calibration",
+      "leakage_group": "citation-parser-definition",
+      "category": "exact_symbol",
+      "query": "validate_model_citations",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": null,
+      "relevant": [
+        "agentforge/context.py"
+      ],
+      "ranked": [
+        "agentforge/context.py",
+        "tests/test_context.py",
+        "agentforge/providers/llama_server.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/answer_contract.py",
+        "agentforge/embeddings/llama_server.py",
+        "agentforge/generalization.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "agentforge/context.py:49-126",
+          "channels": [
+            "symbols",
+            "lexical"
+          ],
+          "resolution_status": "resolved"
+        },
+        {
+          "citation": "tests/test_context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/providers/llama_server.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/answer_contract.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/embeddings/llama_server.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/generalization.py:491-570",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Offline mode returns verified evidence excerpts but does not infer a code conclusion.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.767684
+    },
+    {
+      "id": "AF011-C03",
+      "split": "calibration",
+      "leakage_group": "citation-parser-callers",
+      "category": "caller_relation",
+      "query": "Which caller calls validate_model_citations?",
+      "expected_route": "dependency_relation",
+      "actual_route": "dependency_relation",
+      "route_correct": true,
+      "route_rule": "dependency_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/answer_contract.py",
+        "agentforge/providers/llama_server.py"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/context.py",
+        "tests/test_context.py",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json",
+        "tests/test_af011_product.py",
+        "agentforge/query_routing.py",
+        "tests/fixtures/retrieval_eval_expansion_candidates.json",
+        "tests/fixtures/retrieval_eval_preproduct_v1.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_expansion_candidates.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_preproduct_v1.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 5.117203
+    },
+    {
+      "id": "AF011-C04",
+      "split": "calibration",
+      "leakage_group": "scanner-link-safety",
+      "category": "business_implementation",
+      "query": "How does the scanner reject symbolic links and reparse points?",
+      "expected_route": "business_implementation",
+      "actual_route": "business_implementation",
+      "route_correct": true,
+      "route_rule": "implementation_terms",
+      "route_confidence": "medium",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/scanner.py"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/store.py",
+        "agentforge/scanner.py",
+        "agentforge/generalization.py",
+        "ARCHITECTURE.md",
+        "agentforge/package_relations.py",
+        "agentforge/product_retrieval.py",
+        "SECURITY.md",
+        "AF010S3_SCALE_RUNNER.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/store.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/scanner.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/generalization.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "ARCHITECTURE.md:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/package_relations.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/product_retrieval.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "SECURITY.md:1-44",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S3_SCALE_RUNNER.py:211-290",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 4.369243
+    },
+    {
+      "id": "AF011-C05",
+      "split": "calibration",
+      "leakage_group": "no-shell-policy",
+      "category": "documentation",
+      "query": "Where is the read-only no shell policy documented?",
+      "expected_route": "documentation",
+      "actual_route": "documentation",
+      "route_correct": true,
+      "route_rule": "documentation_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "SECURITY.md"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/fixtures/retrieval_eval_review_pool_v2.json",
+        "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json",
+        "tests/fixtures/retrieval_eval_expansion_candidates.json",
+        "tests/fixtures/retrieval_eval_generalization_v1.json",
+        "AF010S2_BUILD_FIXTURES.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_expansion_candidates.json:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_generalization_v1.json:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 4.634325
+    },
+    {
+      "id": "AF011-C06",
+      "split": "calibration",
+      "leakage_group": "llama-client-definition",
+      "category": "exact_symbol",
+      "query": "LlamaServerClient",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/providers/llama_server.py"
+      ],
+      "ranked": [
+        "agentforge/providers/llama_server.py",
+        "agentforge/cli.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/embeddings/llama_server.py",
+        "AF009GR_DIAGNOSTIC_RESULTS.json",
+        "ARCHITECTURE.md",
+        "AF009GR3_RESULTS.json",
+        "AF009GR4_RESULTS.json",
+        "STATUS.md"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "agentforge/providers/llama_server.py:32-127",
+          "channels": [
+            "symbols",
+            "lexical"
+          ],
+          "resolution_status": "resolved"
+        },
+        {
+          "citation": "agentforge/cli.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/embeddings/llama_server.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR_DIAGNOSTIC_RESULTS.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "ARCHITECTURE.md:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR3_RESULTS.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR4_RESULTS.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "STATUS.md:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.68777
+    },
+    {
+      "id": "AF011-C07",
+      "split": "calibration",
+      "leakage_group": "missing-cloud-deployer",
+      "category": "no_evidence_exact",
+      "query": "CloudDeployer",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.775206
+    },
+    {
+      "id": "AF011-C08",
+      "split": "calibration",
+      "leakage_group": "missing-shell-export",
+      "category": "no_evidence_relation",
+      "query": "Which package reexports execute_shell as a public API?",
+      "expected_route": "package_api",
+      "actual_route": "package_api",
+      "route_correct": true,
+      "route_rule": "public_api_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/test_af011_product.py",
+        "tests/test_package_s2.py",
+        "agentforge/query_routing.py",
+        "tests/fixtures/package_s2_eval_v1.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_package_s2.py:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/package_s2_eval_v1.json:1891-1970",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 4.662516
+    },
+    {
+      "id": "AF011-C09",
+      "split": "calibration",
+      "leakage_group": "missing-patch-writer",
+      "category": "no_evidence_business",
+      "query": "How does repository_patch_writer apply source changes?",
+      "expected_route": "business_implementation",
+      "actual_route": "business_implementation",
+      "route_correct": true,
+      "route_rule": "implementation_terms",
+      "route_confidence": "medium",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/package_relations.py",
+        "tests/fixtures/package_s2_eval_v1.json",
+        "AF010S3_SCALE_RUNNER.py",
+        "agentforge/product_retrieval.py",
+        "tests/test_embeddings.py",
+        "tests/test_symbols.py",
+        "AF010S2_BUILD_FIXTURES.py",
+        "agentforge/cli.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/package_relations.py:701-780",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/package_s2_eval_v1.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S3_SCALE_RUNNER.py:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/product_retrieval.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_embeddings.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_symbols.py:281-360",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:211-269",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/cli.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 3.253541
+    },
+    {
+      "id": "AF011-C10",
+      "split": "calibration",
+      "leakage_group": "unknown-runtime-plugin",
+      "category": "no_evidence_dynamic",
+      "query": "Can a dynamic import resolve remote_plugin at runtime?",
+      "expected_route": "uncertain",
+      "actual_route": "uncertain",
+      "route_correct": true,
+      "route_rule": "dynamic_relation_uncertainty",
+      "route_confidence": "low",
+      "unavailable_channels": [],
+      "uncertainty": "Dynamic or reflective behavior cannot be established by the static relation graph; retain ambiguity and fall back to lexical evidence.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/test_package_s2.py",
+        "tests/test_af011_product.py",
+        "AF010S2_BUILD_FIXTURES.py",
+        "agentforge/query_routing.py",
+        "AF009GR3_HOST_RUNNER.py",
+        "tests/fixtures/symbol_repo/pkg/api.py",
+        "agentforge/package_relations.py",
+        "agentforge/package_s2.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_package_s2.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR3_HOST_RUNNER.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/symbol_repo/pkg/api.py:1-36",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/package_relations.py:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/package_s2.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Dynamic or reflective behavior cannot be established by the static relation graph; retain ambiguity and fall back to lexical evidence.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 4.744007
+    },
+    {
+      "id": "AF011-V01",
+      "split": "validation",
+      "leakage_group": "product-retriever-definition",
+      "category": "exact_symbol",
+      "query": "ProductRetriever",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/product_retrieval.py"
+      ],
+      "ranked": [
+        "agentforge/product_retrieval.py",
+        "tests/test_af011_product.py",
+        "agentforge/product_acceptance.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/agent_loop.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "agentforge/product_retrieval.py:95-309",
+          "channels": [
+            "symbols",
+            "lexical"
+          ],
+          "resolution_status": "resolved"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/product_acceptance.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/agent_loop.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.766026
+    },
+    {
+      "id": "AF011-V02",
+      "split": "validation",
+      "leakage_group": "contract-validator-definition",
+      "category": "exact_symbol",
+      "query": "validate_answer_contract",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/answer_contract.py"
+      ],
+      "ranked": [
+        "agentforge/answer_contract.py",
+        "agentforge/product_acceptance.py",
+        "tests/test_af011_product.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/agent_loop.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "agentforge/answer_contract.py:71-106",
+          "channels": [
+            "symbols",
+            "lexical"
+          ],
+          "resolution_status": "resolved"
+        },
+        {
+          "citation": "agentforge/product_acceptance.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/agent_loop.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.904193
+    },
+    {
+      "id": "AF011-V03",
+      "split": "validation",
+      "leakage_group": "context-builder-callers",
+      "category": "caller_relation",
+      "query": "Which caller calls build_context?",
+      "expected_route": "dependency_relation",
+      "actual_route": "dependency_relation",
+      "route_correct": true,
+      "route_rule": "dependency_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/agent_loop.py",
+        "agentforge/cli.py"
+      ],
+      "ranked": [
+        "tests/test_af011_product.py",
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "AF010S2_BUILD_FIXTURES.py",
+        "agentforge/context.py",
+        "tests/test_context.py",
+        "tests/fixtures/retrieval_eval_preproduct_v1.json",
+        "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json",
+        "agentforge/query_routing.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/test_af011_product.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_preproduct_v1.json:1261-1340",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 3.212707
+    },
+    {
+      "id": "AF011-V04",
+      "split": "validation",
+      "leakage_group": "embedding-provider-export",
+      "category": "package_export",
+      "query": "Which package reexports EmbeddingProvider as a public API?",
+      "expected_route": "package_api",
+      "actual_route": "package_api",
+      "route_correct": true,
+      "route_rule": "public_api_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/embeddings/__init__.py"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/test_af011_product.py",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/test_package_s2.py",
+        "agentforge/query_routing.py",
+        "tests/fixtures/package_s2_eval_v1.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_package_s2.py:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/package_s2_eval_v1.json:1891-1970",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 4.657624
+    },
+    {
+      "id": "AF011-V05",
+      "split": "validation",
+      "leakage_group": "loopback-policy",
+      "category": "documentation",
+      "query": "Where is the proxy and redirect rejection policy documented?",
+      "expected_route": "documentation",
+      "actual_route": "documentation",
+      "route_correct": true,
+      "route_rule": "documentation_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "SECURITY.md"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/fixtures/retrieval_eval_review_pool_v2.json",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/fixtures/retrieval_eval_expansion_candidates.json",
+        "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json",
+        "tests/fixtures/retrieval_eval_preproduct_v1.json",
+        "tests/test_af011_product.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_expansion_candidates.json:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_review_pool_v2_ai_adjudicated.json:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_preproduct_v1.json:1681-1760",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 4.173168
+    },
+    {
+      "id": "AF011-V06",
+      "split": "validation",
+      "leakage_group": "citation-validation-behavior",
+      "category": "business_implementation",
+      "query": "How does AgentForge reject fabricated model citations?",
+      "expected_route": "business_implementation",
+      "actual_route": "business_implementation",
+      "route_correct": true,
+      "route_rule": "implementation_terms",
+      "route_confidence": "medium",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [
+        "agentforge/context.py"
+      ],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/cli.py",
+        "README.md",
+        "agentforge/agent_loop.py",
+        "tests/test_agent_loop.py",
+        "tests/test_context.py",
+        "AF009GR4_RESULTS.json",
+        "ARCHITECTURE.md",
+        "FINAL_ACCEPTANCE_RESULTS.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/cli.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "README.md:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/agent_loop.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_agent_loop.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_context.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR4_RESULTS.json:211-290",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "ARCHITECTURE.md:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "FINAL_ACCEPTANCE_RESULTS.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": false,
+      "latency_seconds": 3.763497
+    },
+    {
+      "id": "AF011-V07",
+      "split": "validation",
+      "leakage_group": "missing-remote-executor",
+      "category": "no_evidence_exact",
+      "query": "RemotePatchExecutor",
+      "expected_route": "exact_symbol",
+      "actual_route": "exact_symbol",
+      "route_correct": true,
+      "route_rule": "bare_identifier",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/test_local_embedding_provider.py",
+        "tests/test_symbols.py",
+        "tests/test_embeddings.py",
+        "tests/test_integration.py",
+        "tests/test_preproduct.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_local_embedding_provider.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_symbols.py:211-290",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_embeddings.py:211-240",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_integration.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_preproduct.py:71-150",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 1.748703
+    },
+    {
+      "id": "AF011-V08",
+      "split": "validation",
+      "leakage_group": "missing-production-rrf-export",
+      "category": "no_evidence_relation",
+      "query": "Which package reexports ProductionRrfRetriever as a public API?",
+      "expected_route": "package_api",
+      "actual_route": "package_api",
+      "route_correct": true,
+      "route_rule": "public_api_terms",
+      "route_confidence": "high",
+      "unavailable_channels": [],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "tests/test_af011_product.py",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/test_package_s2.py",
+        "agentforge/query_routing.py",
+        "tests/fixtures/package_s2_eval_v1.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_package_s2.py:351-430",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/package_s2_eval_v1.json:1891-1970",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 4.899423
+    },
+    {
+      "id": "AF011-V09",
+      "split": "validation",
+      "leakage_group": "missing-quantum-sharding",
+      "category": "no_evidence_business",
+      "query": "How does quantum_fabric_sharding distribute repository chunks?",
+      "expected_route": "business_implementation",
+      "actual_route": "business_implementation",
+      "route_correct": true,
+      "route_rule": "implementation_terms",
+      "route_confidence": "medium",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "uncertainty": "Some Python files could not be parsed; static relations may be incomplete.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/indexer.py",
+        "agentforge/package_s2.py",
+        "tests/test_embeddings.py",
+        "tests/test_symbols.py",
+        "AF009GR5_RESULTS.json",
+        "agentforge/cli.py",
+        "tests/test_store.py",
+        "AF009G_GENERALIZATION_RESULTS.json"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/indexer.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/package_s2.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_embeddings.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_symbols.py:281-360",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR5_RESULTS.json:6581-6660",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/cli.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_store.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009G_GENERALIZATION_RESULTS.json:3011-3090",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Some Python files could not be parsed; static relations may be incomplete.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 3.34202
+    },
+    {
+      "id": "AF011-V10",
+      "split": "validation",
+      "leakage_group": "unknown-reflection-hook",
+      "category": "no_evidence_dynamic",
+      "query": "Can runtime reflection prove the orbital_loader relationship?",
+      "expected_route": "uncertain",
+      "actual_route": "uncertain",
+      "route_correct": true,
+      "route_rule": "dynamic_relation_uncertainty",
+      "route_confidence": "low",
+      "unavailable_channels": [],
+      "uncertainty": "Dynamic or reflective behavior cannot be established by the static relation graph; retain ambiguity and fall back to lexical evidence.",
+      "relevant": [],
+      "ranked": [
+        "tests/fixtures/af011_product_tasks_v1.json",
+        "agentforge/query_routing.py",
+        "tests/test_package_s2.py",
+        "AF009GR_DIAGNOSTIC_RESULTS.json",
+        "tests/fixtures/package_relation_eval.json",
+        "AF010S2_BUILD_FIXTURES.py",
+        "tests/fixtures/retrieval_eval_generalization_v1.json",
+        "tests/test_af011_product.py",
+        "AF009GR3_HOST_RUNNER.py"
+      ],
+      "candidate_provenance": [
+        {
+          "citation": "tests/fixtures/af011_product_tasks_v1.json:1-30",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "agentforge/query_routing.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_package_s2.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR_DIAGNOSTIC_RESULTS.json:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/package_relation_eval.json:911-990",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF010S2_BUILD_FIXTURES.py:141-220",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/fixtures/retrieval_eval_generalization_v1.json:211-290",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "tests/test_af011_product.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        },
+        {
+          "citation": "AF009GR3_HOST_RUNNER.py:1-80",
+          "channels": [
+            "lexical"
+          ],
+          "resolution_status": "not_applicable"
+        }
+      ],
+      "contract_status": "limited",
+      "contract_reason": "Dynamic or reflective behavior cannot be established by the static relation graph; retain ambiguity and fall back to lexical evidence.",
+      "citation_valid": true,
+      "end_to_end_success": true,
+      "latency_seconds": 4.443459
+    }
+  ],
+  "elapsed_seconds": 70.967721,
+  "production_vector_used": false,
+  "rrf_used": false,
+  "threshold_used": false
+}

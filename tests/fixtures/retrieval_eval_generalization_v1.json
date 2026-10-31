@@ -1,0 +1,1159 @@
+{
+  "dataset_version": "agentforge-retrieval-generalization-v1",
+  "status": "provisional_ai",
+  "review_status": "provisional_ai",
+  "review_method": "ai_evidence_review",
+  "human_reviewed": false,
+  "label_rule": "AI-provisional relevance: a positive label requires direct static code or documentation evidence answering the query in this frozen synthetic repository. A no-evidence label means no sufficient answer evidence was found in the complete snapshot; it does not claim the request is impossible in other repositories.",
+  "corpus_path": "tests/fixtures/retrieval_eval_generalization_repo",
+  "query_total": 40,
+  "positive_query_target": 20,
+  "no_evidence_query_target": 20,
+  "queries": [
+    {
+      "id": "g01-n01",
+      "category": "near_domain_negative",
+      "query": "Where does the appointment workflow issue a QR waitlist token when all gallery slots are full?",
+      "split": "calibration",
+      "leakage_group": "g01_visit_assignment",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot has appointment slot assignment and visitor booking, but no QR token or waitlist implementation.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "issue_waitlist_qr"
+      }
+    },
+    {
+      "id": "g01-n02",
+      "category": "near_domain_negative",
+      "query": "Can the gallery visit allocator reserve theatre seat blocks for a group?",
+      "split": "calibration",
+      "leakage_group": "g01_visit_assignment",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot allocates gallery exhibit appointment slots; it contains no theatre seating or group seat-block capability.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g01-p01",
+      "category": "exact_symbol",
+      "query": "Where is arrange_gallery_visit defined?",
+      "split": "calibration",
+      "leakage_group": "g01_visit_assignment",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/visits.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/visits.py",
+          "qualified_name": "src.visits.arrange_gallery_visit"
+        }
+      ],
+      "inclusion_reason": "An exact definition query; the named function and its complete body are the direct answer.",
+      "exclusion_reason": "src/calendar.py and src/payments.py are called dependencies, not the definition requested.",
+      "evidence": [
+        {
+          "path": "src/visits.py",
+          "start_line": 7,
+          "end_line": 12,
+          "reason": "The function definition and body coordinate badge validation, slot booking and deposit collection."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.visits.arrange_gallery_visit"
+      }
+    },
+    {
+      "id": "g01-p02",
+      "category": "cross_file_call",
+      "query": "Which workflow checks a visitor badge before assigning a gallery appointment slot?",
+      "split": "calibration",
+      "leakage_group": "g01_visit_assignment",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/visits.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/visits.py",
+          "qualified_name": "src.visits.arrange_gallery_visit"
+        }
+      ],
+      "inclusion_reason": "The query asks for the caller/workflow that orders the validation and booking calls.",
+      "exclusion_reason": "src/access.py defines the check, but it does not assign the slot; src/calendar.py assigns a slot but does not perform the workflow.",
+      "evidence": [
+        {
+          "path": "src/visits.py",
+          "start_line": 9,
+          "end_line": 10,
+          "reason": "The workflow invokes verify_badge before calling book_slot."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.visits.arrange_gallery_visit"
+      }
+    },
+    {
+      "id": "g02-n01",
+      "category": "near_domain_negative",
+      "query": "Does cancelling a gallery visit automatically refund the visitor deposit?",
+      "split": "validation",
+      "leakage_group": "g02_deposit_flow",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "cancel_gallery_visit only returns a boolean; no refund operation appears anywhere in the complete source snapshot.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g02-n02",
+      "category": "near_domain_negative",
+      "query": "Which routine creates an annual sales-tax statement for each exhibit deposit?",
+      "split": "validation",
+      "leakage_group": "g02_deposit_flow",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot records deposit requests but contains no annual tax statement or tax-report implementation.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "create_annual_tax_statement"
+      }
+    },
+    {
+      "id": "g02-p01",
+      "category": "exact_symbol",
+      "query": "Find the function named charge_deposit.",
+      "split": "validation",
+      "leakage_group": "g02_deposit_flow",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/payments.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/payments.py",
+          "qualified_name": "src.payments.charge_deposit"
+        }
+      ],
+      "inclusion_reason": "An exact symbol lookup asks for the definition of charge_deposit.",
+      "exclusion_reason": "src/visits.py only contains its caller.",
+      "evidence": [
+        {
+          "path": "src/payments.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The exact function declaration and body return a deposit request identifier."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.payments.charge_deposit"
+      }
+    },
+    {
+      "id": "g02-p02",
+      "category": "cross_file_call",
+      "query": "Which payment routine does gallery visit arrangement invoke for a deposit?",
+      "split": "validation",
+      "leakage_group": "g02_deposit_flow",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/payments.py",
+        "src/visits.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/payments.py",
+          "qualified_name": "src.payments.charge_deposit"
+        }
+      ],
+      "inclusion_reason": "The question asks for a call relationship, so both the caller and the called implementation are relevant.",
+      "exclusion_reason": "src/calendar.py handles appointment slots, not deposits.",
+      "evidence": [
+        {
+          "path": "src/visits.py",
+          "start_line": 11,
+          "end_line": 11,
+          "reason": "arrange_gallery_visit invokes charge_deposit."
+        },
+        {
+          "path": "src/payments.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The invoked payment routine is defined here."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.payments.charge_deposit"
+      }
+    },
+    {
+      "id": "g03-n01",
+      "category": "near_domain_negative",
+      "query": "Does the payment hold operation enqueue an artwork for conservation?",
+      "split": "calibration",
+      "leakage_group": "g03_same_name_hold",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The two same-named functions are separate module-local operations; no call or mapping connects payment_id to the conservation queue.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g03-n02",
+      "category": "near_domain_negative",
+      "query": "Can conservation hold pre-authorize a visitor's card payment?",
+      "split": "calibration",
+      "leakage_group": "g03_same_name_hold",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The conservation hold queues an object identifier; the snapshot has no card authorization operation.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g03-p01",
+      "category": "same_name_symbol",
+      "query": "Which hold function places a pending visitor payment into review?",
+      "split": "calibration",
+      "leakage_group": "g03_same_name_hold",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/payments.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/payments.py",
+          "qualified_name": "src.payments.hold"
+        }
+      ],
+      "inclusion_reason": "The surrounding parameter and docstring disambiguate the payment hold from the conservation hold.",
+      "exclusion_reason": "src/conservation.py also defines hold, but its argument and behavior concern artwork.",
+      "evidence": [
+        {
+          "path": "src/payments.py",
+          "start_line": 7,
+          "end_line": 9,
+          "reason": "This hold accepts payment_id and describes a pending visitor payment."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.payments.hold"
+      }
+    },
+    {
+      "id": "g03-p02",
+      "category": "same_name_symbol",
+      "query": "Which hold function places an artwork in the conservation team's work queue?",
+      "split": "calibration",
+      "leakage_group": "g03_same_name_hold",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/conservation.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/conservation.py",
+          "qualified_name": "src.conservation.hold"
+        }
+      ],
+      "inclusion_reason": "The object_id argument and conservation-specific body establish the intended same-named function.",
+      "exclusion_reason": "src/payments.py defines a different hold for payment review.",
+      "evidence": [
+        {
+          "path": "src/conservation.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "This hold accepts object_id and returns a conservation queue key."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.conservation.hold"
+      }
+    },
+    {
+      "id": "g04-n01",
+      "category": "near_domain_negative",
+      "query": "Does the humidity controller change HVAC fan speed when a gallery room drifts outside its target?",
+      "split": "validation",
+      "leakage_group": "g04_climate_targets",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot includes target validation only; no fan-speed controller or drift response exists in the complete source tree.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "adjust_hvac_fan_speed"
+      }
+    },
+    {
+      "id": "g04-n02",
+      "category": "near_domain_negative",
+      "query": "Which climate routine calibrates carbon-dioxide sensors for each display room?",
+      "split": "validation",
+      "leakage_group": "g04_climate_targets",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The conservation module sets relative humidity; no carbon-dioxide sensor calibration code or documentation is present.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g04-p01",
+      "category": "exact_symbol",
+      "query": "Where is set_gallery_humidity defined?",
+      "split": "validation",
+      "leakage_group": "g04_climate_targets",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/conservation.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/conservation.py",
+          "qualified_name": "src.conservation.set_gallery_humidity"
+        }
+      ],
+      "inclusion_reason": "An exact definition query for a function.",
+      "exclusion_reason": "docs/collection-policy.md states the policy band but does not contain the implementation.",
+      "evidence": [
+        {
+          "path": "src/conservation.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "The function validates and returns the room humidity target."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.conservation.set_gallery_humidity"
+      }
+    },
+    {
+      "id": "g04-p02",
+      "category": "business_to_implementation",
+      "query": "Which collection-care rule defines the paper-art humidity band, and where is that room target checked in code?",
+      "split": "validation",
+      "leakage_group": "g04_climate_targets",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "docs/collection-policy.md",
+        "src/conservation.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The query explicitly asks for both the policy band and code enforcement; both the document and implementation are needed.",
+      "exclusion_reason": "src/visits.py handles bookings and does not set conservation conditions.",
+      "evidence": [
+        {
+          "path": "docs/collection-policy.md",
+          "start_line": 6,
+          "end_line": 7,
+          "reason": "The policy specifies the paper-art humidity band and who selects the set point."
+        },
+        {
+          "path": "src/conservation.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "The function validates a target range and returns the selected humidity value."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g05-n01",
+      "category": "near_domain_negative",
+      "query": "Does badge verification rotate a visitor's PIN after a successful check?",
+      "split": "calibration",
+      "leakage_group": "g05_badge_access",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "verify_badge only checks an identifier prefix; the snapshot contains no PIN rotation behavior.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "rotate_visitor_pin"
+      }
+    },
+    {
+      "id": "g05-n02",
+      "category": "near_domain_negative",
+      "query": "Where does the badge service enroll a new NFC card for a visitor?",
+      "split": "calibration",
+      "leakage_group": "g05_badge_access",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot verifies visitor identifiers but contains no NFC card enrollment workflow.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "enroll_nfc_badge"
+      }
+    },
+    {
+      "id": "g05-p01",
+      "category": "exact_symbol",
+      "query": "Find the verify_badge function.",
+      "split": "calibration",
+      "leakage_group": "g05_badge_access",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/access.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/access.py",
+          "qualified_name": "src.access.verify_badge"
+        }
+      ],
+      "inclusion_reason": "An exact symbol query asks for the badge-validation function.",
+      "exclusion_reason": "src/visits.py is a caller, not the function definition.",
+      "evidence": [
+        {
+          "path": "src/access.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The function definition checks the VIS- identifier prefix."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.access.verify_badge"
+      }
+    },
+    {
+      "id": "g05-p02",
+      "category": "caller_symbol",
+      "query": "Which access function calls badge verification before granting an after-hours wing pass?",
+      "split": "calibration",
+      "leakage_group": "g05_badge_access",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/access.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/access.py",
+          "qualified_name": "src.access.grant_after_hours_access"
+        }
+      ],
+      "inclusion_reason": "The query asks for the caller that gates the access grant; the caller body is the primary target.",
+      "exclusion_reason": "verify_badge itself is the callee and does not grant access.",
+      "evidence": [
+        {
+          "path": "src/access.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "grant_after_hours_access calls verify_badge and returns false when verification fails."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.access.grant_after_hours_access"
+      }
+    },
+    {
+      "id": "g06-n01",
+      "category": "near_domain_negative",
+      "query": "Does archive_exhibit run OCR to make scanned exhibit images searchable?",
+      "split": "validation",
+      "leakage_group": "g06_catalog_archive",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The archival function updates a record flag and reason; no OCR implementation or reference exists in the snapshot.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "index_catalog_ocr"
+      }
+    },
+    {
+      "id": "g06-n02",
+      "category": "near_domain_negative",
+      "query": "Does archiving create a signed chain-of-custody receipt for every exhibit?",
+      "split": "validation",
+      "leakage_group": "g06_catalog_archive",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot has no signed receipt generation or chain-of-custody record for archival.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g06-p01",
+      "category": "exact_symbol",
+      "query": "Where is archive_exhibit implemented?",
+      "split": "validation",
+      "leakage_group": "g06_catalog_archive",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/catalog.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/catalog.py",
+          "qualified_name": "src.catalog.archive_exhibit"
+        }
+      ],
+      "inclusion_reason": "An exact symbol query asks for the implementation definition.",
+      "exclusion_reason": "src/catalog_store.py stores attachments and is not the archival function.",
+      "evidence": [
+        {
+          "path": "src/catalog.py",
+          "start_line": 3,
+          "end_line": 8,
+          "reason": "The function loads a record, marks it archived, records a reason, and returns it."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.catalog.archive_exhibit"
+      }
+    },
+    {
+      "id": "g06-p02",
+      "category": "documentation_rule",
+      "query": "Which collection policy says archived exhibit records stay searchable and their digitized attachments remain linked?",
+      "split": "validation",
+      "leakage_group": "g06_catalog_archive",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "docs/collection-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The query explicitly asks which policy document states the rule; direct documentation is the target.",
+      "exclusion_reason": "src/catalog.py implements an archive marker but is not the document that states the policy.",
+      "evidence": [
+        {
+          "path": "docs/collection-policy.md",
+          "start_line": 3,
+          "end_line": 4,
+          "reason": "These policy lines state searchability and attachment retention."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g07-n01",
+      "category": "near_domain_negative",
+      "query": "Which notice routine sends a satisfaction survey after every completed visit?",
+      "split": "calibration",
+      "leakage_group": "g07_closure_notice",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot contains a room-closure notice but no post-visit satisfaction survey implementation.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "send_visit_survey"
+      }
+    },
+    {
+      "id": "g07-n02",
+      "category": "near_domain_negative",
+      "query": "Does the closure notice sender deliver messages through an SMS carrier gateway?",
+      "split": "calibration",
+      "leakage_group": "g07_closure_notice",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "send_closure_notice constructs a notice object; there is no SMS transport or carrier gateway in the snapshot.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "send_sms"
+      }
+    },
+    {
+      "id": "g07-p01",
+      "category": "exact_symbol",
+      "query": "Find send_closure_notice.",
+      "split": "calibration",
+      "leakage_group": "g07_closure_notice",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/notices.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/notices.py",
+          "qualified_name": "src.notices.send_closure_notice"
+        }
+      ],
+      "inclusion_reason": "An exact symbol query asks for the notice implementation.",
+      "exclusion_reason": "src/operations.py contains a caller, not the notice implementation.",
+      "evidence": [
+        {
+          "path": "src/notices.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The function creates a room-closure notice object."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.notices.send_closure_notice"
+      }
+    },
+    {
+      "id": "g07-p02",
+      "category": "cross_file_call",
+      "query": "Which gallery room-closing operation calls the visitor closure-notice routine?",
+      "split": "calibration",
+      "leakage_group": "g07_closure_notice",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/notices.py",
+        "src/operations.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/operations.py",
+          "qualified_name": "src.operations.close_gallery_room"
+        }
+      ],
+      "inclusion_reason": "The question asks for a caller/callee relation; both source and target establish it.",
+      "exclusion_reason": "src/visits.py arranges individual appointments and is unrelated to room closure.",
+      "evidence": [
+        {
+          "path": "src/operations.py",
+          "start_line": 5,
+          "end_line": 8,
+          "reason": "close_gallery_room disables bookings and calls send_closure_notice."
+        },
+        {
+          "path": "src/notices.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The called closure-notice function is defined here."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.operations.close_gallery_room"
+      }
+    },
+    {
+      "id": "g08-n01",
+      "category": "near_domain_negative",
+      "query": "Does attachment retention convert every scanned TIFF into a JPEG derivative?",
+      "split": "validation",
+      "leakage_group": "g08_catalog_attachment",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The storage helper preserves an object key; the snapshot contains no image conversion pipeline.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g08-n02",
+      "category": "near_domain_negative",
+      "query": "Does catalog storage run OCR and index extracted text from each scan?",
+      "split": "validation",
+      "leakage_group": "g08_catalog_attachment",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The snapshot links a digitized object key but contains no OCR or extracted-text indexing code.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "index_scan_text"
+      }
+    },
+    {
+      "id": "g08-p01",
+      "category": "exact_symbol",
+      "query": "Where is retain_catalog_attachment defined?",
+      "split": "validation",
+      "leakage_group": "g08_catalog_attachment",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/catalog_store.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/catalog_store.py",
+          "qualified_name": "src.catalog_store.retain_catalog_attachment"
+        }
+      ],
+      "inclusion_reason": "An exact symbol query asks for the attachment-retention helper.",
+      "exclusion_reason": "src/catalog.py updates archival metadata but does not retain the attachment key.",
+      "evidence": [
+        {
+          "path": "src/catalog_store.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The helper associates an exhibit ID with a digitized object key."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.catalog_store.retain_catalog_attachment"
+      }
+    },
+    {
+      "id": "g08-p02",
+      "category": "business_to_implementation",
+      "query": "How does the catalog keep a digitized exhibit scan linked to its record?",
+      "split": "validation",
+      "leakage_group": "g08_catalog_attachment",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "docs/collection-policy.md",
+        "src/catalog_store.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The query asks about the mechanism and its stated retention behavior; implementation and policy both contribute.",
+      "exclusion_reason": "src/payments.py concerns deposits, not catalog attachments.",
+      "evidence": [
+        {
+          "path": "src/catalog_store.py",
+          "start_line": 3,
+          "end_line": 5,
+          "reason": "The helper returns an object key associated with an exhibit ID."
+        },
+        {
+          "path": "docs/collection-policy.md",
+          "start_line": 3,
+          "end_line": 4,
+          "reason": "The policy says digitized attachments stay linked to catalog records."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g09-n01",
+      "category": "near_domain_negative",
+      "query": "What discounted ticket price does the policy offer to student groups?",
+      "split": "calibration",
+      "leakage_group": "g09_visitor_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The visitor policy covers reservation, deposit and rescheduling but contains no student discount or price.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g09-n02",
+      "category": "near_domain_negative",
+      "query": "Can a visitor transfer a reservation to a family member under the policy?",
+      "split": "calibration",
+      "leakage_group": "g09_visitor_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy assigns a reservation to one named visitor and does not state a transfer rule; no transfer implementation or policy exists.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g09-p01",
+      "category": "documentation_rule",
+      "query": "How does the visitor policy say a cancelled reservation should be rescheduled?",
+      "split": "calibration",
+      "leakage_group": "g09_visitor_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "docs/visitor-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The query asks what the policy says; the direct policy line is sufficient.",
+      "exclusion_reason": "src/visits.py marks a booking cancelled but does not state the rescheduling policy.",
+      "evidence": [
+        {
+          "path": "docs/visitor-policy.md",
+          "start_line": 5,
+          "end_line": 5,
+          "reason": "The policy directs cancelled reservations to be rescheduled through the box office."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g09-p02",
+      "category": "documentation_rule",
+      "query": "At what point does the visitor policy request a deposit for a gallery appointment?",
+      "split": "calibration",
+      "leakage_group": "g09_visitor_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "docs/visitor-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The query asks for a written policy statement, not a runtime payment behavior.",
+      "exclusion_reason": "src/payments.py implements a deposit request but does not describe policy timing.",
+      "evidence": [
+        {
+          "path": "docs/visitor-policy.md",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "The policy states that a deposit is requested when an appointment is arranged."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g10-n01",
+      "category": "near_domain_negative",
+      "query": "Does the daily visit summary export a signed CSV receipt for each day's deposits?",
+      "split": "validation",
+      "leakage_group": "g10_daily_reporting",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The report returns two count fields; the snapshot contains no CSV writer, signature, or deposit receipt workflow.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium",
+      "symbol_query": {
+        "name": "export_signed_deposit_csv"
+      }
+    },
+    {
+      "id": "g10-n02",
+      "category": "out_of_domain_negative",
+      "query": "Where does this repository forecast ocean tide levels for a harbor?",
+      "split": "validation",
+      "leakage_group": "g10_daily_reporting",
+      "no_evidence": true,
+      "difficulty": "out_of_domain",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "The complete snapshot contains only synthetic gallery scheduling, conservation, catalog and visitor-policy material; no harbor or ocean model.",
+      "exclusion_reason": "No file in the complete fixture snapshot provides a direct implementation or policy answer to this request.",
+      "evidence": [],
+      "scope_checked": "All 13 files in tests/fixtures/retrieval_eval_generalization_repo (11 under src/ and 2 under docs/) were checked for direct evidence.",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "The full synthetic snapshot was inspected for evidence matching the stated intent; absence is scoped to this snapshot only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "g10-p01",
+      "category": "exact_symbol",
+      "query": "Where is daily_visit_summary defined?",
+      "split": "validation",
+      "leakage_group": "g10_daily_reporting",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/reports.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/reports.py",
+          "qualified_name": "src.reports.daily_visit_summary"
+        }
+      ],
+      "inclusion_reason": "An exact symbol query asks for the report definition.",
+      "exclusion_reason": "src/calendar.py supplies the count helper, not the daily report.",
+      "evidence": [
+        {
+          "path": "src/reports.py",
+          "start_line": 5,
+          "end_line": 9,
+          "reason": "The function queries booked and cancelled counts and returns both values."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.reports.daily_visit_summary"
+      }
+    },
+    {
+      "id": "g10-p02",
+      "category": "cross_file_call",
+      "query": "Which report counts booked and cancelled visits using calendar booking records?",
+      "split": "validation",
+      "leakage_group": "g10_daily_reporting",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "relevant_paths": [
+        "src/calendar.py",
+        "src/reports.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/reports.py",
+          "qualified_name": "src.reports.daily_visit_summary"
+        }
+      ],
+      "inclusion_reason": "The query asks for a report-to-calendar dependency; caller and called helper are both relevant.",
+      "exclusion_reason": "src/visits.py assigns a single booking but does not aggregate daily counts.",
+      "evidence": [
+        {
+          "path": "src/reports.py",
+          "start_line": 5,
+          "end_line": 9,
+          "reason": "The report invokes count_bookings for booked and cancelled states."
+        },
+        {
+          "path": "src/calendar.py",
+          "start_line": 9,
+          "end_line": 11,
+          "reason": "The calendar count helper is the report's imported data source."
+        }
+      ],
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "adjudication_reason": "Static evidence was checked against the independent synthetic repository snapshot; this is an AI-only provisional label.",
+      "confidence": "medium",
+      "symbol_query": {
+        "qualified_name": "src.reports.daily_visit_summary"
+      }
+    }
+  ]
+}

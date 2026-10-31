@@ -1,0 +1,63 @@
+{
+  "dataset_version": "agentforge-package-relations-v1",
+  "status": "frozen_synthetic_fixture_design",
+  "splits": {
+    "calibration": [
+      "PRS1-001",
+      "PRS1-002",
+      "PRS1-003",
+      "PRS1-004",
+      "PRS1-009",
+      "PRS1-010",
+      "PRS1-011",
+      "PRS1-012",
+      "PRS1-017",
+      "PRS1-018",
+      "PRS1-019",
+      "PRS1-020",
+      "PRS1-025",
+      "PRS1-026",
+      "PRS1-027",
+      "PRS1-028",
+      "PRS1-033",
+      "PRS1-034",
+      "PRS1-035",
+      "PRS1-036"
+    ],
+    "validation": [
+      "PRS1-005",
+      "PRS1-006",
+      "PRS1-007",
+      "PRS1-008",
+      "PRS1-013",
+      "PRS1-014",
+      "PRS1-015",
+      "PRS1-016",
+      "PRS1-021",
+      "PRS1-022",
+      "PRS1-023",
+      "PRS1-024",
+      "PRS1-029",
+      "PRS1-030",
+      "PRS1-031",
+      "PRS1-032",
+      "PRS1-037",
+      "PRS1-038",
+      "PRS1-039",
+      "PRS1-040"
+    ]
+  },
+  "group_policy": "Each leakage_group is assigned wholly to one split.",
+  "expected_distribution": {
+    "calibration": {
+      "query_count": 20,
+      "evidence": 10,
+      "no_evidence": 10
+    },
+    "validation": {
+      "query_count": 20,
+      "evidence": 10,
+      "no_evidence": 10
+    }
+  }
+}

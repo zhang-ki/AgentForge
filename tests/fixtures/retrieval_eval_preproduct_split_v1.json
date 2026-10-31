@@ -1,0 +1,323 @@
+{
+  "dataset_version": "agentforge-retrieval-preproduct-v1",
+  "plan_version": "agentforge-retrieval-preproduct-split-v1",
+  "status": "fixed_provisional_ai_group_isolated",
+  "split_rule": "Twenty authored subject groups were assigned before retrieval: odd-numbered groups to Calibration and even-numbered groups to Validation. Every group contains two positive and two negative queries and cannot cross splits.",
+  "tuning_boundary": "Calibration alone may select an exploratory abstention rule. RRF k=60 and historical vector top_score >= 0.70 are predeclared. Validation is evaluated once after the selected rule is frozen.",
+  "engineering_targets": {
+    "false_accept_rate_max": 0.05,
+    "false_reject_rate_max": 0.25,
+    "rrf_requires_recall1_and_mrr_gain": true,
+    "no_unexplained_recall5_or_recall10_drop": true
+  },
+  "group_assignments": [
+    {
+      "leakage_group": "p01_manifest_registration",
+      "query_ids": [
+        "pre01-p1",
+        "pre01-p2",
+        "pre01-n1",
+        "pre01-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p02_manifest_validation",
+      "query_ids": [
+        "pre02-p1",
+        "pre02-p2",
+        "pre02-n1",
+        "pre02-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p03_dock_reservation",
+      "query_ids": [
+        "pre03-p1",
+        "pre03-p2",
+        "pre03-n1",
+        "pre03-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p04_inventory_allocation",
+      "query_ids": [
+        "pre04-p1",
+        "pre04-p2",
+        "pre04-n1",
+        "pre04-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p05_route_planning",
+      "query_ids": [
+        "pre05-p1",
+        "pre05-p2",
+        "pre05-n1",
+        "pre05-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p06_weather_scoring",
+      "query_ids": [
+        "pre06-p1",
+        "pre06-p2",
+        "pre06-n1",
+        "pre06-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p07_temperature_recording",
+      "query_ids": [
+        "pre07-p1",
+        "pre07-p2",
+        "pre07-n1",
+        "pre07-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p08_excursion_alert",
+      "query_ids": [
+        "pre08-p1",
+        "pre08-p2",
+        "pre08-n1",
+        "pre08-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p09_notice_queue",
+      "query_ids": [
+        "pre09-p1",
+        "pre09-p2",
+        "pre09-n1",
+        "pre09-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p10_storage_billing",
+      "query_ids": [
+        "pre10-p1",
+        "pre10-p2",
+        "pre10-n1",
+        "pre10-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p11_audit_construction",
+      "query_ids": [
+        "pre11-p1",
+        "pre11-p2",
+        "pre11-n1",
+        "pre11-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p12_shift_reporting",
+      "query_ids": [
+        "pre12-p1",
+        "pre12-p2",
+        "pre12-n1",
+        "pre12-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p13_custody_handoff",
+      "query_ids": [
+        "pre13-p1",
+        "pre13-p2",
+        "pre13-n1",
+        "pre13-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p14_maintenance_planning",
+      "query_ids": [
+        "pre14-p1",
+        "pre14-p2",
+        "pre14-n1",
+        "pre14-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p15_cold_chain_policy",
+      "query_ids": [
+        "pre15-p1",
+        "pre15-p2",
+        "pre15-n1",
+        "pre15-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p16_incident_policy",
+      "query_ids": [
+        "pre16-p1",
+        "pre16-p2",
+        "pre16-n1",
+        "pre16-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p17_retention_policy",
+      "query_ids": [
+        "pre17-p1",
+        "pre17-p2",
+        "pre17-n1",
+        "pre17-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p18_billing_policy",
+      "query_ids": [
+        "pre18-p1",
+        "pre18-p2",
+        "pre18-n1",
+        "pre18-n2"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "p19_same_name_hold",
+      "query_ids": [
+        "pre19-p1",
+        "pre19-p2",
+        "pre19-n1",
+        "pre19-n2"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "p20_package_exports",
+      "query_ids": [
+        "pre20-p1",
+        "pre20-p2",
+        "pre20-n1",
+        "pre20-n2"
+      ],
+      "split": "validation"
+    }
+  ],
+  "splits": {
+    "calibration": [
+      "pre01-p1",
+      "pre01-p2",
+      "pre01-n1",
+      "pre01-n2",
+      "pre03-p1",
+      "pre03-p2",
+      "pre03-n1",
+      "pre03-n2",
+      "pre05-p1",
+      "pre05-p2",
+      "pre05-n1",
+      "pre05-n2",
+      "pre07-p1",
+      "pre07-p2",
+      "pre07-n1",
+      "pre07-n2",
+      "pre09-p1",
+      "pre09-p2",
+      "pre09-n1",
+      "pre09-n2",
+      "pre11-p1",
+      "pre11-p2",
+      "pre11-n1",
+      "pre11-n2",
+      "pre13-p1",
+      "pre13-p2",
+      "pre13-n1",
+      "pre13-n2",
+      "pre15-p1",
+      "pre15-p2",
+      "pre15-n1",
+      "pre15-n2",
+      "pre17-p1",
+      "pre17-p2",
+      "pre17-n1",
+      "pre17-n2",
+      "pre19-p1",
+      "pre19-p2",
+      "pre19-n1",
+      "pre19-n2"
+    ],
+    "validation": [
+      "pre02-p1",
+      "pre02-p2",
+      "pre02-n1",
+      "pre02-n2",
+      "pre04-p1",
+      "pre04-p2",
+      "pre04-n1",
+      "pre04-n2",
+      "pre06-p1",
+      "pre06-p2",
+      "pre06-n1",
+      "pre06-n2",
+      "pre08-p1",
+      "pre08-p2",
+      "pre08-n1",
+      "pre08-n2",
+      "pre10-p1",
+      "pre10-p2",
+      "pre10-n1",
+      "pre10-n2",
+      "pre12-p1",
+      "pre12-p2",
+      "pre12-n1",
+      "pre12-n2",
+      "pre14-p1",
+      "pre14-p2",
+      "pre14-n1",
+      "pre14-n2",
+      "pre16-p1",
+      "pre16-p2",
+      "pre16-n1",
+      "pre16-n2",
+      "pre18-p1",
+      "pre18-p2",
+      "pre18-n1",
+      "pre18-n2",
+      "pre20-p1",
+      "pre20-p2",
+      "pre20-n1",
+      "pre20-n2"
+    ]
+  },
+  "expected_distribution": {
+    "calibration": {
+      "query_count": 40,
+      "evidence": 20,
+      "no_evidence": 20,
+      "near_domain_negative": 20,
+      "out_of_domain_negative": 0
+    },
+    "validation": {
+      "query_count": 40,
+      "evidence": 20,
+      "no_evidence": 20,
+      "near_domain_negative": 19,
+      "out_of_domain_negative": 1
+    }
+  },
+  "status_notes": [
+    "Synthetic AI-authored labels only; human_reviewed remains false.",
+    "No ranking output was used to create labels or split groups.",
+    "Validation must not be consulted during rule selection."
+  ]
+}
+

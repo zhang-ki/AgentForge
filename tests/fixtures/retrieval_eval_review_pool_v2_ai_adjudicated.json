@@ -1,0 +1,437 @@
+{
+  "artifact_version": "agentforge-retrieval-v2-ai-adjudication-1",
+  "created_date": "2026-10-26",
+  "status": "ai_review_completed_pending_human_review",
+  "review_method": "ai_evidence_review",
+  "human_reviewed": false,
+  "source_dataset": "tests/fixtures/retrieval_eval_review_pool_v2.json",
+  "source_dataset_sha256": "0FBB43BF71B2A6BCD79733670C2D87B6C43FA767135EB2008091F4B291D15D4D",
+  "source_split_plan": "tests/fixtures/retrieval_eval_split_plan_v2.json",
+  "source_split_plan_sha256": "69E5F08C36FCC22A2BDA9BE5FA4E1A27493DFD09C43A06E624C8CDC696F66D6A",
+  "frozen_scope": [
+    "README.md",
+    "docs/continuity.md",
+    "docs/storage.md",
+    "pkg/__init__.py",
+    "pkg/handlers.py",
+    "pkg/preferences.py",
+    "pkg/session.py",
+    "pkg/token_cache.py"
+  ],
+  "decision_counts": {
+    "accept_current": 17,
+    "modify_relevant_set": 0,
+    "insufficient_evidence": 0,
+    "no_evidence": 20,
+    "rewrite_query": 3
+  },
+  "records": [
+    {
+      "id": "candidate-business-continuity",
+      "query": "Where does the application recover a returning person's approved identity without another login prompt?",
+      "category": "business_concept_without_shared_terms",
+      "leakage_group": "lease_identity",
+      "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["docs/continuity.md", "pkg/session.py"], "relevant_symbols": []},
+      "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["docs/continuity.md", "pkg/session.py"], "relevant_symbols": []},
+      "suggested_evidence": [
+        {"path": "docs/continuity.md", "start_line": 1, "end_line": 3, "excerpt": "resumes the previously approved principal ... does not ask for a fresh credential prompt"},
+        {"path": "pkg/session.py", "start_line": 9, "end_line": 11, "excerpt": "return lease.principal"}
+      ],
+      "excluded_candidates": ["pkg/handlers.py and pkg/session.py:4-6 concern key rotation; storage files concern unrelated records"],
+      "rationale": "The business-concept wording combines the user-facing no-prompt rule with the implementation that recovers the principal, so both direct explanatory and implementation evidence are relevant.",
+      "confidence": "medium",
+      "uncertainty": "A narrower interpretation of 'Where does' could treat only pkg/session.py as primary; the no-prompt clause itself is stated only in the document.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-continuity-policy",
+      "query": "Which document states that a fresh credential prompt is unnecessary while a lease remains acceptable?",
+      "category": "documentation_evidence", "leakage_group": "lease_identity", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["docs/continuity.md"], "relevant_symbols": []},
+      "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["docs/continuity.md"], "relevant_symbols": []},
+      "suggested_evidence": [{"path": "docs/continuity.md", "start_line": 1, "end_line": 3, "excerpt": "It does not ask for a fresh credential prompt when that lease remains acceptable."}],
+      "excluded_candidates": ["pkg/session.py restores a principal but does not state the complete policy"],
+      "rationale": "The query explicitly asks for a document and the passage states the rule verbatim.", "confidence": "high", "uncertainty": "None material.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-coordinator-renew",
+      "query": "Which class method extends an approved lease while preserving the principal?",
+      "category": "nested_call_relationship", "leakage_group": "lease_identity", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.SessionCoordinator.renew"]},
+      "decision": "rewrite_query",
+      "suggested_query": "Which class method delegates recovery of the principal from an approved lease?",
+      "suggested_label": {"kind": "evidence_for_rewritten_query", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.SessionCoordinator.renew"]},
+      "suggested_evidence": [{"path": "pkg/session.py", "start_line": 14, "end_line": 19, "excerpt": "def renew(self, lease): ... return restore_identity_from_lease(lease)"}],
+      "excluded_candidates": ["restore_identity_from_lease is the callee, not the requested class method"],
+      "rationale": "The body delegates principal recovery but performs no observable lease extension. The name and docstring alone cannot establish that implementation behavior.",
+      "confidence": "high", "uncertainty": "The original query is supportable only if documentation claims, rather than executed operations, define 'extends'.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-cross-file-renewal",
+      "query": "Which request handler imports and calls the stale session key rotation function?",
+      "category": "cross_file_import_reference", "leakage_group": "session_rotation_flow", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": ["pkg.handlers.handle_expired_session"]},
+      "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": ["pkg.handlers.handle_expired_session"]},
+      "suggested_evidence": [{"path": "pkg/handlers.py", "start_line": 3, "end_line": 8, "excerpt": "from .session import rotate_session_key ... return rotate_session_key(key)"}],
+      "excluded_candidates": ["pkg/session.py defines the callee but is not the requested handler"],
+      "rationale": "The import and call site directly answer the caller-focused query.", "confidence": "high", "uncertainty": "None material.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-fixture-nonexecution",
+      "query": "Where is it stated that the artificial evaluation source must never be executed as a project?",
+      "category": "documentation_evidence", "leakage_group": "fixture_docs", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["README.md"], "relevant_symbols": []},
+      "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["README.md"], "relevant_symbols": []},
+      "suggested_evidence": [{"path": "README.md", "start_line": 1, "end_line": 3, "excerpt": "Every source file is artificial and must never be executed as a project."}],
+      "excluded_candidates": ["Feature code and feature documents do not state the fixture execution rule"],
+      "rationale": "The query asks where a documentation rule is stated, and the fixture README states it directly.", "confidence": "high", "uncertainty": "Its usefulness as a production-like query is a benchmark-design question, not an evidence defect.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-handler-return",
+      "query": "Which boundary handler returns the result of rotating a stale session key?",
+      "category": "caller_vs_implementation_boundary", "leakage_group": "session_rotation_flow", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": ["pkg.handlers.handle_expired_session"]},
+      "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": ["pkg.handlers.handle_expired_session"]},
+      "suggested_evidence": [{"path": "pkg/handlers.py", "start_line": 6, "end_line": 8, "excerpt": "def handle_expired_session(key): ... return rotate_session_key(key)"}],
+      "excluded_candidates": ["pkg/session.py implements rotation but is not the boundary handler"],
+      "rationale": "The query explicitly targets the caller at the request boundary.", "confidence": "high", "uncertainty": "None material.",
+      "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-account-delete",
+      "query": "Where is permanent user account deletion implemented?",
+      "category": "no_sufficient_evidence", "leakage_group": "account_lifecycle_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["docs/continuity.md and pkg/session.py address continuity, restoration, and rotation, not account deletion"],
+      "rationale": "All eight files were inspected; none defines or documents account deletion.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-avatar-upload",
+      "query": "How does the repository resize and upload profile avatar images?",
+      "category": "no_sufficient_evidence", "leakage_group": "media_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["No file contains image, avatar, resize, media, or upload behavior"],
+      "rationale": "The complete frozen snapshot contains no implementation or documentation for image processing or upload.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-compress-cache",
+      "query": "Which operation compresses cached records to reduce storage size?",
+      "category": "no_sufficient_evidence", "leakage_group": "storage_optimization_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/token_cache.py returns small mappings; docs/storage.md distinguishes features but describes no compression"],
+      "rationale": "No compression, encoding, compaction, or storage-size operation exists in the inspected snapshot.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-delete-token",
+      "query": "Which token-cache operation deletes a record by key?",
+      "category": "no_sufficient_evidence", "leakage_group": "token_mutation_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/token_cache.py:4-11 only looks up a key or returns a token_policy mapping"],
+      "rationale": "The only token-cache operations are lookup and save_token_choice; neither deletes records.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-encrypt-token-cache",
+      "query": "Where are token-cache records encrypted before storage?",
+      "category": "no_sufficient_evidence", "leakage_group": "token_security_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/token_cache.py returns plain dictionaries and docs/storage.md only describes feature separation"],
+      "rationale": "No encryption, key management, ciphertext, or persistent storage operation appears in the snapshot.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-export-preferences",
+      "query": "Where are all display preferences exported to a file?",
+      "category": "no_sufficient_evidence", "leakage_group": "preference_export_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/preferences.py only looks up one preference or returns one theme mapping"],
+      "rationale": "No enumeration, serialization, file access, or export operation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-invalidate-sessions",
+      "query": "Where are all existing session keys invalidated after a security incident?",
+      "category": "no_sufficient_evidence", "leakage_group": "session_termination_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/session.py:4-6 transforms one supplied key; it neither enumerates nor invalidates all sessions"],
+      "rationale": "No bulk invalidation, incident response, session registry, or revocation operation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-invoice-refund",
+      "query": "Which code refunds a paid invoice and reverses the ledger entry?",
+      "category": "no_sufficient_evidence", "leakage_group": "billing_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["No file contains billing, invoice, payment, refund, or ledger behavior"],
+      "rationale": "The complete snapshot is unrelated to billing operations.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-locale-preference",
+      "query": "Where is the user's locale preference applied to translations?",
+      "category": "no_sufficient_evidence", "leakage_group": "preference_localization_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/preferences.py has generic lookup and theme selection but no locale or translation application"],
+      "rationale": "No locale, language, translation, or internationalization behavior exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-logout-all",
+      "query": "Which code logs the user out from every active session?",
+      "category": "no_sufficient_evidence", "leakage_group": "session_termination_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["Session restoration and key rotation preserve or transform supplied values; they do not terminate sessions"],
+      "rationale": "No logout, termination, session enumeration, or active-session store exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-mfa-enroll",
+      "query": "Which function enrolls a time-based one-time-password factor?",
+      "category": "no_sufficient_evidence", "leakage_group": "credential_security_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["Continuity code consumes an existing lease and contains no MFA, TOTP, secret, or enrollment operation"],
+      "rationale": "No multifactor enrollment evidence exists in any frozen file.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-oauth-link",
+      "query": "Where is an external OAuth identity linked to the current account?",
+      "category": "no_sufficient_evidence", "leakage_group": "credential_security_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["Lease principal restoration contains no provider, callback, authorization code, or account-link operation"],
+      "rationale": "No OAuth or external identity-linking evidence exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-password-change",
+      "query": "Where is a signed-in user's password changed?",
+      "category": "no_sufficient_evidence", "leakage_group": "credential_recovery_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["docs/continuity.md mentions avoiding a credential prompt but does not implement credential mutation"],
+      "rationale": "No password, credential store, hashing, or account settings mutation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-password-reset",
+      "query": "Which function sends a password reset email?",
+      "category": "no_sufficient_evidence", "leakage_group": "credential_recovery_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["No file contains email, password reset, recovery token, or notification behavior"],
+      "rationale": "The complete snapshot has no password-reset email capability.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-persist-lease",
+      "query": "Where is an approved lease persisted to a database?",
+      "category": "no_sufficient_evidence", "leakage_group": "lease_storage_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/session.py only reads the supplied lease object; docs/storage.md discusses token/theme concepts, not a database"],
+      "rationale": "No database connection, persistence API, schema, or lease write operation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-rate-limit",
+      "query": "Where does the request handler rate-limit repeated expired-session attempts?",
+      "category": "no_sufficient_evidence", "leakage_group": "request_controls_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/handlers.py:6-8 performs one direct call and has no counter, clock, quota, or rejection branch"],
+      "rationale": "The handler contains no rate-limiting behavior.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-revoke-lease",
+      "query": "Which implementation revokes an approved lease before it expires?",
+      "category": "no_sufficient_evidence", "leakage_group": "lease_revocation_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["restore_identity_from_lease reads a principal; SessionCoordinator.renew delegates recovery; neither revokes"],
+      "rationale": "No revocation flag, expiration mutation, blacklist, or delete operation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-session-ip-audit",
+      "query": "Which function records the client IP address for each session renewal?",
+      "category": "no_sufficient_evidence", "leakage_group": "audit_absent", "split": "calibration",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["SessionCoordinator.renew accepts only lease and records no network or audit data"],
+      "rationale": "No IP address, request metadata, audit event, or logging operation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-theme-contrast",
+      "query": "Which code validates the selected theme for accessible color contrast?",
+      "category": "no_sufficient_evidence", "leakage_group": "theme_validation_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["save_theme_choice returns the selected value without inspecting colors or accessibility"],
+      "rationale": "No color parsing, contrast calculation, validation, or accessibility rule exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-no-token-expiry",
+      "query": "Which function calculates the expiration timestamp for a cached token?",
+      "category": "no_sufficient_evidence", "leakage_group": "token_expiry_absent", "split": "validation",
+      "original_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "decision": "no_evidence",
+      "suggested_label": {"kind": "no_evidence", "relevant_paths": [], "relevant_symbols": []}, "suggested_evidence": [], "scope_reference": "frozen_scope",
+      "excluded_candidates": ["pkg/token_cache.py returns token and token_policy fields but contains no time value or calculation"],
+      "rationale": "No timestamp, TTL, expiry field, clock, or lifetime calculation exists.", "confidence": "high", "uncertainty": "Conclusion is limited to the frozen snapshot.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-preference-lookup",
+      "query": "Which lookup returns a display preference by name?",
+      "category": "duplicate_symbol_disambiguation", "leakage_group": "preference_lookup", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.lookup"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.lookup"]},
+      "suggested_evidence": [{"path": "pkg/preferences.py", "start_line": 4, "end_line": 6, "excerpt": "def lookup(name): ... return {\"preference\": name}"}],
+      "excluded_candidates": ["pkg/token_cache.py::lookup returns a token record instead"],
+      "rationale": "The argument, docstring, and return key identify the display-preference lookup.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-preference-return-shape",
+      "query": "Which same-named lookup returns a dictionary with the key 'preference'?",
+      "category": "duplicate_symbol_disambiguation", "leakage_group": "preference_lookup", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.lookup"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.lookup"]},
+      "suggested_evidence": [{"path": "pkg/preferences.py", "start_line": 4, "end_line": 6, "excerpt": "return {\"preference\": name}"}],
+      "excluded_candidates": ["pkg/token_cache.py::lookup returns the key token"],
+      "rationale": "The literal return key uniquely distinguishes the same-named function.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-renewal-implementation",
+      "query": "How is an expired session key replaced with a fresh synthetic key?",
+      "category": "business_concept_to_implementation", "leakage_group": "session_rotation_flow", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.rotate_session_key"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.rotate_session_key"]},
+      "suggested_evidence": [{"path": "pkg/session.py", "start_line": 4, "end_line": 6, "excerpt": "return old_key + \"-rotated\""}],
+      "excluded_candidates": ["pkg/handlers.py forwards the call but does not implement the transformation"],
+      "rationale": "The function body directly implements the requested replacement rule.", "confidence": "high", "uncertainty": "The operation is synthetic string transformation, not a security claim.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-restore-principal",
+      "query": "Which function obtains the authorized principal from an existing lease?",
+      "category": "business_concept_to_implementation", "leakage_group": "lease_identity", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.restore_identity_from_lease"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.restore_identity_from_lease"]},
+      "suggested_evidence": [{"path": "pkg/session.py", "start_line": 9, "end_line": 11, "excerpt": "return lease.principal"}],
+      "excluded_candidates": ["docs/continuity.md describes policy but is not an implementation"],
+      "rationale": "The function directly reads and returns the principal from the supplied lease.", "confidence": "high", "uncertainty": "Authorization is asserted by the fixture wording; no runtime authorization check exists.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-rotation-import",
+      "query": "Where is rotate_session_key imported with a relative import?",
+      "category": "cross_file_import_reference", "leakage_group": "session_rotation_flow", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": []}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": []},
+      "suggested_evidence": [{"path": "pkg/handlers.py", "start_line": 3, "end_line": 3, "excerpt": "from .session import rotate_session_key"}],
+      "excluded_candidates": ["pkg/session.py defines the symbol and does not import it"],
+      "rationale": "The single relative import statement exactly answers the query.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-rotation-output",
+      "query": "Which implementation appends the '-rotated' suffix to an old key?",
+      "category": "implementation_behavior", "leakage_group": "session_rotation_flow", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.rotate_session_key"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/session.py"], "relevant_symbols": ["pkg.session.rotate_session_key"]},
+      "suggested_evidence": [{"path": "pkg/session.py", "start_line": 4, "end_line": 6, "excerpt": "return old_key + \"-rotated\""}],
+      "excluded_candidates": ["pkg/handlers.py returns the callee result but does not append the suffix"],
+      "rationale": "The literal suffix operation appears in the implementation body.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-storage-separation",
+      "query": "Where is it documented that token records and display themes are separate features?",
+      "category": "documentation_evidence", "leakage_group": "storage_separation", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["docs/storage.md"], "relevant_symbols": []}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["docs/storage.md"], "relevant_symbols": []},
+      "suggested_evidence": [{"path": "docs/storage.md", "start_line": 1, "end_line": 3, "excerpt": "These are separate synthetic features even though both may use a lookup operation."}],
+      "excluded_candidates": ["Each implementation module shows only its own feature and does not state the cross-feature distinction"],
+      "rationale": "The query asks for documentation and the document directly states the separation.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-storage-shared-name",
+      "query": "Which document explains why two separate features can both use an operation named lookup?",
+      "category": "documentation_evidence", "leakage_group": "storage_separation", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["docs/storage.md"], "relevant_symbols": []}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["docs/storage.md"], "relevant_symbols": []},
+      "suggested_evidence": [{"path": "docs/storage.md", "start_line": 1, "end_line": 3, "excerpt": "separate synthetic features even though both may use a lookup operation"}],
+      "excluded_candidates": ["The two Python modules demonstrate separate lookup functions but do not provide the cross-feature explanation"],
+      "rationale": "The document links the shared operation name to two explicitly separate feature domains.", "confidence": "medium", "uncertainty": "The passage states the distinction but gives only a minimal explanation of why shared naming is acceptable.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-theme-return",
+      "query": "Which save function returns a theme mapping?",
+      "category": "similar_names_different_meaning", "leakage_group": "theme_save", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.save_theme_choice"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.save_theme_choice"]},
+      "suggested_evidence": [{"path": "pkg/preferences.py", "start_line": 9, "end_line": 11, "excerpt": "return {\"theme\": choice}"}],
+      "excluded_candidates": ["pkg/token_cache.py::save_token_choice returns token_policy, not theme"],
+      "rationale": "The return key and function identity directly answer the query.", "confidence": "high", "uncertainty": "The function name says save, but this query asks only about its return mapping.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-theme-save",
+      "query": "Where is the chosen display theme stored?",
+      "category": "similar_names_different_meaning", "leakage_group": "theme_save", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.save_theme_choice"]},
+      "decision": "rewrite_query",
+      "suggested_query": "Which function returns a mapping for the chosen display theme?",
+      "suggested_label": {"kind": "evidence_for_rewritten_query", "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": ["pkg.preferences.save_theme_choice"]},
+      "suggested_evidence": [{"path": "pkg/preferences.py", "start_line": 9, "end_line": 11, "excerpt": "def save_theme_choice(choice): ... return {\"theme\": choice}"}],
+      "excluded_candidates": ["save_token_choice concerns token policy; no function persists theme state"],
+      "rationale": "The body constructs and returns a dictionary but performs no observable storage or persistence operation. The original query overstates implementation behavior.",
+      "confidence": "high", "uncertainty": "The docstring says Save, but a documentation claim cannot substitute for missing storage code.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-token-lookup",
+      "query": "Which lookup returns a token record for a key?",
+      "category": "duplicate_symbol_disambiguation", "leakage_group": "token_cache_lookup", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.lookup"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.lookup"]},
+      "suggested_evidence": [{"path": "pkg/token_cache.py", "start_line": 4, "end_line": 6, "excerpt": "def lookup(key): ... return {\"token\": key}"}],
+      "excluded_candidates": ["pkg/preferences.py::lookup returns a display preference"],
+      "rationale": "The parameter, docstring, and token return key distinguish this lookup.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-token-policy-return",
+      "query": "Which save function returns a token_policy mapping?",
+      "category": "similar_names_different_meaning", "leakage_group": "token_policy_save", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.save_token_choice"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.save_token_choice"]},
+      "suggested_evidence": [{"path": "pkg/token_cache.py", "start_line": 9, "end_line": 11, "excerpt": "return {\"token_policy\": choice}"}],
+      "excluded_candidates": ["pkg/preferences.py::save_theme_choice returns theme, not token_policy"],
+      "rationale": "The return key and function identity directly answer the query.", "confidence": "high", "uncertainty": "The function name says save, but this query asks only about its return mapping.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-token-policy-save",
+      "query": "Where is a selected token policy stored?",
+      "category": "similar_names_different_meaning", "leakage_group": "token_policy_save", "split": "validation",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.save_token_choice"]},
+      "decision": "rewrite_query",
+      "suggested_query": "Which function returns a mapping for the selected token policy?",
+      "suggested_label": {"kind": "evidence_for_rewritten_query", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.save_token_choice"]},
+      "suggested_evidence": [{"path": "pkg/token_cache.py", "start_line": 9, "end_line": 11, "excerpt": "def save_token_choice(choice): ... return {\"token_policy\": choice}"}],
+      "excluded_candidates": ["save_theme_choice concerns themes; no function persists token-policy state"],
+      "rationale": "The body returns a dictionary but performs no observable storage or persistence operation. The original query overstates implementation behavior.",
+      "confidence": "high", "uncertainty": "The docstring says Save, but a documentation claim cannot substitute for missing storage code.", "review_method": "ai_evidence_review", "human_reviewed": false
+    },
+    {
+      "id": "candidate-token-return-shape",
+      "query": "Which same-named lookup returns a dictionary with the key 'token'?",
+      "category": "duplicate_symbol_disambiguation", "leakage_group": "token_cache_lookup", "split": "calibration",
+      "original_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.lookup"]}, "decision": "accept_current",
+      "suggested_label": {"kind": "evidence", "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": ["pkg.token_cache.lookup"]},
+      "suggested_evidence": [{"path": "pkg/token_cache.py", "start_line": 4, "end_line": 6, "excerpt": "return {\"token\": key}"}],
+      "excluded_candidates": ["pkg/preferences.py::lookup returns the key preference"],
+      "rationale": "The literal return key uniquely identifies token_cache.lookup.", "confidence": "high", "uncertainty": "None material.", "review_method": "ai_evidence_review", "human_reviewed": false
+    }
+  ]
+}

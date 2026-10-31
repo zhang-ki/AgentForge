@@ -1,0 +1,191 @@
+{
+  "stage": "AF-011",
+  "generated_on": "2026-10-27",
+  "overall_status": "offline_v1_pass_with_limits",
+  "first_version_freeze": {
+    "status": "pass",
+    "scope": [
+      "offline_read_only_rag",
+      "python_code_aware_index",
+      "intent_driven_candidate_retrieval",
+      "evidence_first_answer_contract",
+      "bounded_read_only_agent"
+    ],
+    "excluded": [
+      "real_local_chat_acceptance",
+      "generated_answer_semantic_entailment",
+      "production_rrf",
+      "production_abstention_threshold",
+      "reranker",
+      "shell_or_patch_tools"
+    ]
+  },
+  "implementation": {
+    "product_router": "measured",
+    "product_retriever": "measured",
+    "answer_contract": "measured",
+    "stale_evidence_rejection": "measured",
+    "cross_repository_index_rejection": "measured",
+    "default_search_behavior_changed": false,
+    "rrf_enabled": false,
+    "production_threshold_enabled": false,
+    "reranker_implemented": false
+  },
+  "offline_acceptance": {
+    "result_file": "AF011_OFFLINE_ACCEPTANCE_RESULTS_V4.json",
+    "result_size_bytes": 52358,
+    "result_sha256": "E751936B075A55251BF9EE464887D39651DED89FC1E12C536A3A95B14C2D94F7",
+    "dataset": "tests/fixtures/af011_product_tasks_v3.json",
+    "dataset_version": "af011-agentforge-source-tasks-v3",
+    "dataset_size_bytes": 19290,
+    "dataset_sha256": "6E8D5769FE748E5A5A4B4E69428C8AE3BF586F5B6FE92EC4C29AD470A51648BD",
+    "label_source": "ai_evidence_review",
+    "human_reviewed": false,
+    "task_count": 20,
+    "snapshot_file_count": 47,
+    "snapshot_manifest_sha256": "17136CB638C554030DAA8121EEC367202E26AFDAC2553EFF8FCE5FBBCB5E0C28",
+    "snapshot_removed": true,
+    "vector_used": false,
+    "rrf_used": false,
+    "threshold_used": false,
+    "calibration": {
+      "queries": 10,
+      "positives": 6,
+      "no_evidence": 4,
+      "recall_at_1": 0.666667,
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "mrr": 0.805556,
+      "route_accuracy": 1.0,
+      "evidence_contract_valid_rate": 1.0,
+      "strict_refusal_on_no_evidence": {
+        "count": 3,
+        "denominator": 4,
+        "rate": 0.75
+      },
+      "non_assertive_on_no_evidence": {
+        "count": 4,
+        "denominator": 4,
+        "rate": 1.0
+      },
+      "false_accepts": 0,
+      "end_to_end_success": {
+        "count": 10,
+        "denominator": 10,
+        "rate": 1.0
+      },
+      "mean_latency_seconds": 0.315082
+    },
+    "validation": {
+      "queries": 10,
+      "positives": 6,
+      "no_evidence": 4,
+      "recall_at_1": 0.666667,
+      "recall_at_5": 0.833333,
+      "recall_at_10": 0.833333,
+      "mrr": 0.7,
+      "route_accuracy": 1.0,
+      "evidence_contract_valid_rate": 1.0,
+      "strict_refusal_on_no_evidence": {
+        "count": 3,
+        "denominator": 4,
+        "rate": 0.75
+      },
+      "non_assertive_on_no_evidence": {
+        "count": 4,
+        "denominator": 4,
+        "rate": 1.0
+      },
+      "candidate_nonempty_on_no_evidence": {
+        "count": 3,
+        "denominator": 4,
+        "rate": 0.75
+      },
+      "false_accepts": 0,
+      "false_refusals_on_positive": 0,
+      "end_to_end_success": {
+        "count": 9,
+        "denominator": 10,
+        "rate": 0.9
+      },
+      "mean_latency_seconds": 0.581072,
+      "failure": {
+        "query_id": "AF011-V05",
+        "reason": "English documentation query did not retrieve the Chinese SECURITY.md in top five",
+        "classification": "cross_language_document_retrieval_gap"
+      }
+    },
+    "model_citation_validation": "not_measured_offline_provider_does_not_generate_claims"
+  },
+  "real_chat": {
+    "status": "blocked",
+    "request_sent": false,
+    "model_started": false,
+    "reason": "CODEX_SANDBOX_NETWORK_DISABLED=1 and no supported loopback host entry was available for this turn",
+    "citation_validation": "not_measured",
+    "semantic_entailment": "not_measured"
+  },
+  "tests": {
+    "targeted": {
+      "command": "python -X utf8 -B -m unittest tests.test_af011_product tests.test_af011_acceptance tests.test_agent_loop tests.test_cli tests.test_context tests.test_providers -v",
+      "run": 47,
+      "passed": 47,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "full": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "run": 202,
+      "passed": 197,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0,
+      "duration_seconds": 15.16,
+      "skip_reason": "Windows privileges did not permit real file/directory symlink, hard-link, substitution-link, or junction construction"
+    }
+  },
+  "integrity": {
+    "af010s2_protected_paths": {
+      "count": 135,
+      "missing": 0,
+      "changed": 0,
+      "status": "passed"
+    },
+    "formal_index": {
+      "path": ".agentforge/data/index.sqlite3",
+      "bytes": 32768,
+      "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+    },
+    "read_only_evidence": {
+      "path": ".agentforge/data/read_only_evidence.json",
+      "bytes": 2885,
+      "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+    },
+    "llama_server_processes": 0,
+    "process_check": "Get-Process returned no llama-server process",
+    "cim_process_query": "permission_denied",
+    "tests_tmp": {
+      "task_owned_entries_remaining": 0,
+      "preexisting_entries_not_modified": [
+        "af009c-llama-server"
+      ]
+    },
+    "agentexpr_accessed": false
+  },
+  "decisions": {
+    "offline_first_version": "pass_with_declared_limits",
+    "full_local_model_product": "blocked",
+    "new_routed_strategy_for_ask_and_agent": "accepted_with_offline_evidence",
+    "universal_retriever_replacement": "not_approved",
+    "production_rrf": "deferred",
+    "production_abstention_threshold": "deferred",
+    "reranker": "deferred"
+  },
+  "minimum_follow_up": [
+    "Run one bounded real local chat acceptance in a platform-supported host and validate the returned answer against the current evidence contract",
+    "Fix and independently validate the English-query-to-Chinese-document retrieval gap without changing the frozen v3 labels"
+  ]
+}

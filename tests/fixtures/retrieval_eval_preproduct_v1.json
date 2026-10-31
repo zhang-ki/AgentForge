@@ -1,0 +1,2176 @@
+{
+  "dataset_version": "agentforge-retrieval-preproduct-v1",
+  "status": "provisional_ai",
+  "review_status": "provisional_ai",
+  "review_method": "ai_evidence_review",
+  "human_reviewed": false,
+  "label_rule": "Synthetic-fixture relevance is fixed from the authored Northstar code and documentation before retrieval. Positive labels require direct line-addressable evidence answering the query. A no-evidence label means the complete frozen snapshot lacks sufficient evidence; it is not a claim about other repositories.",
+  "corpus_path": "tests/fixtures/retrieval_eval_preproduct_repo",
+  "query_total": 80,
+  "positive_query_target": 40,
+  "no_evidence_query_target": 40,
+  "independence_statement": "New cold-chain domain, modules, symbols, prose, queries and leakage groups were authored independently of prior AgentForge retrieval fixtures; no historical labels or rankings were reused.",
+  "queries": [
+    {
+      "id": "pre01-p1",
+      "category": "exact_symbol",
+      "query": "Where is register_manifest defined?",
+      "split": "calibration",
+      "leakage_group": "p01_manifest_registration",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/intake.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/intake.py",
+          "qualified_name": "src.intake.register_manifest"
+        }
+      ],
+      "inclusion_reason": "The named function definition and body are the direct answer.",
+      "exclusion_reason": "Validation and dock modules are dependencies, not the requested definition.",
+      "evidence": [
+        {
+          "path": "src/intake.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "The named function definition and body are the direct answer."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.intake.register_manifest"
+      }
+    },
+    {
+      "id": "pre01-p2",
+      "category": "cross_file_call",
+      "query": "Which inbound workflow validates a manifest before reserving a receiving dock?",
+      "split": "calibration",
+      "leakage_group": "p01_manifest_registration",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/intake.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The workflow calls validate_manifest before reserve_dock.",
+      "exclusion_reason": "validation.py and docks.py implement callees but do not establish the ordering.",
+      "evidence": [
+        {
+          "path": "src/intake.py",
+          "start_line": 7,
+          "end_line": 10,
+          "reason": "The workflow calls validate_manifest before reserve_dock."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre01-n1",
+      "category": "near_domain_negative",
+      "query": "Where does manifest intake submit an automatic customs declaration?",
+      "split": "calibration",
+      "leakage_group": "p01_manifest_registration",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "submit_customs_declaration"
+      }
+    },
+    {
+      "id": "pre01-n2",
+      "category": "near_domain_negative",
+      "query": "How does registration run optical character recognition over paper manifests?",
+      "split": "calibration",
+      "leakage_group": "p01_manifest_registration",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre02-p1",
+      "category": "exact_symbol",
+      "query": "Where is ManifestRules.check implemented?",
+      "split": "validation",
+      "leakage_group": "p02_manifest_validation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/validation.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/validation.py",
+          "qualified_name": "src.validation.ManifestRules.check"
+        }
+      ],
+      "inclusion_reason": "The method checks required manifest fields.",
+      "exclusion_reason": "The wrapper validate_manifest delegates but is not the requested method definition.",
+      "evidence": [
+        {
+          "path": "src/validation.py",
+          "start_line": 9,
+          "end_line": 13,
+          "reason": "The method checks required manifest fields."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.validation.ManifestRules.check"
+      }
+    },
+    {
+      "id": "pre02-p2",
+      "category": "business_to_implementation",
+      "query": "Which implementation rejects manifests missing container, commodity, or target temperature fields?",
+      "split": "validation",
+      "leakage_group": "p02_manifest_validation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/validation.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The required tuple and check body establish and enforce all three fields.",
+      "exclusion_reason": "intake.py only invokes validation and does not define the rule.",
+      "evidence": [
+        {
+          "path": "src/validation.py",
+          "start_line": 4,
+          "end_line": 13,
+          "reason": "The required tuple and check body establish and enforce all three fields."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre02-n1",
+      "category": "near_domain_negative",
+      "query": "Where are manifest cryptographic signatures verified?",
+      "split": "validation",
+      "leakage_group": "p02_manifest_validation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "verify_manifest_signature"
+      }
+    },
+    {
+      "id": "pre02-n2",
+      "category": "near_domain_negative",
+      "query": "Which validator checks hazardous-material transport licenses?",
+      "split": "validation",
+      "leakage_group": "p02_manifest_validation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre03-p1",
+      "category": "exact_symbol",
+      "query": "Where is reserve_dock defined?",
+      "split": "calibration",
+      "leakage_group": "p03_dock_reservation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/docks.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/docks.py",
+          "qualified_name": "src.docks.reserve_dock"
+        }
+      ],
+      "inclusion_reason": "The function associates a container with a receiving dock.",
+      "exclusion_reason": "intake.py calls it but does not define it.",
+      "evidence": [
+        {
+          "path": "src/docks.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function associates a container with a receiving dock."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.docks.reserve_dock"
+      }
+    },
+    {
+      "id": "pre03-p2",
+      "category": "caller_symbol",
+      "query": "Which caller reserves a dock only after manifest validation succeeds?",
+      "split": "calibration",
+      "leakage_group": "p03_dock_reservation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/intake.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/intake.py",
+          "qualified_name": "src.intake.register_manifest"
+        }
+      ],
+      "inclusion_reason": "register_manifest orders validation before reserve_dock.",
+      "exclusion_reason": "docks.py implements reservation without the preceding validation workflow.",
+      "evidence": [
+        {
+          "path": "src/intake.py",
+          "start_line": 7,
+          "end_line": 10,
+          "reason": "register_manifest orders validation before reserve_dock."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.intake.register_manifest"
+      }
+    },
+    {
+      "id": "pre03-n1",
+      "category": "near_domain_negative",
+      "query": "Where does dock allocation control an autonomous crane?",
+      "split": "calibration",
+      "leakage_group": "p03_dock_reservation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "control_dock_crane"
+      }
+    },
+    {
+      "id": "pre03-n2",
+      "category": "near_domain_negative",
+      "query": "How can a carrier reschedule an existing dock appointment?",
+      "split": "calibration",
+      "leakage_group": "p03_dock_reservation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre04-p1",
+      "category": "exact_symbol",
+      "query": "Where is allocate_lot defined?",
+      "split": "validation",
+      "leakage_group": "p04_inventory_allocation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/inventory.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/inventory.py",
+          "qualified_name": "src.inventory.allocate_lot"
+        }
+      ],
+      "inclusion_reason": "The function assigns a container lot to a cold-room zone.",
+      "exclusion_reason": "Dock reservation is a different allocation concept.",
+      "evidence": [
+        {
+          "path": "src/inventory.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function assigns a container lot to a cold-room zone."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.inventory.allocate_lot"
+      }
+    },
+    {
+      "id": "pre04-p2",
+      "category": "same_name_symbol",
+      "query": "Which hold function quarantines an inventory lot for quality review?",
+      "split": "validation",
+      "leakage_group": "p04_inventory_allocation",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/inventory.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/inventory.py",
+          "qualified_name": "src.inventory.hold"
+        }
+      ],
+      "inclusion_reason": "This hold returns a quarantined lot record.",
+      "exclusion_reason": "docks.hold and billing.hold use the same name for different meanings.",
+      "evidence": [
+        {
+          "path": "src/inventory.py",
+          "start_line": 9,
+          "end_line": 11,
+          "reason": "This hold returns a quarantined lot record."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.inventory.hold"
+      }
+    },
+    {
+      "id": "pre04-n1",
+      "category": "near_domain_negative",
+      "query": "Where is first-expire-first-out inventory rotation implemented?",
+      "split": "validation",
+      "leakage_group": "p04_inventory_allocation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "rotate_fefo"
+      }
+    },
+    {
+      "id": "pre04-n2",
+      "category": "near_domain_negative",
+      "query": "Which inventory function dispatches a warehouse picking robot?",
+      "split": "validation",
+      "leakage_group": "p04_inventory_allocation",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre05-p1",
+      "category": "exact_symbol",
+      "query": "Where is plan_route defined?",
+      "split": "calibration",
+      "leakage_group": "p05_route_planning",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/routing.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/routing.py",
+          "qualified_name": "src.routing.plan_route"
+        }
+      ],
+      "inclusion_reason": "The function builds a route with static weather risk.",
+      "exclusion_reason": "weather.py computes risk but does not construct the route.",
+      "evidence": [
+        {
+          "path": "src/routing.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The function builds a route with static weather risk."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.routing.plan_route"
+      }
+    },
+    {
+      "id": "pre05-p2",
+      "category": "cross_file_call",
+      "query": "Which routing function calls score_weather_risk before returning a lane?",
+      "split": "calibration",
+      "leakage_group": "p05_route_planning",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/routing.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/routing.py",
+          "qualified_name": "src.routing.plan_route"
+        }
+      ],
+      "inclusion_reason": "The route planner invokes the imported risk scorer and returns its value.",
+      "exclusion_reason": "weather.py is the callee, not the caller asked for.",
+      "evidence": [
+        {
+          "path": "src/routing.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The route planner invokes the imported risk scorer and returns its value."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.routing.plan_route"
+      }
+    },
+    {
+      "id": "pre05-n1",
+      "category": "near_domain_negative",
+      "query": "Where does route planning call a live GPS traffic API?",
+      "split": "calibration",
+      "leakage_group": "p05_route_planning",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "fetch_live_traffic"
+      }
+    },
+    {
+      "id": "pre05-n2",
+      "category": "near_domain_negative",
+      "query": "Which function minimizes route carbon emissions?",
+      "split": "calibration",
+      "leakage_group": "p05_route_planning",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre06-p1",
+      "category": "exact_symbol",
+      "query": "Where is score_weather_risk defined?",
+      "split": "validation",
+      "leakage_group": "p06_weather_scoring",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/weather.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/weather.py",
+          "qualified_name": "src.weather.score_weather_risk"
+        }
+      ],
+      "inclusion_reason": "The function definition directly answers the symbol query.",
+      "exclusion_reason": "routing.py imports and calls it but is not its definition.",
+      "evidence": [
+        {
+          "path": "src/weather.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function definition directly answers the symbol query."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.weather.score_weather_risk"
+      }
+    },
+    {
+      "id": "pre06-p2",
+      "category": "business_to_implementation",
+      "query": "Which code combines wind speed and precipitation into route weather risk?",
+      "split": "validation",
+      "leakage_group": "p06_weather_scoring",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/weather.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The return expression combines both measurements deterministically.",
+      "exclusion_reason": "routing.py supplies values but does not define the formula.",
+      "evidence": [
+        {
+          "path": "src/weather.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The return expression combines both measurements deterministically."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre06-n1",
+      "category": "near_domain_negative",
+      "query": "Where does weather scoring download a hurricane forecast?",
+      "split": "validation",
+      "leakage_group": "p06_weather_scoring",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "download_hurricane_forecast"
+      }
+    },
+    {
+      "id": "pre06-n2",
+      "category": "near_domain_negative",
+      "query": "Which module consumes satellite imagery for route risk?",
+      "split": "validation",
+      "leakage_group": "p06_weather_scoring",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre07-p1",
+      "category": "exact_symbol",
+      "query": "Where is SensorMonitor.record_temperature implemented?",
+      "split": "calibration",
+      "leakage_group": "p07_temperature_recording",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/sensors.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/sensors.py",
+          "qualified_name": "src.sensors.SensorMonitor.record_temperature"
+        }
+      ],
+      "inclusion_reason": "The class method returns the container temperature sample.",
+      "exclusion_reason": "The module-level convenience wrapper is a different symbol.",
+      "evidence": [
+        {
+          "path": "src/sensors.py",
+          "start_line": 10,
+          "end_line": 11,
+          "reason": "The class method returns the container temperature sample."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.sensors.SensorMonitor.record_temperature"
+      }
+    },
+    {
+      "id": "pre07-p2",
+      "category": "caller_symbol",
+      "query": "Which convenience function delegates a temperature sample to SensorMonitor?",
+      "split": "calibration",
+      "leakage_group": "p07_temperature_recording",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/sensors.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/sensors.py",
+          "qualified_name": "src.sensors.record_temperature"
+        }
+      ],
+      "inclusion_reason": "The module function constructs SensorMonitor and calls its method.",
+      "exclusion_reason": "SensorMonitor.record_temperature is the callee, not the wrapper.",
+      "evidence": [
+        {
+          "path": "src/sensors.py",
+          "start_line": 14,
+          "end_line": 16,
+          "reason": "The module function constructs SensorMonitor and calls its method."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.sensors.record_temperature"
+      }
+    },
+    {
+      "id": "pre07-n1",
+      "category": "near_domain_negative",
+      "query": "Where are humidity sensor samples recorded?",
+      "split": "calibration",
+      "leakage_group": "p07_temperature_recording",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "record_humidity"
+      }
+    },
+    {
+      "id": "pre07-n2",
+      "category": "near_domain_negative",
+      "query": "Which telemetry function detects calibration drift?",
+      "split": "calibration",
+      "leakage_group": "p07_temperature_recording",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre08-p1",
+      "category": "exact_symbol",
+      "query": "Where is raise_excursion_alert defined?",
+      "split": "validation",
+      "leakage_group": "p08_excursion_alert",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/alerts.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/alerts.py",
+          "qualified_name": "src.alerts.raise_excursion_alert"
+        }
+      ],
+      "inclusion_reason": "The function definition and body create the excursion notice.",
+      "exclusion_reason": "notices.py defines only the generic notice helper.",
+      "evidence": [
+        {
+          "path": "src/alerts.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The function definition and body create the excursion notice."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.alerts.raise_excursion_alert"
+      }
+    },
+    {
+      "id": "pre08-p2",
+      "category": "cross_file_call",
+      "query": "Which alert workflow calls send_notice for an exceeded temperature ceiling?",
+      "split": "validation",
+      "leakage_group": "p08_excursion_alert",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/alerts.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/alerts.py",
+          "qualified_name": "src.alerts.raise_excursion_alert"
+        }
+      ],
+      "inclusion_reason": "The alert function formats excursion detail and calls send_notice.",
+      "exclusion_reason": "notices.py is the generic callee and does not detect an excursion.",
+      "evidence": [
+        {
+          "path": "src/alerts.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The alert function formats excursion detail and calls send_notice."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.alerts.raise_excursion_alert"
+      }
+    },
+    {
+      "id": "pre08-n1",
+      "category": "near_domain_negative",
+      "query": "Where does an excursion alert automatically shut down a compressor?",
+      "split": "validation",
+      "leakage_group": "p08_excursion_alert",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "shutdown_compressor"
+      }
+    },
+    {
+      "id": "pre08-n2",
+      "category": "near_domain_negative",
+      "query": "Which alert code sends an SMS through a telecom provider?",
+      "split": "validation",
+      "leakage_group": "p08_excursion_alert",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre09-p1",
+      "category": "exact_symbol",
+      "query": "Where is send_notice defined?",
+      "split": "calibration",
+      "leakage_group": "p09_notice_queue",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/notices.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/notices.py",
+          "qualified_name": "src.notices.send_notice"
+        }
+      ],
+      "inclusion_reason": "The function definition directly returns the queued notice record.",
+      "exclusion_reason": "alerts.py calls it but does not define it.",
+      "evidence": [
+        {
+          "path": "src/notices.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function definition directly returns the queued notice record."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.notices.send_notice"
+      }
+    },
+    {
+      "id": "pre09-p2",
+      "category": "business_to_implementation",
+      "query": "Which implementation marks operational notices as queued?",
+      "split": "calibration",
+      "leakage_group": "p09_notice_queue",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/notices.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The returned record explicitly sets queued to true.",
+      "exclusion_reason": "alerts.py supplies one notice but does not implement the generic queue record.",
+      "evidence": [
+        {
+          "path": "src/notices.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The returned record explicitly sets queued to true."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre09-n1",
+      "category": "near_domain_negative",
+      "query": "Where does notice delivery retry failed email sends?",
+      "split": "calibration",
+      "leakage_group": "p09_notice_queue",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "retry_email_notice"
+      }
+    },
+    {
+      "id": "pre09-n2",
+      "category": "near_domain_negative",
+      "query": "Which notice function signs outgoing webhooks?",
+      "split": "calibration",
+      "leakage_group": "p09_notice_queue",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre10-p1",
+      "category": "exact_symbol",
+      "query": "Where is calculate_storage_fee defined?",
+      "split": "validation",
+      "leakage_group": "p10_storage_billing",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/billing.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/billing.py",
+          "qualified_name": "src.billing.calculate_storage_fee"
+        }
+      ],
+      "inclusion_reason": "The function definition calculates storage fees.",
+      "exclusion_reason": "The billing policy explains the rule but is not code definition evidence.",
+      "evidence": [
+        {
+          "path": "src/billing.py",
+          "start_line": 4,
+          "end_line": 7,
+          "reason": "The function definition calculates storage fees."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.billing.calculate_storage_fee"
+      }
+    },
+    {
+      "id": "pre10-p2",
+      "category": "business_to_implementation",
+      "query": "Which implementation subtracts two free storage hours before charging?",
+      "split": "validation",
+      "leakage_group": "p10_storage_billing",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/billing.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The code subtracts two hours and applies the hourly rate.",
+      "exclusion_reason": "The policy documents the rule but does not implement the calculation.",
+      "evidence": [
+        {
+          "path": "src/billing.py",
+          "start_line": 4,
+          "end_line": 7,
+          "reason": "The code subtracts two hours and applies the hourly rate."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre10-n1",
+      "category": "near_domain_negative",
+      "query": "Where is live currency conversion applied to storage fees?",
+      "split": "validation",
+      "leakage_group": "p10_storage_billing",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "convert_storage_currency"
+      }
+    },
+    {
+      "id": "pre10-n2",
+      "category": "near_domain_negative",
+      "query": "Which billing code calculates a fuel surcharge?",
+      "split": "validation",
+      "leakage_group": "p10_storage_billing",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre11-p1",
+      "category": "exact_symbol",
+      "query": "Where is write_audit_entry defined?",
+      "split": "calibration",
+      "leakage_group": "p11_audit_construction",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/audit.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/audit.py",
+          "qualified_name": "src.audit.write_audit_entry"
+        }
+      ],
+      "inclusion_reason": "The function constructs the audit event record.",
+      "exclusion_reason": "Callers in reports and handoff do not define the function.",
+      "evidence": [
+        {
+          "path": "src/audit.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function constructs the audit event record."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.audit.write_audit_entry"
+      }
+    },
+    {
+      "id": "pre11-p2",
+      "category": "business_to_implementation",
+      "query": "Which code constructs an immutable actor-action-object audit event?",
+      "split": "calibration",
+      "leakage_group": "p11_audit_construction",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/audit.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The function returns exactly those three audit fields.",
+      "exclusion_reason": "No persistence behavior is claimed by this query.",
+      "evidence": [
+        {
+          "path": "src/audit.py",
+          "start_line": 4,
+          "end_line": 6,
+          "reason": "The function returns exactly those three audit fields."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre11-n1",
+      "category": "near_domain_negative",
+      "query": "Where are audit entries appended to a database?",
+      "split": "calibration",
+      "leakage_group": "p11_audit_construction",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "persist_audit_entry"
+      }
+    },
+    {
+      "id": "pre11-n2",
+      "category": "near_domain_negative",
+      "query": "Which audit function builds a cryptographic hash chain?",
+      "split": "calibration",
+      "leakage_group": "p11_audit_construction",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre12-p1",
+      "category": "exact_symbol",
+      "query": "Where is build_shift_report defined?",
+      "split": "validation",
+      "leakage_group": "p12_shift_reporting",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/reports.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/reports.py",
+          "qualified_name": "src.reports.build_shift_report"
+        }
+      ],
+      "inclusion_reason": "The function definition composes the report.",
+      "exclusion_reason": "sensors.py and audit.py implement its dependencies.",
+      "evidence": [
+        {
+          "path": "src/reports.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "The function definition composes the report."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.reports.build_shift_report"
+      }
+    },
+    {
+      "id": "pre12-p2",
+      "category": "cross_file_call",
+      "query": "Which reporting workflow combines record_temperature with write_audit_entry?",
+      "split": "validation",
+      "leakage_group": "p12_shift_reporting",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/reports.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/reports.py",
+          "qualified_name": "src.reports.build_shift_report"
+        }
+      ],
+      "inclusion_reason": "The report function calls both imported functions before returning.",
+      "exclusion_reason": "The two dependency modules do not combine both operations.",
+      "evidence": [
+        {
+          "path": "src/reports.py",
+          "start_line": 7,
+          "end_line": 11,
+          "reason": "The report function calls both imported functions before returning."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.reports.build_shift_report"
+      }
+    },
+    {
+      "id": "pre12-n1",
+      "category": "near_domain_negative",
+      "query": "Where is a shift report rendered as a PDF?",
+      "split": "validation",
+      "leakage_group": "p12_shift_reporting",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "render_shift_pdf"
+      }
+    },
+    {
+      "id": "pre12-n2",
+      "category": "near_domain_negative",
+      "query": "Which report computes weekly trend analytics?",
+      "split": "validation",
+      "leakage_group": "p12_shift_reporting",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre13-p1",
+      "category": "exact_symbol",
+      "query": "Where is handoff_container defined?",
+      "split": "calibration",
+      "leakage_group": "p13_custody_handoff",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/handoff.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/handoff.py",
+          "qualified_name": "src.handoff.handoff_container"
+        }
+      ],
+      "inclusion_reason": "The function definition returns the custody transfer record.",
+      "exclusion_reason": "audit.py is a dependency, not the requested definition.",
+      "evidence": [
+        {
+          "path": "src/handoff.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The function definition returns the custody transfer record."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.handoff.handoff_container"
+      }
+    },
+    {
+      "id": "pre13-p2",
+      "category": "cross_file_call",
+      "query": "Which custody workflow writes a handoff audit entry?",
+      "split": "calibration",
+      "leakage_group": "p13_custody_handoff",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/handoff.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/handoff.py",
+          "qualified_name": "src.handoff.handoff_container"
+        }
+      ],
+      "inclusion_reason": "The handoff workflow invokes write_audit_entry with the handoff action.",
+      "exclusion_reason": "audit.py constructs events but does not perform the custody workflow.",
+      "evidence": [
+        {
+          "path": "src/handoff.py",
+          "start_line": 6,
+          "end_line": 9,
+          "reason": "The handoff workflow invokes write_audit_entry with the handoff action."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.handoff.handoff_container"
+      }
+    },
+    {
+      "id": "pre13-n1",
+      "category": "near_domain_negative",
+      "query": "Where is a custody handoff digitally signed by both teams?",
+      "split": "calibration",
+      "leakage_group": "p13_custody_handoff",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "sign_handoff"
+      }
+    },
+    {
+      "id": "pre13-n2",
+      "category": "near_domain_negative",
+      "query": "Which handoff function notifies a customs authority?",
+      "split": "calibration",
+      "leakage_group": "p13_custody_handoff",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre14-p1",
+      "category": "exact_symbol",
+      "query": "Where is MaintenancePlanner.schedule implemented?",
+      "split": "validation",
+      "leakage_group": "p14_maintenance_planning",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "definition",
+      "relevant_paths": [
+        "src/maintenance.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/maintenance.py",
+          "qualified_name": "src.maintenance.MaintenancePlanner.schedule"
+        }
+      ],
+      "inclusion_reason": "The class method creates a scheduled work order.",
+      "exclusion_reason": "The module wrapper is a separate caller.",
+      "evidence": [
+        {
+          "path": "src/maintenance.py",
+          "start_line": 7,
+          "end_line": 8,
+          "reason": "The class method creates a scheduled work order."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.maintenance.MaintenancePlanner.schedule"
+      }
+    },
+    {
+      "id": "pre14-p2",
+      "category": "caller_symbol",
+      "query": "Which wrapper delegates refrigeration service scheduling to MaintenancePlanner?",
+      "split": "validation",
+      "leakage_group": "p14_maintenance_planning",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "caller",
+      "relevant_paths": [
+        "src/maintenance.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/maintenance.py",
+          "qualified_name": "src.maintenance.schedule_maintenance"
+        }
+      ],
+      "inclusion_reason": "The wrapper constructs the planner and calls schedule.",
+      "exclusion_reason": "The class method is the callee rather than the requested wrapper.",
+      "evidence": [
+        {
+          "path": "src/maintenance.py",
+          "start_line": 11,
+          "end_line": 13,
+          "reason": "The wrapper constructs the planner and calls schedule."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.maintenance.schedule_maintenance"
+      }
+    },
+    {
+      "id": "pre14-n1",
+      "category": "near_domain_negative",
+      "query": "Where does maintenance predict compressor failure with machine learning?",
+      "split": "validation",
+      "leakage_group": "p14_maintenance_planning",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "predict_compressor_failure"
+      }
+    },
+    {
+      "id": "pre14-n2",
+      "category": "near_domain_negative",
+      "query": "Which maintenance workflow reserves replacement parts?",
+      "split": "validation",
+      "leakage_group": "p14_maintenance_planning",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre15-p1",
+      "category": "documentation_rule",
+      "query": "Which document requires temperature samples at every custody handoff?",
+      "split": "calibration",
+      "leakage_group": "p15_cold_chain_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/cold-chain-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy directly states the sampling requirement.",
+      "exclusion_reason": "Code records samples but does not state this universal policy rule.",
+      "evidence": [
+        {
+          "path": "docs/cold-chain-policy.md",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "The policy directly states the sampling requirement."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre15-p2",
+      "category": "documentation_rule",
+      "query": "Which policy lists the manifest fields required before dock reservation?",
+      "split": "calibration",
+      "leakage_group": "p15_cold_chain_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/cold-chain-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy names container, commodity and target temperature.",
+      "exclusion_reason": "validation.py implements matching checks, but the query asks for policy.",
+      "evidence": [
+        {
+          "path": "docs/cold-chain-policy.md",
+          "start_line": 5,
+          "end_line": 6,
+          "reason": "The policy names container, commodity and target temperature."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre15-n1",
+      "category": "near_domain_negative",
+      "query": "Which policy requires temperature samples every five minutes?",
+      "split": "calibration",
+      "leakage_group": "p15_cold_chain_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre15-n2",
+      "category": "near_domain_negative",
+      "query": "Where does cold-chain policy require annual driver certification?",
+      "split": "calibration",
+      "leakage_group": "p15_cold_chain_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre16-p1",
+      "category": "documentation_rule",
+      "query": "Which document requires operations to receive notice after a temperature ceiling is exceeded?",
+      "split": "validation",
+      "leakage_group": "p16_incident_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/incident-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The incident policy directly states the notice obligation.",
+      "exclusion_reason": "alerts.py implements a notice but is not the document requested.",
+      "evidence": [
+        {
+          "path": "docs/incident-policy.md",
+          "start_line": 1,
+          "end_line": 4,
+          "reason": "The incident policy directly states the notice obligation."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre16-p2",
+      "category": "documentation_rule",
+      "query": "Which policy says a temperature incident record must identify the container?",
+      "split": "validation",
+      "leakage_group": "p16_incident_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/incident-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The second sentence directly requires container identity.",
+      "exclusion_reason": "No other document states this incident-record requirement.",
+      "evidence": [
+        {
+          "path": "docs/incident-policy.md",
+          "start_line": 3,
+          "end_line": 4,
+          "reason": "The second sentence directly requires container identity."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre16-n1",
+      "category": "near_domain_negative",
+      "query": "Which incident policy lists an emergency telephone number?",
+      "split": "validation",
+      "leakage_group": "p16_incident_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre16-n2",
+      "category": "near_domain_negative",
+      "query": "Where is a ten-minute escalation deadline documented?",
+      "split": "validation",
+      "leakage_group": "p16_incident_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre17-p1",
+      "category": "documentation_rule",
+      "query": "How long does policy retain custody handoff and shift-report audit events?",
+      "split": "calibration",
+      "leakage_group": "p17_retention_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/retention-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy states a 180-day retention period.",
+      "exclusion_reason": "Code constructs events but does not state retention duration.",
+      "evidence": [
+        {
+          "path": "docs/retention-policy.md",
+          "start_line": 1,
+          "end_line": 3,
+          "reason": "The policy states a 180-day retention period."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre17-p2",
+      "category": "documentation_rule",
+      "query": "How long are telemetry samples retained according to policy?",
+      "split": "calibration",
+      "leakage_group": "p17_retention_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/retention-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy states telemetry samples are retained 30 days.",
+      "exclusion_reason": "sensors.py records samples but has no retention rule.",
+      "evidence": [
+        {
+          "path": "docs/retention-policy.md",
+          "start_line": 1,
+          "end_line": 4,
+          "reason": "The policy states telemetry samples are retained 30 days."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre17-n1",
+      "category": "near_domain_negative",
+      "query": "How long are billing invoices retained?",
+      "split": "calibration",
+      "leakage_group": "p17_retention_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre17-n2",
+      "category": "near_domain_negative",
+      "query": "Where is automatic deletion after retention implemented?",
+      "split": "calibration",
+      "leakage_group": "p17_retention_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "delete_expired_records"
+      }
+    },
+    {
+      "id": "pre18-p1",
+      "category": "documentation_rule",
+      "query": "Which policy grants the first two hours of cold-room storage free?",
+      "split": "validation",
+      "leakage_group": "p18_billing_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/billing-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The billing policy directly states the two-hour allowance.",
+      "exclusion_reason": "billing.py implements it but is not the policy requested.",
+      "evidence": [
+        {
+          "path": "docs/billing-policy.md",
+          "start_line": 1,
+          "end_line": 4,
+          "reason": "The billing policy directly states the two-hour allowance."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre18-p2",
+      "category": "documentation_rule",
+      "query": "Which document says fuel surcharges and currency conversion are outside its rules?",
+      "split": "validation",
+      "leakage_group": "p18_billing_policy",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "documentation",
+      "relevant_paths": [
+        "docs/billing-policy.md"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The policy explicitly excludes both subjects.",
+      "exclusion_reason": "No code or other document makes this scope statement.",
+      "evidence": [
+        {
+          "path": "docs/billing-policy.md",
+          "start_line": 3,
+          "end_line": 4,
+          "reason": "The policy explicitly excludes both subjects."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre18-n1",
+      "category": "near_domain_negative",
+      "query": "What tax percentage does the billing policy require?",
+      "split": "validation",
+      "leakage_group": "p18_billing_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre18-n2",
+      "category": "near_domain_negative",
+      "query": "Which policy defines a weekend storage surcharge?",
+      "split": "validation",
+      "leakage_group": "p18_billing_policy",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre19-p1",
+      "category": "same_name_symbol",
+      "query": "Which hold function quarantines a lot rather than a dock or payment authorization?",
+      "split": "calibration",
+      "leakage_group": "p19_same_name_hold",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/inventory.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/inventory.py",
+          "qualified_name": "src.inventory.hold"
+        }
+      ],
+      "inclusion_reason": "The inventory hold returns a quarantined lot.",
+      "exclusion_reason": "docks.hold and billing.hold are intentionally same-named distractors.",
+      "evidence": [
+        {
+          "path": "src/inventory.py",
+          "start_line": 9,
+          "end_line": 11,
+          "reason": "The inventory hold returns a quarantined lot."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.inventory.hold"
+      }
+    },
+    {
+      "id": "pre19-p2",
+      "category": "same_name_symbol",
+      "query": "Which hold function temporarily reserves a physical dock door?",
+      "split": "calibration",
+      "leakage_group": "p19_same_name_hold",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "implementation",
+      "relevant_paths": [
+        "src/docks.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "src/docks.py",
+          "qualified_name": "src.docks.hold"
+        }
+      ],
+      "inclusion_reason": "The dock hold returns a held dock-door record.",
+      "exclusion_reason": "inventory.hold quarantines lots and billing.hold handles payment authorization.",
+      "evidence": [
+        {
+          "path": "src/docks.py",
+          "start_line": 9,
+          "end_line": 11,
+          "reason": "The dock hold returns a held dock-door record."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "qualified_name": "src.docks.hold"
+      }
+    },
+    {
+      "id": "pre19-n1",
+      "category": "near_domain_negative",
+      "query": "Where is a dock hold released?",
+      "split": "calibration",
+      "leakage_group": "p19_same_name_hold",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false,
+      "symbol_query": {
+        "name": "release_dock_hold"
+      }
+    },
+    {
+      "id": "pre19-n2",
+      "category": "near_domain_negative",
+      "query": "Which function releases a quarantined inventory lot?",
+      "split": "calibration",
+      "leakage_group": "p19_same_name_hold",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre20-p1",
+      "category": "cross_file_import",
+      "query": "Which package entry point exports register_manifest?",
+      "split": "validation",
+      "leakage_group": "p20_package_exports",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "import",
+      "relevant_paths": [
+        "src/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The package initializer imports and lists register_manifest in __all__.",
+      "exclusion_reason": "intake.py defines the function but is not the package export boundary.",
+      "evidence": [
+        {
+          "path": "src/__init__.py",
+          "start_line": 1,
+          "end_line": 6,
+          "reason": "The package initializer imports and lists register_manifest in __all__."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre20-p2",
+      "category": "cross_file_import",
+      "query": "Which package entry point exports plan_route?",
+      "split": "validation",
+      "leakage_group": "p20_package_exports",
+      "no_evidence": false,
+      "difficulty": "positive",
+      "evidence_type": "import",
+      "relevant_paths": [
+        "src/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "inclusion_reason": "The package initializer imports and lists plan_route in __all__.",
+      "exclusion_reason": "routing.py defines the function but is not the export boundary.",
+      "evidence": [
+        {
+          "path": "src/__init__.py",
+          "start_line": 1,
+          "end_line": 6,
+          "reason": "The package initializer imports and lists plan_route in __all__."
+        }
+      ],
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre20-n1",
+      "category": "near_domain_negative",
+      "query": "Does the package entry point export schedule_maintenance?",
+      "split": "validation",
+      "leakage_group": "p20_package_exports",
+      "no_evidence": true,
+      "difficulty": "near_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "pre20-n2",
+      "category": "out_of_domain_negative",
+      "query": "Where does this repository implement video transcoding?",
+      "split": "validation",
+      "leakage_group": "p20_package_exports",
+      "no_evidence": true,
+      "difficulty": "out_of_domain",
+      "evidence_type": "none",
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "inclusion_reason": "This query is a controlled negative: the requested capability is absent from the frozen Northstar fixture.",
+      "exclusion_reason": "No file in the complete frozen fixture provides direct code or documentation evidence answering this intent.",
+      "evidence": [],
+      "scope_checked": "All 20 files in tests/fixtures/retrieval_eval_preproduct_repo (15 under src/, 4 under docs/, and README.md) were checked for direct evidence; absence is scoped to this frozen synthetic snapshot.",
+      "label_origin": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    }
+  ]
+}
+

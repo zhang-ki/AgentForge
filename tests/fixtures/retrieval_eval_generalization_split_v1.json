@@ -1,0 +1,176 @@
+{
+  "dataset_version": "agentforge-retrieval-generalization-v1",
+  "plan_version": "agentforge-retrieval-generalization-split-v1",
+  "status": "fixed_provisional_ai_group_isolated",
+  "split_rule": "Assign complete leakage groups before retrieval evaluation; alternating subject groups by stable group list. No query or group may cross Calibration and Validation.",
+  "tuning_boundary": "RRF k=60 and historical top_score >= 0.70 are predeclared. Calibration is used to assess transfer and no post-Validation tuning is allowed.",
+  "group_assignments": [
+    {
+      "leakage_group": "g01_visit_assignment",
+      "query_ids": [
+        "g01-p01",
+        "g01-p02",
+        "g01-n01",
+        "g01-n02"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "g02_deposit_flow",
+      "query_ids": [
+        "g02-p01",
+        "g02-p02",
+        "g02-n01",
+        "g02-n02"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "g03_same_name_hold",
+      "query_ids": [
+        "g03-p01",
+        "g03-p02",
+        "g03-n01",
+        "g03-n02"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "g04_climate_targets",
+      "query_ids": [
+        "g04-p01",
+        "g04-p02",
+        "g04-n01",
+        "g04-n02"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "g05_badge_access",
+      "query_ids": [
+        "g05-p01",
+        "g05-p02",
+        "g05-n01",
+        "g05-n02"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "g06_catalog_archive",
+      "query_ids": [
+        "g06-p01",
+        "g06-p02",
+        "g06-n01",
+        "g06-n02"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "g07_closure_notice",
+      "query_ids": [
+        "g07-p01",
+        "g07-p02",
+        "g07-n01",
+        "g07-n02"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "g08_catalog_attachment",
+      "query_ids": [
+        "g08-p01",
+        "g08-p02",
+        "g08-n01",
+        "g08-n02"
+      ],
+      "split": "validation"
+    },
+    {
+      "leakage_group": "g09_visitor_policy",
+      "query_ids": [
+        "g09-p01",
+        "g09-p02",
+        "g09-n01",
+        "g09-n02"
+      ],
+      "split": "calibration"
+    },
+    {
+      "leakage_group": "g10_daily_reporting",
+      "query_ids": [
+        "g10-p01",
+        "g10-p02",
+        "g10-n01",
+        "g10-n02"
+      ],
+      "split": "validation"
+    }
+  ],
+  "splits": {
+    "calibration": [
+      "g01-p01",
+      "g01-p02",
+      "g01-n01",
+      "g01-n02",
+      "g03-p01",
+      "g03-p02",
+      "g03-n01",
+      "g03-n02",
+      "g05-p01",
+      "g05-p02",
+      "g05-n01",
+      "g05-n02",
+      "g07-p01",
+      "g07-p02",
+      "g07-n01",
+      "g07-n02",
+      "g09-p01",
+      "g09-p02",
+      "g09-n01",
+      "g09-n02"
+    ],
+    "validation": [
+      "g02-p01",
+      "g02-p02",
+      "g02-n01",
+      "g02-n02",
+      "g04-p01",
+      "g04-p02",
+      "g04-n01",
+      "g04-n02",
+      "g06-p01",
+      "g06-p02",
+      "g06-n01",
+      "g06-n02",
+      "g08-p01",
+      "g08-p02",
+      "g08-n01",
+      "g08-n02",
+      "g10-p01",
+      "g10-p02",
+      "g10-n01",
+      "g10-n02"
+    ]
+  },
+  "expected_distribution": {
+    "calibration": {
+      "query_count": 20,
+      "evidence": 10,
+      "no_evidence": 10,
+      "near_domain_negative": 10,
+      "out_of_domain_negative": 0
+    },
+    "validation": {
+      "query_count": 20,
+      "evidence": 10,
+      "no_evidence": 10,
+      "near_domain_negative": 9,
+      "out_of_domain_negative": 1
+    }
+  },
+  "status_notes": [
+    "AI-provisional only; no human labels.",
+    "The split assignment is frozen independently of retrieval scores.",
+    "Validation must be evaluated once after fixed experiment configuration."
+  ]
+}

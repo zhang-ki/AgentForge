@@ -1,0 +1,263 @@
+{
+  "dataset_version": "agentforge-retrieval-v2-candidates",
+  "parent_dataset_version": "agentforge-retrieval-v1-expansion-candidates",
+  "parent_dataset_sha256": "877B30B0F7827243CA04C79450C3116059033557F2DBFA3F408CDA53EB6154C1",
+  "corpus": "tests/fixtures/retrieval_eval_repo",
+  "review_status": "pending_human_review",
+  "label_rule": "Candidate labels are provisional and scoped only to the frozen eight-file synthetic corpus. Positive labels require line-addressable direct evidence. No-evidence means the frozen corpus lacks sufficient evidence, not that the question is universally unanswerable.",
+  "queries": [
+    {
+      "id": "candidate-business-continuity", "category": "business_concept_without_shared_terms", "leakage_group": "lease_identity",
+      "query": "Where does the application recover a returning person's approved identity without another login prompt?",
+      "relevant_paths": ["docs/continuity.md", "pkg/session.py"], "relevant_symbols": [],
+      "evidence": [
+        {"path": "docs/continuity.md", "start_line": 1, "end_line": 3, "reason": "Directly describes resuming an approved principal without a fresh credential prompt."},
+        {"path": "pkg/session.py", "start_line": 9, "end_line": 11, "reason": "restore_identity_from_lease returns the principal from an existing lease."}
+      ],
+      "inclusion_reason": "Policy explanation and direct implementation both answer the concept query.", "exclusion_reason": "Session rotation and storage files do not explain identity restoration.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-cross-file-renewal", "category": "cross_file_import_reference", "leakage_group": "session_rotation_flow",
+      "query": "Which request handler imports and calls the stale session key rotation function?", "symbol_query": {"qualified_name": "pkg.handlers.handle_expired_session"},
+      "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": [{"path": "pkg/handlers.py", "qualified_name": "pkg.handlers.handle_expired_session"}],
+      "evidence": [{"path": "pkg/handlers.py", "start_line": 3, "end_line": 8, "reason": "Imports rotate_session_key and calls it from handle_expired_session."}],
+      "inclusion_reason": "The query directly asks for the importing call site.", "exclusion_reason": "pkg/session.py defines the callee but is not the request handler.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-renewal-implementation", "category": "business_concept_to_implementation", "leakage_group": "session_rotation_flow",
+      "query": "How is an expired session key replaced with a fresh synthetic key?", "symbol_query": {"name": "rotate_session_key"},
+      "relevant_paths": ["pkg/session.py"], "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.rotate_session_key"}],
+      "evidence": [{"path": "pkg/session.py", "start_line": 4, "end_line": 6, "reason": "The function directly implements key replacement."}],
+      "inclusion_reason": "The function is the requested implementation.", "exclusion_reason": "The handler calls the function but does not implement the transformation.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-lookup", "category": "duplicate_symbol_disambiguation", "leakage_group": "token_cache_lookup",
+      "query": "Which lookup returns a token record for a key?", "symbol_query": {"qualified_name": "pkg.token_cache.lookup"},
+      "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.lookup"}],
+      "evidence": [{"path": "pkg/token_cache.py", "start_line": 4, "end_line": 6, "reason": "Returns a token record keyed by the argument."}],
+      "inclusion_reason": "Token semantics select this same-named function.", "exclusion_reason": "pkg/preferences.py::lookup returns a display preference.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-preference-lookup", "category": "duplicate_symbol_disambiguation", "leakage_group": "preference_lookup",
+      "query": "Which lookup returns a display preference by name?", "symbol_query": {"qualified_name": "pkg.preferences.lookup"},
+      "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.lookup"}],
+      "evidence": [{"path": "pkg/preferences.py", "start_line": 4, "end_line": 6, "reason": "Returns a preference record for a display preference name."}],
+      "inclusion_reason": "Preference semantics select this same-named function.", "exclusion_reason": "pkg/token_cache.py::lookup handles token records.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-policy-save", "category": "similar_names_different_meaning", "leakage_group": "token_policy_save",
+      "query": "Where is a selected token policy stored?", "symbol_query": {"name": "save_token_choice"},
+      "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.save_token_choice"}],
+      "evidence": [{"path": "pkg/token_cache.py", "start_line": 9, "end_line": 11, "reason": "save_token_choice returns a token_policy record."}],
+      "inclusion_reason": "Token policy maps to save_token_choice.", "exclusion_reason": "save_theme_choice stores a display theme.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-theme-save", "category": "similar_names_different_meaning", "leakage_group": "theme_save",
+      "query": "Where is the chosen display theme stored?", "symbol_query": {"name": "save_theme_choice"},
+      "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.save_theme_choice"}],
+      "evidence": [{"path": "pkg/preferences.py", "start_line": 9, "end_line": 11, "reason": "save_theme_choice returns a theme record."}],
+      "inclusion_reason": "Display theme maps to save_theme_choice.", "exclusion_reason": "save_token_choice stores a token policy.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-storage-separation", "category": "documentation_evidence", "leakage_group": "storage_separation",
+      "query": "Where is it documented that token records and display themes are separate features?",
+      "relevant_paths": ["docs/storage.md"], "relevant_symbols": [],
+      "evidence": [{"path": "docs/storage.md", "start_line": 1, "end_line": 3, "reason": "Explicitly distinguishes token cache records from display preferences."}],
+      "inclusion_reason": "The query asks for the direct documentation passage.", "exclusion_reason": "Each implementation module describes only one side of the distinction.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-password-reset", "category": "no_sufficient_evidence", "leakage_group": "credential_recovery_absent", "difficulty": "near_domain",
+      "query": "Which function sends a password reset email?", "symbol_query": {"name": "send_password_reset_email"},
+      "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.",
+      "inclusion_reason": "Plausible account-management request absent from the snapshot.", "exclusion_reason": "No file declares or documents email or password reset behavior.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-account-delete", "category": "no_sufficient_evidence", "leakage_group": "account_lifecycle_absent", "difficulty": "near_domain",
+      "query": "Where is permanent user account deletion implemented?", "symbol_query": {"name": "delete_account"},
+      "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.",
+      "inclusion_reason": "Plausible identity feature absent from the snapshot.", "exclusion_reason": "Session continuity is present, but account deletion is not.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-avatar-upload", "category": "no_sufficient_evidence", "leakage_group": "media_absent", "difficulty": "out_of_domain",
+      "query": "How does the repository resize and upload profile avatar images?", "symbol_query": {"name": "upload_avatar"},
+      "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.",
+      "inclusion_reason": "Unrelated realistic profile feature absent from the snapshot.", "exclusion_reason": "No source or document contains image or upload behavior.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-invoice-refund", "category": "no_sufficient_evidence", "leakage_group": "billing_absent", "difficulty": "out_of_domain",
+      "query": "Which code refunds a paid invoice and reverses the ledger entry?", "symbol_query": {"name": "refund_invoice"},
+      "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.",
+      "inclusion_reason": "Unrelated billing request probes false acceptance.", "exclusion_reason": "No billing, payment, invoice or ledger evidence exists.", "review_status": "pending_human_review"
+    },
+
+    {
+      "id": "candidate-restore-principal", "category": "business_concept_to_implementation", "leakage_group": "lease_identity",
+      "query": "Which function obtains the authorized principal from an existing lease?", "symbol_query": {"name": "restore_identity_from_lease"},
+      "relevant_paths": ["pkg/session.py"], "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.restore_identity_from_lease"}],
+      "evidence": [{"path": "pkg/session.py", "start_line": 9, "end_line": 11, "reason": "Returns lease.principal directly."}],
+      "inclusion_reason": "This is the direct principal-restoration implementation.", "exclusion_reason": "Continuity documentation describes policy but does not perform the operation.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-coordinator-renew", "category": "nested_call_relationship", "leakage_group": "lease_identity",
+      "query": "Which class method extends an approved lease while preserving the principal?", "symbol_query": {"qualified_name": "pkg.session.SessionCoordinator.renew"},
+      "relevant_paths": ["pkg/session.py"], "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.SessionCoordinator.renew"}],
+      "evidence": [{"path": "pkg/session.py", "start_line": 14, "end_line": 19, "reason": "SessionCoordinator.renew delegates to restore_identity_from_lease."}],
+      "inclusion_reason": "The method directly matches the class-method request.", "exclusion_reason": "The standalone helper lacks the requested class-method role.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-continuity-policy", "category": "documentation_evidence", "leakage_group": "lease_identity",
+      "query": "Which document states that a fresh credential prompt is unnecessary while a lease remains acceptable?",
+      "relevant_paths": ["docs/continuity.md"], "relevant_symbols": [],
+      "evidence": [{"path": "docs/continuity.md", "start_line": 1, "end_line": 3, "reason": "States the credential-prompt rule explicitly."}],
+      "inclusion_reason": "The query asks specifically for documentation.", "exclusion_reason": "Implementation code restores identity but does not state the complete user-facing rule.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-rotation-output", "category": "implementation_behavior", "leakage_group": "session_rotation_flow",
+      "query": "Which implementation appends the '-rotated' suffix to an old key?", "symbol_query": {"name": "rotate_session_key"},
+      "relevant_paths": ["pkg/session.py"], "relevant_symbols": [{"path": "pkg/session.py", "qualified_name": "pkg.session.rotate_session_key"}],
+      "evidence": [{"path": "pkg/session.py", "start_line": 4, "end_line": 6, "reason": "The return statement appends '-rotated'."}],
+      "inclusion_reason": "The function contains the exact transformation.", "exclusion_reason": "The handler only forwards the function result.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-rotation-import", "category": "cross_file_import_reference", "leakage_group": "session_rotation_flow",
+      "query": "Where is rotate_session_key imported with a relative import?",
+      "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": [],
+      "evidence": [{"path": "pkg/handlers.py", "start_line": 3, "end_line": 3, "reason": "Contains the relative import from .session."}],
+      "inclusion_reason": "The import declaration directly answers the query.", "exclusion_reason": "The definition file contains no import of itself.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-handler-return", "category": "caller_vs_implementation_boundary", "leakage_group": "session_rotation_flow",
+      "query": "Which boundary handler returns the result of rotating a stale session key?", "symbol_query": {"name": "handle_expired_session"},
+      "relevant_paths": ["pkg/handlers.py"], "relevant_symbols": [{"path": "pkg/handlers.py", "qualified_name": "pkg.handlers.handle_expired_session"}],
+      "evidence": [{"path": "pkg/handlers.py", "start_line": 6, "end_line": 8, "reason": "The handler returns rotate_session_key(key)."}],
+      "inclusion_reason": "The caller is primary because the query asks for the boundary handler.", "exclusion_reason": "The callee implements rotation but is not the requested boundary handler.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-return-shape", "category": "duplicate_symbol_disambiguation", "leakage_group": "token_cache_lookup",
+      "query": "Which same-named lookup returns a dictionary with the key 'token'?", "symbol_query": {"qualified_name": "pkg.token_cache.lookup"},
+      "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.lookup"}],
+      "evidence": [{"path": "pkg/token_cache.py", "start_line": 4, "end_line": 6, "reason": "The return value is {'token': key}."}],
+      "inclusion_reason": "The return schema uniquely identifies token_cache.lookup.", "exclusion_reason": "preferences.lookup returns a 'preference' key.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-preference-return-shape", "category": "duplicate_symbol_disambiguation", "leakage_group": "preference_lookup",
+      "query": "Which same-named lookup returns a dictionary with the key 'preference'?", "symbol_query": {"qualified_name": "pkg.preferences.lookup"},
+      "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.lookup"}],
+      "evidence": [{"path": "pkg/preferences.py", "start_line": 4, "end_line": 6, "reason": "The return value is {'preference': name}."}],
+      "inclusion_reason": "The return schema uniquely identifies preferences.lookup.", "exclusion_reason": "token_cache.lookup returns a 'token' key.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-token-policy-return", "category": "similar_names_different_meaning", "leakage_group": "token_policy_save",
+      "query": "Which save function returns a token_policy mapping?", "symbol_query": {"name": "save_token_choice"},
+      "relevant_paths": ["pkg/token_cache.py"], "relevant_symbols": [{"path": "pkg/token_cache.py", "qualified_name": "pkg.token_cache.save_token_choice"}],
+      "evidence": [{"path": "pkg/token_cache.py", "start_line": 9, "end_line": 11, "reason": "Returns {'token_policy': choice}."}],
+      "inclusion_reason": "The output field identifies the token-policy save function.", "exclusion_reason": "save_theme_choice returns a theme mapping.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-theme-return", "category": "similar_names_different_meaning", "leakage_group": "theme_save",
+      "query": "Which save function returns a theme mapping?", "symbol_query": {"name": "save_theme_choice"},
+      "relevant_paths": ["pkg/preferences.py"], "relevant_symbols": [{"path": "pkg/preferences.py", "qualified_name": "pkg.preferences.save_theme_choice"}],
+      "evidence": [{"path": "pkg/preferences.py", "start_line": 9, "end_line": 11, "reason": "Returns {'theme': choice}."}],
+      "inclusion_reason": "The output field identifies the theme save function.", "exclusion_reason": "save_token_choice returns a token_policy mapping.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-storage-shared-name", "category": "documentation_evidence", "leakage_group": "storage_separation",
+      "query": "Which document explains why two separate features can both use an operation named lookup?",
+      "relevant_paths": ["docs/storage.md"], "relevant_symbols": [],
+      "evidence": [{"path": "docs/storage.md", "start_line": 1, "end_line": 3, "reason": "Explains separate token and display features despite shared lookup naming."}],
+      "inclusion_reason": "The document explicitly explains the naming ambiguity.", "exclusion_reason": "Each implementation shows only one lookup and not the cross-feature explanation.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-fixture-nonexecution", "category": "documentation_evidence", "leakage_group": "fixture_docs",
+      "query": "Where is it stated that the artificial evaluation source must never be executed as a project?",
+      "relevant_paths": ["README.md"], "relevant_symbols": [],
+      "evidence": [{"path": "README.md", "start_line": 1, "end_line": 3, "reason": "The fixture README contains the non-execution instruction."}],
+      "inclusion_reason": "The README directly states the requested fixture rule.", "exclusion_reason": "Code and feature documents do not describe fixture execution policy.", "review_status": "pending_human_review"
+    },
+
+    {
+      "id": "candidate-no-password-change", "category": "no_sufficient_evidence", "leakage_group": "credential_recovery_absent", "difficulty": "near_domain",
+      "query": "Where is a signed-in user's password changed?", "symbol_query": {"name": "change_password"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Near-domain credential operation probes confusion with session continuity.", "exclusion_reason": "No password mutation, credential storage or account settings implementation exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-mfa-enroll", "category": "no_sufficient_evidence", "leakage_group": "credential_security_absent", "difficulty": "near_domain",
+      "query": "Which function enrolls a time-based one-time-password factor?", "symbol_query": {"name": "enroll_totp"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Near-domain authentication security operation.", "exclusion_reason": "No MFA, TOTP, enrollment or secret provisioning evidence exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-oauth-link", "category": "no_sufficient_evidence", "leakage_group": "credential_security_absent", "difficulty": "near_domain",
+      "query": "Where is an external OAuth identity linked to the current account?", "symbol_query": {"name": "link_oauth_identity"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Near-domain identity operation may resemble lease identity restoration.", "exclusion_reason": "No OAuth provider, authorization callback or identity-linking code exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-logout-all", "category": "no_sufficient_evidence", "leakage_group": "session_termination_absent", "difficulty": "near_domain",
+      "query": "Which code logs the user out from every active session?", "symbol_query": {"name": "logout_all_sessions"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard session-domain negative contrasts with renewal and continuity.", "exclusion_reason": "The snapshot renews/restores sessions but never terminates all sessions.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-invalidate-sessions", "category": "no_sufficient_evidence", "leakage_group": "session_termination_absent", "difficulty": "near_domain",
+      "query": "Where are all existing session keys invalidated after a security incident?", "symbol_query": {"name": "invalidate_all_sessions"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares session/key language with positive rotation code.", "exclusion_reason": "Rotating one synthetic key is not bulk invalidation or incident response.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-revoke-lease", "category": "no_sufficient_evidence", "leakage_group": "lease_revocation_absent", "difficulty": "near_domain",
+      "query": "Which implementation revokes an approved lease before it expires?", "symbol_query": {"name": "revoke_lease"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative contrasts revocation with renewal/restoration.", "exclusion_reason": "Lease renewal and principal restoration do not revoke a lease.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-persist-lease", "category": "no_sufficient_evidence", "leakage_group": "lease_storage_absent", "difficulty": "near_domain",
+      "query": "Where is an approved lease persisted to a database?", "symbol_query": {"name": "save_lease"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares lease vocabulary with existing evidence.", "exclusion_reason": "The snapshot consumes an in-memory lease argument and has no database persistence.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-session-ip-audit", "category": "no_sufficient_evidence", "leakage_group": "audit_absent", "difficulty": "near_domain",
+      "query": "Which function records the client IP address for each session renewal?", "symbol_query": {"name": "audit_session_ip"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative combines session renewal with an absent audit behavior.", "exclusion_reason": "No IP address, audit event or logging operation exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-rate-limit", "category": "no_sufficient_evidence", "leakage_group": "request_controls_absent", "difficulty": "near_domain",
+      "query": "Where does the request handler rate-limit repeated expired-session attempts?", "symbol_query": {"name": "rate_limit_expired_session"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares request-handler and session terms.", "exclusion_reason": "The handler calls rotation once and contains no rate limiting or attempt counter.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-delete-token", "category": "no_sufficient_evidence", "leakage_group": "token_mutation_absent", "difficulty": "near_domain",
+      "query": "Which token-cache operation deletes a record by key?", "symbol_query": {"name": "delete_token"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares token-cache vocabulary with lookup/save positives.", "exclusion_reason": "The token cache exposes lookup and save_token_choice only; no delete operation exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-encrypt-token-cache", "category": "no_sufficient_evidence", "leakage_group": "token_security_absent", "difficulty": "near_domain",
+      "query": "Where are token-cache records encrypted before storage?", "symbol_query": {"name": "encrypt_token_cache"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares storage and token terminology.", "exclusion_reason": "No cryptography, ciphertext or encryption operation appears in the snapshot.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-token-expiry", "category": "no_sufficient_evidence", "leakage_group": "token_expiry_absent", "difficulty": "near_domain",
+      "query": "Which function calculates the expiration timestamp for a cached token?", "symbol_query": {"name": "calculate_token_expiry"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares token/cache concepts with positive code.", "exclusion_reason": "No timestamps, TTL, expiry calculation or token lifetime fields exist.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-export-preferences", "category": "no_sufficient_evidence", "leakage_group": "preference_export_absent", "difficulty": "near_domain",
+      "query": "Where are all display preferences exported to a file?", "symbol_query": {"name": "export_preferences"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares preference language with lookup/save positives.", "exclusion_reason": "No enumeration, serialization or file export behavior exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-theme-contrast", "category": "no_sufficient_evidence", "leakage_group": "theme_validation_absent", "difficulty": "near_domain",
+      "query": "Which code validates the selected theme for accessible color contrast?", "symbol_query": {"name": "validate_theme_contrast"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares theme-selection vocabulary.", "exclusion_reason": "Saving a theme choice does not validate colors or accessibility.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-locale-preference", "category": "no_sufficient_evidence", "leakage_group": "preference_localization_absent", "difficulty": "near_domain",
+      "query": "Where is the user's locale preference applied to translations?", "symbol_query": {"name": "apply_locale"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares preference vocabulary but requests absent localization behavior.", "exclusion_reason": "Only generic preference lookup and theme choice exist; no locale or translation code exists.", "review_status": "pending_human_review"
+    },
+    {
+      "id": "candidate-no-compress-cache", "category": "no_sufficient_evidence", "leakage_group": "storage_optimization_absent", "difficulty": "near_domain",
+      "query": "Which operation compresses cached records to reduce storage size?", "symbol_query": {"name": "compress_cache"}, "relevant_paths": [], "relevant_symbols": [], "no_evidence": true, "evidence": [],
+      "scope_checked": "All 8 files in tests/fixtures/retrieval_eval_repo at the AF-009E frozen snapshot.", "inclusion_reason": "Hard negative shares cache/storage terms.", "exclusion_reason": "No compression, encoding or storage optimization operation exists.", "review_status": "pending_human_review"
+    }
+  ]
+}

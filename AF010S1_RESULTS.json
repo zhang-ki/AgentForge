@@ -1,0 +1,4168 @@
+{
+  "experiment": "AF-010-S1",
+  "generated_at_utc": "2026-10-26T07:42:59.209961+00:00",
+  "status": "research_prototype_complete",
+  "dataset_validation": {
+    "query_count": 40,
+    "leakage_groups_disjoint": true,
+    "splits": {
+      "calibration": {
+        "query_count": 20,
+        "evidence": 10,
+        "no_evidence": 10
+      },
+      "validation": {
+        "query_count": 20,
+        "evidence": 10,
+        "no_evidence": 10
+      }
+    }
+  },
+  "fixture": {
+    "repository": "tests/fixtures/package_relation_repo",
+    "file_count": 18,
+    "dataset": {
+      "path": "tests/fixtures/package_relation_eval.json",
+      "size_bytes": 47937,
+      "sha256": "6B980E3B5F5857E8CB20BDB1457D825F9E5D5D321276DCBA977E14342EACE417"
+    },
+    "split_plan": {
+      "path": "tests/fixtures/package_relation_split.json",
+      "size_bytes": 1200,
+      "sha256": "A7BF7A2A60F4600805AA024C4A93194130B8F4CDB6B7883F5618015A47EA4EC7"
+    },
+    "label_source": "synthetic_fixture_design",
+    "human_reviewed": false
+  },
+  "graph": {
+    "relation_count": 47,
+    "relation_types": {
+      "exports_symbol": 2,
+      "import_alias": 4,
+      "imports": 3,
+      "imports_symbol": 14,
+      "reexports_symbol": 6,
+      "resolves_to": 18
+    },
+    "resolution_states": {
+      "ambiguous": 2,
+      "resolved": 30,
+      "uncertain": 3,
+      "unresolved": 12
+    },
+    "cycle_relation_count": 4,
+    "parse_failures": []
+  },
+  "splits": {
+    "calibration": {
+      "dataset_version": "agentforge-package-relations-v1",
+      "review_status": "provisional_ai",
+      "label_rule": "Synthetic fixture-design labels: a path is relevant only when the cited source directly establishes the requested definition, import, export, reexport, alias, resolution, or documentation fact; retrieval output never defines ground truth.",
+      "query_total": 20,
+      "category_counts": {
+        "alias": 3,
+        "cycle": 1,
+        "dynamic_export": 1,
+        "dynamic_import": 1,
+        "export": 2,
+        "import_module": 1,
+        "import_symbol": 3,
+        "reexport": 6,
+        "resolution": 2
+      },
+      "no_evidence_query_count": 10,
+      "no_evidence_checks": [
+        {
+          "query_id": "PRS1-003",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-004",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-011",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-012",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-019",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-020",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-027",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-028",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-035",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-036",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        }
+      ],
+      "retrievers": {
+        "lexical": {
+          "grounded_query_count": 10,
+          "valid_label_count": 10,
+          "scored_query_count": 10,
+          "recall_at": {
+            "1": 0.5,
+            "5": 0.9,
+            "10": 1.0
+          },
+          "mrr": 0.6625,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "alias": {
+              "query_count": 3,
+              "applicable_query_count": 3,
+              "grounded_query_count": 2,
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "cycle": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 0.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 0.5,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "dynamic_export": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 0.0,
+                "5": 0.0,
+                "10": 1.0
+              },
+              "mrr": 0.125,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "dynamic_import": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "export": {
+              "query_count": 2,
+              "applicable_query_count": 2,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "import_module": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "import_symbol": {
+              "query_count": 3,
+              "applicable_query_count": 3,
+              "grounded_query_count": 2,
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 0.5,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 0.625,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "reexport": {
+              "query_count": 6,
+              "applicable_query_count": 6,
+              "grounded_query_count": 2,
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 0.5,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 0.75,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "resolution": {
+              "query_count": 2,
+              "applicable_query_count": 2,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 0.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 0.25,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-001",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "beacon/impl.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "consumer.py",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-002",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "atlas/impl.py"
+              ],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-003",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "atlas/impl.py",
+                "docs/api.md",
+                "atlas/__init__.py",
+                "beacon/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-004",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "beacon/__init__.py",
+                "beacon/impl.py",
+                "atlas/__init__.py",
+                "ambiguous/__init__.py",
+                "consumer.py",
+                "plain/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-009",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "atlas/facade.py"
+              ],
+              "ranked": [
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "atlas/facade.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/local.py",
+                "cycle/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-010",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "beacon/impl.py",
+                "consumer.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-011",
+              "category": "import_symbol",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/facade.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "cycle/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-012",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "atlas/local.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-017",
+              "category": "alias",
+              "applicable": true,
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py",
+                "atlas/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-018",
+              "category": "alias",
+              "applicable": true,
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py",
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "plain/__init__.py",
+                "dynamic/items.py",
+                "atlas/facade.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-019",
+              "category": "alias",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "beacon/impl.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "plain/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-020",
+              "category": "export",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "consumer.py",
+                "docs/api.md",
+                "plain/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-025",
+              "category": "cycle",
+              "applicable": true,
+              "relevant": [
+                "cycle/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "docs/api.md",
+                "beacon/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-026",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "cycle/left.py"
+              ],
+              "ranked": [
+                "cycle/left.py",
+                "cycle/right.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "dynamic/__init__.py",
+                "plain/__init__.py",
+                "stars/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-027",
+              "category": "resolution",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-028",
+              "category": "export",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "atlas/local.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-033",
+              "category": "dynamic_export",
+              "applicable": true,
+              "relevant": [
+                "dynamic/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "dynamic/__init__.py",
+                "plain/__init__.py",
+                "stars/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-034",
+              "category": "dynamic_import",
+              "applicable": true,
+              "relevant": [
+                "dynamic/items.py"
+              ],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-035",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py",
+                "atlas/local.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-036",
+              "category": "import_module",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py"
+              ]
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.034422,
+            "measured_call_count": 20,
+            "mean_seconds_per_call": 0.001721,
+            "note": null
+          }
+        },
+        "symbols": {
+          "grounded_query_count": 1,
+          "valid_label_count": 1,
+          "scored_query_count": 1,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "alias": {
+              "query_count": 3,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "cycle": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "dynamic_export": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "dynamic_import": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "export": {
+              "query_count": 2,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "import_module": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "import_symbol": {
+              "query_count": 3,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "reexport": {
+              "query_count": 6,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "resolution": {
+              "query_count": 2,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-002",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "atlas/impl.py::atlas.impl.dispatch"
+              ],
+              "ranked": [
+                "atlas/impl.py::atlas.impl.dispatch"
+              ]
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.000117,
+            "measured_call_count": 1,
+            "mean_seconds_per_call": 0.000117,
+            "note": "Only applicable exact-symbol queries are timed."
+          }
+        },
+        "vector": {
+          "status": "not_measured",
+          "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence."
+        },
+        "package_relations": {
+          "applicable_query_count": 20,
+          "not_applicable_query_count": 0,
+          "scored_query_count": 10,
+          "valid_label_count": 10,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "alias": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "cycle": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "dynamic_export": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "dynamic_import": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "export": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_module": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_symbol": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "reexport": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "resolution": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-001",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py"
+              ],
+              "relations": [
+                "reexports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-002",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "atlas/impl.py"
+              ],
+              "ranked": [
+                "atlas/impl.py"
+              ],
+              "relations": [
+                "resolves_to"
+              ]
+            },
+            {
+              "query_id": "PRS1-003",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-004",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-009",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "atlas/facade.py"
+              ],
+              "ranked": [
+                "atlas/facade.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-010",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py"
+              ],
+              "relations": [
+                "reexports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-011",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-012",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-017",
+              "category": "alias",
+              "applicable": true,
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py"
+              ],
+              "relations": [
+                "import_alias"
+              ]
+            },
+            {
+              "query_id": "PRS1-018",
+              "category": "alias",
+              "applicable": true,
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py"
+              ],
+              "relations": [
+                "import_alias"
+              ]
+            },
+            {
+              "query_id": "PRS1-019",
+              "category": "alias",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-020",
+              "category": "export",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-025",
+              "category": "cycle",
+              "applicable": true,
+              "relevant": [
+                "cycle/__init__.py"
+              ],
+              "ranked": [
+                "cycle/__init__.py"
+              ],
+              "relations": [
+                "reexports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-026",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "cycle/left.py"
+              ],
+              "ranked": [
+                "cycle/left.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-027",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-028",
+              "category": "export",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-033",
+              "category": "dynamic_export",
+              "applicable": true,
+              "relevant": [
+                "dynamic/__init__.py"
+              ],
+              "ranked": [
+                "dynamic/__init__.py"
+              ],
+              "relations": [
+                "exports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-034",
+              "category": "dynamic_import",
+              "applicable": true,
+              "relevant": [
+                "dynamic/items.py"
+              ],
+              "ranked": [
+                "dynamic/items.py"
+              ],
+              "relations": [
+                "imports"
+              ]
+            },
+            {
+              "query_id": "PRS1-035",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-036",
+              "category": "import_module",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.000259,
+            "measured_call_count": 20
+          }
+        },
+        "rrf_lexical_symbol_package": {
+          "status": "offline_exploration_only",
+          "channels": [
+            "lexical",
+            "symbols",
+            "package_relations"
+          ],
+          "vector_included": false,
+          "scored_query_count": 10,
+          "valid_label_count": 10,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "alias": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "cycle": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "dynamic_export": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "dynamic_import": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "export": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_module": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_symbol": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "reexport": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "resolution": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-001",
+              "category": "reexport",
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "docs/api.md",
+                "beacon/impl.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "consumer.py",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-002",
+              "category": "resolution",
+              "relevant": [
+                "atlas/impl.py"
+              ],
+              "ranked": [
+                "atlas/impl.py",
+                "docs/api.md",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/local.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "atlas/impl.py": [
+                  "lexical",
+                  "package_relations",
+                  "symbols"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-003",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "atlas/impl.py",
+                "docs/api.md",
+                "atlas/__init__.py",
+                "beacon/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-004",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "beacon/__init__.py",
+                "beacon/impl.py",
+                "atlas/__init__.py",
+                "ambiguous/__init__.py",
+                "consumer.py",
+                "plain/__init__.py"
+              ],
+              "channel_contributions": {
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-009",
+              "category": "import_symbol",
+              "relevant": [
+                "atlas/facade.py"
+              ],
+              "ranked": [
+                "atlas/facade.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/local.py",
+                "cycle/__init__.py"
+              ],
+              "channel_contributions": {
+                "atlas/facade.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-010",
+              "category": "reexport",
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "beacon/impl.py",
+                "consumer.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-011",
+              "category": "import_symbol",
+              "relevant": [],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/facade.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "cycle/__init__.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-012",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "atlas/local.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py"
+              ],
+              "channel_contributions": {
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-017",
+              "category": "alias",
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py",
+                "atlas/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "consumer.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-018",
+              "category": "alias",
+              "relevant": [
+                "consumer.py"
+              ],
+              "ranked": [
+                "consumer.py",
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "plain/__init__.py",
+                "dynamic/items.py",
+                "atlas/facade.py"
+              ],
+              "channel_contributions": {
+                "consumer.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-019",
+              "category": "alias",
+              "relevant": [],
+              "ranked": [
+                "beacon/impl.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "plain/__init__.py"
+              ],
+              "channel_contributions": {
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-020",
+              "category": "export",
+              "relevant": [],
+              "ranked": [
+                "consumer.py",
+                "docs/api.md",
+                "plain/__init__.py"
+              ],
+              "channel_contributions": {
+                "consumer.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-025",
+              "category": "cycle",
+              "relevant": [
+                "cycle/__init__.py"
+              ],
+              "ranked": [
+                "cycle/__init__.py",
+                "atlas/__init__.py",
+                "cycle/left.py",
+                "docs/api.md",
+                "beacon/__init__.py"
+              ],
+              "channel_contributions": {
+                "cycle/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-026",
+              "category": "import_symbol",
+              "relevant": [
+                "cycle/left.py"
+              ],
+              "ranked": [
+                "cycle/left.py",
+                "cycle/right.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "dynamic/__init__.py",
+                "plain/__init__.py",
+                "stars/__init__.py"
+              ],
+              "channel_contributions": {
+                "cycle/left.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "cycle/right.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-027",
+              "category": "resolution",
+              "relevant": [],
+              "ranked": [
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ],
+              "channel_contributions": {
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-028",
+              "category": "export",
+              "relevant": [],
+              "ranked": [
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "atlas/local.py"
+              ],
+              "channel_contributions": {
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-033",
+              "category": "dynamic_export",
+              "relevant": [
+                "dynamic/__init__.py"
+              ],
+              "ranked": [
+                "dynamic/__init__.py",
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "plain/__init__.py",
+                "stars/__init__.py"
+              ],
+              "channel_contributions": {
+                "dynamic/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-034",
+              "category": "dynamic_import",
+              "relevant": [
+                "dynamic/items.py"
+              ],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ],
+              "channel_contributions": {
+                "dynamic/items.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-035",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py",
+                "atlas/local.py"
+              ],
+              "channel_contributions": {
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-036",
+              "category": "import_module",
+              "relevant": [],
+              "ranked": [
+                "dynamic/items.py",
+                "dynamic/__init__.py"
+              ],
+              "channel_contributions": {
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ]
+              }
+            }
+          ],
+          "timing": {
+            "fusion_seconds": 0.000893
+          }
+        }
+      },
+      "vector_abstention": null,
+      "metric_notes": {
+        "recall_at": "Macro-average per query: relevant returned among the first K divided by the number of labelled relevant items.",
+        "mrr": "Macro mean reciprocal rank of the first relevant result; an unreturned relevant item contributes zero.",
+        "query_units": {
+          "lexical": "repository-relative file path",
+          "symbols": "repository-relative file path plus qualified symbol name",
+          "vector": "repository-relative file path",
+          "rrf": "repository-relative file path fused across available lexical, symbol and vector ranks"
+        },
+        "empty_ground_truth": "Excluded from recall/MRR; reported separately as no-evidence checks.",
+        "candidate_scope": "Lexical and vector use the same indexed chunk corpus and file-path labels; exact symbols use symbol records and path-plus-qualified-name labels.",
+        "symbol_scope": "Natural-language semantic queries without exact symbol filters are not applicable to the current exact symbol API."
+      },
+      "package_relation_analysis": {
+        "unique_relevant_hits_over_lexical_and_symbol": [],
+        "unique_relevant_hit_count": 0,
+        "top1_rescues_over_lexical_and_symbol": [
+          "PRS1-001",
+          "PRS1-009",
+          "PRS1-025",
+          "PRS1-033"
+        ],
+        "top1_rescue_count": 4,
+        "error_candidate_count": 0,
+        "error_candidates": [],
+        "no_evidence": [
+          {
+            "query_id": "PRS1-003",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-004",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-011",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-012",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-019",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-020",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-027",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-028",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-035",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-036",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          }
+        ],
+        "no_evidence_nonempty_rate": 0.0,
+        "rrf_no_evidence_nonempty_rate": 1.0,
+        "parse_failures": [],
+        "relation_status_counts": {
+          "resolved": 30,
+          "ambiguous": 2,
+          "unresolved": 12,
+          "uncertain": 3
+        }
+      }
+    },
+    "validation": {
+      "dataset_version": "agentforge-package-relations-v1",
+      "review_status": "provisional_ai",
+      "label_rule": "Synthetic fixture-design labels: a path is relevant only when the cited source directly establishes the requested definition, import, export, reexport, alias, resolution, or documentation fact; retrieval output never defines ground truth.",
+      "query_total": 20,
+      "category_counts": {
+        "documentation": 1,
+        "exact_symbol": 1,
+        "export": 4,
+        "import_symbol": 4,
+        "missing_capability": 1,
+        "reexport": 3,
+        "resolution": 5,
+        "star_import": 1
+      },
+      "no_evidence_query_count": 10,
+      "no_evidence_checks": [
+        {
+          "query_id": "PRS1-007",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-008",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-015",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-016",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-023",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-024",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-031",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-032",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-039",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        },
+        {
+          "query_id": "PRS1-040",
+          "lexical_returned_empty": false,
+          "symbols_returned_empty": true,
+          "vector_returned_empty": null,
+          "rrf_returned_empty": null
+        }
+      ],
+      "retrievers": {
+        "lexical": {
+          "grounded_query_count": 10,
+          "valid_label_count": 10,
+          "scored_query_count": 10,
+          "recall_at": {
+            "1": 0.7,
+            "5": 0.9,
+            "10": 1.0
+          },
+          "mrr": 0.814286,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "documentation": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "exact_symbol": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "export": {
+              "query_count": 4,
+              "applicable_query_count": 4,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "import_symbol": {
+              "query_count": 4,
+              "applicable_query_count": 4,
+              "grounded_query_count": 3,
+              "scored_query_count": 3,
+              "valid_label_count": 3,
+              "recall_at": {
+                "1": 0.333333,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 0.666667,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "missing_capability": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "reexport": {
+              "query_count": 3,
+              "applicable_query_count": 3,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 0.0,
+                "5": 0.0,
+                "10": 1.0
+              },
+              "mrr": 0.142857,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "resolution": {
+              "query_count": 5,
+              "applicable_query_count": 5,
+              "grounded_query_count": 2,
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "star_import": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-005",
+              "category": "export",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/local.py",
+                "docs/api.md"
+              ]
+            },
+            {
+              "query_id": "PRS1-006",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/local.py",
+                "atlas/impl.py",
+                "consumer.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "atlas/facade.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-007",
+              "category": "export",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-008",
+              "category": "export",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "plain/internal.py",
+                "plain/__init__.py",
+                "docs/api.md"
+              ]
+            },
+            {
+              "query_id": "PRS1-013",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "beacon/__init__.py"
+              ],
+              "ranked": [
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/__init__.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-014",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "beacon/impl.py"
+              ],
+              "ranked": [
+                "beacon/impl.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-015",
+              "category": "resolution",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "atlas/impl.py",
+                "beacon/impl.py",
+                "ambiguous/__init__.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/local.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-016",
+              "category": "resolution",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "atlas/facade.py",
+                "atlas/local.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-021",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/local.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "ambiguous/__init__.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-022",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/internal.py",
+                "plain/__init__.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "dynamic/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-023",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "plain/internal.py",
+                "plain/__init__.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "dynamic/__init__.py",
+                "stars/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-024",
+              "category": "import_symbol",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "ambiguous/__init__.py",
+                "atlas/impl.py",
+                "beacon/impl.py",
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "consumer.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-029",
+              "category": "star_import",
+              "applicable": true,
+              "relevant": [
+                "stars/__init__.py"
+              ],
+              "ranked": [
+                "stars/__init__.py",
+                "dynamic/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-030",
+              "category": "exact_symbol",
+              "applicable": true,
+              "relevant": [
+                "stars/items.py"
+              ],
+              "ranked": [
+                "stars/items.py",
+                "atlas/local.py",
+                "stars/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-031",
+              "category": "resolution",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "stars/items.py",
+                "stars/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-032",
+              "category": "reexport",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "stars/items.py",
+                "docs/api.md",
+                "stars/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-037",
+              "category": "documentation",
+              "applicable": true,
+              "relevant": [
+                "docs/api.md"
+              ],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-038",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/__init__.py",
+                "plain/internal.py",
+                "atlas/__init__.py",
+                "docs/api.md"
+              ]
+            },
+            {
+              "query_id": "PRS1-039",
+              "category": "missing_capability",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py"
+              ]
+            },
+            {
+              "query_id": "PRS1-040",
+              "category": "export",
+              "applicable": false,
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "plain/__init__.py"
+              ]
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.027002,
+            "measured_call_count": 20,
+            "mean_seconds_per_call": 0.00135,
+            "note": null
+          }
+        },
+        "symbols": {
+          "grounded_query_count": 3,
+          "valid_label_count": 3,
+          "scored_query_count": 3,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "documentation": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "exact_symbol": {
+              "query_count": 1,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "export": {
+              "query_count": 4,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "import_symbol": {
+              "query_count": 4,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "missing_capability": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "reexport": {
+              "query_count": 3,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            },
+            "resolution": {
+              "query_count": 5,
+              "applicable_query_count": 1,
+              "grounded_query_count": 1,
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": null
+            },
+            "star_import": {
+              "query_count": 1,
+              "applicable_query_count": 0,
+              "grounded_query_count": 0,
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth",
+              "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category."
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-005",
+              "category": "export",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py::atlas.PackageInfo"
+              ],
+              "ranked": [
+                "atlas/__init__.py::atlas.PackageInfo"
+              ]
+            },
+            {
+              "query_id": "PRS1-014",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "beacon/impl.py::beacon.impl.dispatch"
+              ],
+              "ranked": [
+                "beacon/impl.py::beacon.impl.dispatch"
+              ]
+            },
+            {
+              "query_id": "PRS1-030",
+              "category": "exact_symbol",
+              "applicable": true,
+              "relevant": [
+                "stars/items.py::stars.items.alpha"
+              ],
+              "ranked": [
+                "stars/items.py::stars.items.alpha"
+              ]
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.000105,
+            "measured_call_count": 3,
+            "mean_seconds_per_call": 3.5e-05,
+            "note": "Only applicable exact-symbol queries are timed."
+          }
+        },
+        "vector": {
+          "status": "not_measured",
+          "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence."
+        },
+        "package_relations": {
+          "applicable_query_count": 18,
+          "not_applicable_query_count": 2,
+          "scored_query_count": 8,
+          "valid_label_count": 8,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "documentation": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "exact_symbol": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "export": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_symbol": {
+              "scored_query_count": 3,
+              "valid_label_count": 3,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "missing_capability": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "reexport": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "resolution": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "star_import": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-005",
+              "category": "export",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py"
+              ],
+              "relations": [
+                "exports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-006",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py"
+              ],
+              "relations": [
+                "resolves_to"
+              ]
+            },
+            {
+              "query_id": "PRS1-007",
+              "category": "export",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-008",
+              "category": "export",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-013",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [
+                "beacon/__init__.py"
+              ],
+              "ranked": [
+                "beacon/__init__.py"
+              ],
+              "relations": [
+                "reexports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-014",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [
+                "beacon/impl.py"
+              ],
+              "ranked": [
+                "beacon/impl.py"
+              ],
+              "relations": [
+                "resolves_to"
+              ]
+            },
+            {
+              "query_id": "PRS1-015",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-016",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-021",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-022",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/__init__.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-023",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-024",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-029",
+              "category": "star_import",
+              "applicable": true,
+              "relevant": [
+                "stars/__init__.py"
+              ],
+              "ranked": [
+                "stars/__init__.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-031",
+              "category": "resolution",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-032",
+              "category": "reexport",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-038",
+              "category": "import_symbol",
+              "applicable": true,
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/__init__.py"
+              ],
+              "relations": [
+                "imports_symbol"
+              ]
+            },
+            {
+              "query_id": "PRS1-039",
+              "category": "missing_capability",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            },
+            {
+              "query_id": "PRS1-040",
+              "category": "export",
+              "applicable": true,
+              "relevant": [],
+              "ranked": [],
+              "relations": []
+            }
+          ],
+          "timing": {
+            "retrieval_seconds": 0.000229,
+            "measured_call_count": 18
+          }
+        },
+        "rrf_lexical_symbol_package": {
+          "status": "offline_exploration_only",
+          "channels": [
+            "lexical",
+            "symbols",
+            "package_relations"
+          ],
+          "vector_included": false,
+          "scored_query_count": 10,
+          "valid_label_count": 10,
+          "recall_at": {
+            "1": 1.0,
+            "5": 1.0,
+            "10": 1.0
+          },
+          "mrr": 1.0,
+          "aggregation": "macro average over queries with non-empty ground truth",
+          "by_category": {
+            "documentation": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "exact_symbol": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "export": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "import_symbol": {
+              "scored_query_count": 3,
+              "valid_label_count": 3,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "missing_capability": {
+              "scored_query_count": 0,
+              "valid_label_count": 0,
+              "recall_at": {
+                "1": null,
+                "5": null,
+                "10": null
+              },
+              "mrr": null,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "reexport": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "resolution": {
+              "scored_query_count": 2,
+              "valid_label_count": 2,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            },
+            "star_import": {
+              "scored_query_count": 1,
+              "valid_label_count": 1,
+              "recall_at": {
+                "1": 1.0,
+                "5": 1.0,
+                "10": 1.0
+              },
+              "mrr": 1.0,
+              "aggregation": "macro average over queries with non-empty ground truth"
+            }
+          },
+          "query_results": [
+            {
+              "query_id": "PRS1-005",
+              "category": "export",
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/local.py",
+                "docs/api.md"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical",
+                  "package_relations",
+                  "symbols"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-006",
+              "category": "resolution",
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/local.py",
+                "atlas/impl.py",
+                "consumer.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "atlas/facade.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-007",
+              "category": "export",
+              "relevant": [],
+              "ranked": [
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/impl.py",
+                "atlas/local.py",
+                "docs/api.md",
+                "ambiguous/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-008",
+              "category": "export",
+              "relevant": [],
+              "ranked": [
+                "plain/internal.py",
+                "plain/__init__.py",
+                "docs/api.md"
+              ],
+              "channel_contributions": {
+                "plain/internal.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-013",
+              "category": "reexport",
+              "relevant": [
+                "beacon/__init__.py"
+              ],
+              "ranked": [
+                "beacon/__init__.py",
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/impl.py",
+                "atlas/__init__.py",
+                "ambiguous/__init__.py",
+                "atlas/facade.py"
+              ],
+              "channel_contributions": {
+                "beacon/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-014",
+              "category": "resolution",
+              "relevant": [
+                "beacon/impl.py"
+              ],
+              "ranked": [
+                "beacon/impl.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "ambiguous/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/__init__.py"
+              ],
+              "channel_contributions": {
+                "beacon/impl.py": [
+                  "lexical",
+                  "package_relations",
+                  "symbols"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-015",
+              "category": "resolution",
+              "relevant": [],
+              "ranked": [
+                "atlas/impl.py",
+                "beacon/impl.py",
+                "ambiguous/__init__.py",
+                "beacon/__init__.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/local.py"
+              ],
+              "channel_contributions": {
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-016",
+              "category": "resolution",
+              "relevant": [],
+              "ranked": [
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "beacon/impl.py",
+                "docs/api.md",
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "atlas/impl.py",
+                "atlas/facade.py",
+                "atlas/local.py"
+              ],
+              "channel_contributions": {
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-021",
+              "category": "import_symbol",
+              "relevant": [
+                "atlas/__init__.py"
+              ],
+              "ranked": [
+                "atlas/__init__.py",
+                "atlas/local.py",
+                "consumer.py",
+                "beacon/__init__.py",
+                "ambiguous/__init__.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ],
+              "channel_contributions": {
+                "atlas/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-022",
+              "category": "import_symbol",
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/__init__.py",
+                "plain/internal.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "consumer.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "dynamic/__init__.py"
+              ],
+              "channel_contributions": {
+                "plain/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "plain/internal.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-023",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "plain/internal.py",
+                "plain/__init__.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py",
+                "dynamic/__init__.py",
+                "stars/__init__.py"
+              ],
+              "channel_contributions": {
+                "plain/internal.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-024",
+              "category": "import_symbol",
+              "relevant": [],
+              "ranked": [
+                "ambiguous/__init__.py",
+                "atlas/impl.py",
+                "beacon/impl.py",
+                "atlas/__init__.py",
+                "beacon/__init__.py",
+                "consumer.py",
+                "docs/api.md",
+                "atlas/facade.py",
+                "atlas/local.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/impl.py": [
+                  "lexical"
+                ],
+                "beacon/impl.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-029",
+              "category": "star_import",
+              "relevant": [
+                "stars/__init__.py"
+              ],
+              "ranked": [
+                "stars/__init__.py",
+                "dynamic/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py",
+                "cycle/left.py"
+              ],
+              "channel_contributions": {
+                "stars/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "dynamic/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/left.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-030",
+              "category": "exact_symbol",
+              "relevant": [
+                "stars/items.py"
+              ],
+              "ranked": [
+                "stars/items.py",
+                "atlas/local.py",
+                "stars/__init__.py"
+              ],
+              "channel_contributions": {
+                "stars/items.py": [
+                  "lexical",
+                  "symbols"
+                ],
+                "atlas/local.py": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-031",
+              "category": "resolution",
+              "relevant": [],
+              "ranked": [
+                "stars/items.py",
+                "stars/__init__.py",
+                "consumer.py",
+                "ambiguous/__init__.py",
+                "atlas/__init__.py",
+                "dynamic/items.py",
+                "plain/__init__.py",
+                "atlas/facade.py",
+                "beacon/__init__.py",
+                "cycle/__init__.py"
+              ],
+              "channel_contributions": {
+                "stars/items.py": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ],
+                "consumer.py": [
+                  "lexical"
+                ],
+                "ambiguous/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "atlas/facade.py": [
+                  "lexical"
+                ],
+                "beacon/__init__.py": [
+                  "lexical"
+                ],
+                "cycle/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-032",
+              "category": "reexport",
+              "relevant": [],
+              "ranked": [
+                "stars/items.py",
+                "docs/api.md",
+                "stars/__init__.py"
+              ],
+              "channel_contributions": {
+                "stars/items.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "stars/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-037",
+              "category": "documentation",
+              "relevant": [
+                "docs/api.md"
+              ],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "plain/__init__.py",
+                "dynamic/items.py"
+              ],
+              "channel_contributions": {
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ],
+                "dynamic/items.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-038",
+              "category": "import_symbol",
+              "relevant": [
+                "plain/__init__.py"
+              ],
+              "ranked": [
+                "plain/__init__.py",
+                "plain/internal.py",
+                "atlas/__init__.py",
+                "docs/api.md"
+              ],
+              "channel_contributions": {
+                "plain/__init__.py": [
+                  "lexical",
+                  "package_relations"
+                ],
+                "plain/internal.py": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "docs/api.md": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-039",
+              "category": "missing_capability",
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py"
+              ],
+              "channel_contributions": {
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ]
+              }
+            },
+            {
+              "query_id": "PRS1-040",
+              "category": "export",
+              "relevant": [],
+              "ranked": [
+                "docs/api.md",
+                "atlas/__init__.py",
+                "plain/__init__.py"
+              ],
+              "channel_contributions": {
+                "docs/api.md": [
+                  "lexical"
+                ],
+                "atlas/__init__.py": [
+                  "lexical"
+                ],
+                "plain/__init__.py": [
+                  "lexical"
+                ]
+              }
+            }
+          ],
+          "timing": {
+            "fusion_seconds": 0.000817
+          }
+        }
+      },
+      "vector_abstention": null,
+      "metric_notes": {
+        "recall_at": "Macro-average per query: relevant returned among the first K divided by the number of labelled relevant items.",
+        "mrr": "Macro mean reciprocal rank of the first relevant result; an unreturned relevant item contributes zero.",
+        "query_units": {
+          "lexical": "repository-relative file path",
+          "symbols": "repository-relative file path plus qualified symbol name",
+          "vector": "repository-relative file path",
+          "rrf": "repository-relative file path fused across available lexical, symbol and vector ranks"
+        },
+        "empty_ground_truth": "Excluded from recall/MRR; reported separately as no-evidence checks.",
+        "candidate_scope": "Lexical and vector use the same indexed chunk corpus and file-path labels; exact symbols use symbol records and path-plus-qualified-name labels.",
+        "symbol_scope": "Natural-language semantic queries without exact symbol filters are not applicable to the current exact symbol API."
+      },
+      "package_relation_analysis": {
+        "unique_relevant_hits_over_lexical_and_symbol": [],
+        "unique_relevant_hit_count": 0,
+        "top1_rescues_over_lexical_and_symbol": [
+          "PRS1-013",
+          "PRS1-021",
+          "PRS1-022"
+        ],
+        "top1_rescue_count": 3,
+        "error_candidate_count": 0,
+        "error_candidates": [],
+        "no_evidence": [
+          {
+            "query_id": "PRS1-007",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-008",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-015",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-016",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-023",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-024",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-031",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-032",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-039",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          },
+          {
+            "query_id": "PRS1-040",
+            "package_returned_empty": true,
+            "rrf_returned_empty": false
+          }
+        ],
+        "no_evidence_nonempty_rate": 0.0,
+        "rrf_no_evidence_nonempty_rate": 1.0,
+        "parse_failures": [],
+        "relation_status_counts": {
+          "resolved": 30,
+          "ambiguous": 2,
+          "unresolved": 12,
+          "uncertain": 3
+        }
+      }
+    }
+  },
+  "vector": {
+    "status": "not_measured",
+    "reason": "AF-010-S1 is a static relation study; no local model service was restarted and no embedding/network request was sent."
+  },
+  "rrf": {
+    "status": "offline_exploration_only",
+    "k": 60,
+    "channels": [
+      "lexical",
+      "symbols",
+      "package_relations"
+    ],
+    "vector_included": false
+  },
+  "product_state": {
+    "default_retriever_changed": false,
+    "package_channel_enabled_by_default": false,
+    "production_abstention_enabled": false,
+    "schema_changed": false
+  },
+  "protected_files_at_evaluation": [
+    {
+      "path": ".agentforge/data/index.sqlite3",
+      "size_bytes": 32768,
+      "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+    },
+    {
+      "path": ".agentforge/data/read_only_evidence.json",
+      "size_bytes": 2885,
+      "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+    },
+    {
+      "path": "AF010PRE_RESULTS.json",
+      "size_bytes": 1174255,
+      "sha256": "37756A988EF084DBB6A2510F6907AFFBA14A0CD807AF55795A0344BFEA2ED52D"
+    },
+    {
+      "path": "tests/fixtures/retrieval_eval.json",
+      "size_bytes": 3838,
+      "sha256": "B3276E4309C08FAA8B8961DB8DDD457A6ABA7491C134E606FC037B0B1342AF87"
+    },
+    {
+      "path": "tests/fixtures/retrieval_eval_preproduct_v1.json",
+      "size_bytes": 89053,
+      "sha256": "DE1F62EB971B82E2346605E8B0CA808778F3D9AFA96C7E6319F94A0B8C14883A"
+    },
+    {
+      "path": "tests/fixtures/retrieval_eval_preproduct_split_v1.json",
+      "size_bytes": 6925,
+      "sha256": "E5759214E13EF95B6F7CA529E592057514C26277BAA6E4FFF3FFD8368003C8EF"
+    }
+  ]
+}

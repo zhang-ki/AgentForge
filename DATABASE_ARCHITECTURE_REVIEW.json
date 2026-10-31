@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-31",
+  "recommendation": "A",
+  "decision": "retain SQLite; measure before optionally adding Chroma as independent vector backend",
+  "migration_approved": false,
+  "current": {
+    "schema": 3,
+    "metadata_and_chunks": "SQLite files, chunks, metadata",
+    "structured": "SQLite symbols, symbol_references, parse_status; package relation graph independent research prototype",
+    "vectors": "SQLite normalized float32, Python linear exact cosine top-k",
+    "limits": {
+      "records": 10000,
+      "dimension": 4096,
+      "bytes": 134217728
+    },
+    "database": "fixed single-repository index; user index currently has zero vectors",
+    "query_default": "lexical/symbol routing; no default RRF or production abstention threshold",
+    "tests": "in-memory SQLite and temporary isolated databases; one legacy test incorrectly asserts mutable formal index hash"
+  },
+  "chroma": {
+    "single_node": "SQLite-backed metadata plus HNSW vector index, version dependent",
+    "client": "persistent and ephemeral Python clients, server mode optional",
+    "windows": "published Windows x86-64 wheel; not installed or tested here",
+    "index": "HNSW approximate nearest neighbours; distance semantics differ from cosine similarity",
+    "performance": "not benchmarked locally",
+    "cross_store_atomicity": "not guaranteed with AgentForge SQLite"
+  },
+  "sources": [
+    "https://docs.trychroma.com/reference/architecture/overview",
+    "https://cookbook.chromadb.dev/core/storage-layout/",
+    "https://cookbook.chromadb.dev/core/configuration/",
+    "https://docs.trychroma.com/reference/python/client",
+    "https://docs.trychroma.com/guides/deploy/performance",
+    "https://pypi.org/project/chromadb/"
+  ],
+  "tests_or_migration_performed": false
+}

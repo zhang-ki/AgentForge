@@ -1,0 +1,129 @@
+{
+  "stage": "AF-009G-R",
+  "recorded_at": "2026-10-26T01:12:06+08:00",
+  "status": "blocked_before_model_start",
+  "diagnosis": {
+    "confirmed": "A standard-library TCP listener can bind and listen on an ephemeral 127.0.0.1 port, but a client socket in the same process is denied by Windows with WinError 10013.",
+    "not_confirmed": [
+      "The policy or security component that produced WinError 10013",
+      "Whether llama-server would have accepted AF-009G-R embedding requests",
+      "Whether the model or runtime has any new failure"
+    ],
+    "llama_server_was_not_started": true,
+    "embedding_requests_sent": 0
+  },
+  "loopback_socket_test": {
+    "host": "127.0.0.1",
+    "ephemeral_port": 54586,
+    "bind": {"ok": true, "elapsed_seconds": 0.000036},
+    "listen": {"ok": true, "elapsed_seconds": 0.000014},
+    "connect": {
+      "ok": false,
+      "elapsed_seconds": 0.000125,
+      "exception_type": "PermissionError",
+      "errno": 13,
+      "winerror": 10013
+    },
+    "accept": {
+      "ok": false,
+      "elapsed_seconds": 3.008925,
+      "exception_type": "TimeoutError",
+      "reason": "No client connection reached the listener."
+    },
+    "round_trip_completed": false,
+    "all_sockets_closed": true,
+    "total_elapsed_seconds": 3.011225
+  },
+  "listener_table_queries": {
+    "get_net_tcp_connection": {
+      "ok": false,
+      "exception_type": "System.Management.Automation.MethodInvocationException",
+      "hresult": "0x80131501",
+      "reason": "CIM resources were inaccessible from the client."
+    },
+    "netstat": {
+      "exit_code": 0,
+      "returned_connection_rows": 0,
+      "interpretation": "Not used as proof of listener absence because the environment restricts other listener-table access."
+    }
+  },
+  "asset_preflight": {
+    "model": {
+      "path": "D:\\agent\\models\\qwen3-embedding-0.6b-gguf\\Qwen3-Embedding-0.6B-Q8_0.gguf",
+      "size_bytes": 639150592,
+      "sha256": "06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
+      "matches_recorded_hash": true
+    },
+    "runtime_exe": {
+      "path": "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe",
+      "size_bytes": 9216,
+      "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+      "matches_recorded_hash": true
+    },
+    "runtime_impl": {
+      "path": "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll",
+      "size_bytes": 9160704,
+      "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB",
+      "matches_recorded_hash": true
+    },
+    "runtime_file_count": 51
+  },
+  "evaluation": {
+    "vector": "not_run",
+    "full_rrf": "not_run",
+    "historical_threshold_0_70": "not_evaluated_on_AF-009G",
+    "production_threshold_enabled": false,
+    "default_retriever_changed": false,
+    "reason": "The mandatory standard-library loopback connect preflight failed before the permitted one-time model start."
+  },
+  "tests": {
+    "targeted": {
+      "command": "python -X utf8 -B -m unittest tests.test_generalization tests.test_local_embedding_provider tests.test_evaluation tests.test_provisional_fusion -v",
+      "run": 38,
+      "passed": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "full": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "run": 124,
+      "passed": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0,
+      "skip_reason": "Windows privileges did not permit physical symlink, junction, or hard-link construction."
+    }
+  },
+  "cleanup": {
+    "task_llama_server_processes_started": 0,
+    "task_llama_server_processes_remaining": 0,
+    "temporary_runtime_created": false,
+    "temporary_runtime_remaining": false,
+    "existing_tests_tmp_af009c_llama_server_touched": false
+  },
+  "protected_files": {
+    "tests/fixtures/retrieval_eval_generalization_v1.json": {
+      "size_bytes": 50993,
+      "sha256": "607C0BE6DB9CAB0003E6D57A14E028758B27C248F79F125F6E818861F4D8CBF1"
+    },
+    "tests/fixtures/retrieval_eval_generalization_split_v1.json": {
+      "size_bytes": 3819,
+      "sha256": "78E367FCEC916C0BF062C8433367ADF5FC41E3BD4713CB4541AC9C8B69D12FDD"
+    },
+    "AF009G_GENERALIZATION_RESULTS.json": {
+      "size_bytes": 178223,
+      "sha256": "E6161199EC0CF13C8A5E1A122B943D766556A730AFDEC1937083F4A9635861C0"
+    },
+    ".agentforge/data/index.sqlite3": {
+      "size_bytes": 32768,
+      "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+    },
+    ".agentforge/data/read_only_evidence.json": {
+      "size_bytes": 2885,
+      "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+    }
+  }
+}

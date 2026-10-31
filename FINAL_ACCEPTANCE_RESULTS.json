@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "stage": "FINAL_ACCEPTANCE",
+  "timestamp_local": "2026-10-26",
+  "workspace": "D:\\agent\\AgentForge",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "Windows",
+    "CODEX_SANDBOX_NETWORK_DISABLED": "1",
+    "supported_loopback_host_available": false,
+    "network_or_model_probe_performed": false,
+    "git_status": "not_a_git_repository"
+  },
+  "acceptance_matrix": [
+    {
+      "item": "phase_0_security_and_data_protection",
+      "status": "PASS",
+      "implementation": "implemented",
+      "offline_tests": "passed",
+      "real_runtime": "five physical Windows link cases skipped for insufficient privileges",
+      "product_admission": "passed_with_documented_unverified_link_cases"
+    },
+    {
+      "item": "phase_1_read_only_rag_mvp",
+      "status": "PASS",
+      "implementation": "implemented",
+      "offline_tests": "passed",
+      "real_runtime": "deterministic OfflineProvider end-to-end on synthetic repositories",
+      "product_admission": "passed_for_offline_read_only_mvp"
+    },
+    {
+      "item": "phase_2_local_qwen_chat",
+      "status": "BLOCKED",
+      "implementation": "llama-server provider and authenticated client implemented",
+      "offline_tests": "mock tests passed",
+      "real_runtime": "historical health/model metadata passed; one generation timed out and 2B-3S is unknown; no complete answer with validated citations",
+      "product_admission": "not_passed"
+    },
+    {
+      "item": "phase_3_code_aware_index",
+      "status": "PASS",
+      "implementation": "Python AST symbols and conservative references implemented",
+      "offline_tests": "passed",
+      "real_runtime": "static synthetic repositories only",
+      "product_admission": "passed_for_python_static_index"
+    },
+    {
+      "item": "phase_4_vector_and_hybrid_retrieval",
+      "status": "DEFERRED",
+      "implementation": "vector interfaces/store/retriever and explicit RRF prototype implemented",
+      "offline_tests": "passed",
+      "real_runtime": "historical AF009GR5 and AF010PRE Embedding runs passed; latest 120-query PackageRelation+Vector joint run blocked",
+      "product_admission": "deferred_due_to_quality_and_environment"
+    },
+    {
+      "item": "phase_5_reranker",
+      "status": "DEFERRED",
+      "implementation": "not_implemented",
+      "offline_tests": "not_applicable",
+      "real_runtime": "not_measured",
+      "product_admission": "no_independent_benefit_or_verified_model_evidence"
+    },
+    {
+      "item": "phase_6_bounded_read_only_agent",
+      "status": "PASS",
+      "implementation": "implemented with index/search/read/list-symbols only",
+      "offline_tests": "7_of_7_passed",
+      "real_runtime": "deterministic offline planner only",
+      "product_admission": "passed_for_offline_read_only_loop; real_model_tool_selection_blocked"
+    },
+    {
+      "item": "AF_009G_real_vector_generalization",
+      "status": "PASS",
+      "implementation": "implemented",
+      "offline_tests": "passed",
+      "real_runtime": "AF009GR5 completed 93_of_93 Embedding requests with 1024-dimensional vectors",
+      "product_admission": "deferred_because_vector_rrf_underperformed_lexical_and_abstention_failed"
+    },
+    {
+      "item": "AF_010_package_relation_routing_rrf_abstention",
+      "status": "DEFERRED",
+      "implementation": "research prototypes implemented",
+      "offline_tests": "passed including 5000-module end-to-end synthetic lifecycle",
+      "real_runtime": "AF010PRE measured; latest four-channel S5 run blocked_by_environment",
+      "product_admission": "not_approved"
+    }
+  ],
+  "agent_loop": {
+    "allowed_tools": ["index", "list-symbols", "read", "search"],
+    "maximum_steps": 8,
+    "maximum_read_lines": 200,
+    "timeouts": "per-tool cooperative wall-clock budget plus bounded total run; no retry",
+    "audit": "origin, typed arguments, status, elapsed time, result or rejection",
+    "forbidden_capabilities": ["shell", "arbitrary network", "source write", "patch", "subprocess tool"],
+    "source_repository_modified_in_tests": false
+  },
+  "historical_real_results": {
+    "qwen_chat": {
+      "health_and_model_metadata": "passed_historically",
+      "complete_rag_answer_and_citation_validation": "not_passed"
+    },
+    "AF009GR5_validation": {
+      "lexical_recall_at_1": 0.80,
+      "lexical_mrr": 1.00,
+      "vector_recall_at_1": 0.75,
+      "vector_mrr": 0.95,
+      "rrf_recall_at_1": 0.75,
+      "rrf_mrr": 0.95,
+      "threshold_0_70_false_accept_rate": 0.10,
+      "threshold_0_70_false_reject_rate": 0.80
+    },
+    "AF010PRE_validation": {
+      "lexical_recall_at_1": 0.80,
+      "vector_recall_at_1": 0.85,
+      "rrf_recall_at_1": 0.85,
+      "threshold_0_70_false_accept_rate": 0.0,
+      "threshold_0_70_false_reject_rate": 0.55,
+      "required_max_false_accept_rate": 0.05,
+      "required_max_false_reject_rate": 0.25
+    },
+    "labels_human_reviewed": false
+  },
+  "tests": {
+    "agent_targeted_initial": {"run": 7, "passed": 4, "failed": 3, "errors": 0, "skipped": 0, "exit_code": 1, "reason": "exact-step completion was misclassified as step_budget_exhausted"},
+    "agent_targeted": {"run": 7, "passed": 7, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+    "related_targeted": {"run": 47, "passed": 42, "failed": 0, "errors": 0, "skipped": 5, "exit_code": 0},
+    "full": {"run": 188, "passed": 183, "failed": 0, "errors": 0, "skipped": 5, "exit_code": 0},
+    "skipped_reason": "Windows permissions prevented constructing physical symlink, junction, and hard-link fixtures; skips are not passes."
+  },
+  "integrity": {
+    "protected_paths_checked": 169,
+    "protected_path_mismatches": 0,
+    "formal_index": {"bytes": 32768, "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"},
+    "read_only_evidence": {"bytes": 2885, "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"},
+    "agentexpr_accessed": false
+  },
+  "cleanup": {
+    "service_started": false,
+    "http_requests_sent": 0,
+    "owned_process_remaining": false,
+    "new_runtime_copy_created": false,
+    "test_cases_cleaned": true,
+    "preexisting_tests_tmp_af009c_llama_server_preserved": true
+  },
+  "product_decisions": {
+    "mvp": "PASS",
+    "AF_010": "DEFERRED",
+    "reranker": "DEFERRED",
+    "read_only_agent_offline": "PASS",
+    "read_only_agent_real_model": "BLOCKED",
+    "production_abstention_threshold": "disabled",
+    "default_retriever_changed": false
+  },
+  "only_next_step": {
+    "prerequisite": "Use a platform-supported normal Windows host context that permits loopback; do not alter firewall, sandbox, ACL, or security settings.",
+    "command": "cd D:\\agent\\AgentForge; python -X utf8 -B AF010S2_HOST_RUNNER.py",
+    "expected": "AF010S2_RESULTS.json reports status=completed/state=COMPLETED, all required Embedding requests are accounted for, the owned process exits, the port is released, and protected hashes remain unchanged.",
+    "current_environment_must_not_run_it": true
+  }
+}

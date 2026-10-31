@@ -1,0 +1,5934 @@
+{
+  "calibration": {
+    "category_counts": {
+      "caller_symbol": 1,
+      "cross_file_call": 2,
+      "documentation_rule": 2,
+      "exact_symbol": 3,
+      "near_domain_negative": 10,
+      "same_name_symbol": 2
+    },
+    "historical_threshold_070": null,
+    "near_domain_negative_count": 10,
+    "no_evidence_query_count": 10,
+    "no_evidence_returns": {
+      "lexical": {
+        "applicable_no_evidence_queries": 10,
+        "near_domain": {
+          "count": 10,
+          "non_empty_returns": 10
+        },
+        "non_empty_return_rate": 1.0,
+        "non_empty_returns": 10,
+        "not_applicable_no_evidence_queries": 0,
+        "out_of_domain": {
+          "count": 0,
+          "non_empty_returns": 0
+        }
+      },
+      "rrf": {
+        "applicable_no_evidence_queries": 10,
+        "near_domain": {
+          "count": 10,
+          "non_empty_returns": 10
+        },
+        "non_empty_return_rate": 1.0,
+        "non_empty_returns": 10,
+        "not_applicable_no_evidence_queries": 0,
+        "out_of_domain": {
+          "count": 0,
+          "non_empty_returns": 0
+        }
+      },
+      "symbols": {
+        "applicable_no_evidence_queries": 5,
+        "near_domain": {
+          "count": 5,
+          "non_empty_returns": 0
+        },
+        "non_empty_return_rate": 0.0,
+        "non_empty_returns": 0,
+        "not_applicable_no_evidence_queries": 5,
+        "out_of_domain": {
+          "count": 0,
+          "non_empty_returns": 0
+        }
+      },
+      "vector": {
+        "applicable_no_evidence_queries": null,
+        "non_empty_return_rate": null,
+        "non_empty_returns": null,
+        "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence.",
+        "status": "not_measured"
+      }
+    },
+    "out_of_domain_negative_count": 0,
+    "positive_query_count": 10,
+    "query_count": 20,
+    "query_results": {
+      "lexical": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g01-n01",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/conservation.py",
+            "src/visits.py",
+            "src/operations.py",
+            "src/__init__.py",
+            "src/access.py",
+            "src/reports.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g01-n02",
+          "ranked": [
+            "src/visits.py",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g01-p01",
+          "ranked": [
+            "src/visits.py",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py"
+          ],
+          "relevant": [
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g01-p02",
+          "ranked": [
+            "src/visits.py",
+            "src/access.py",
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "docs/collection-policy.md",
+            "src/__init__.py",
+            "src/reports.py"
+          ],
+          "relevant": [
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g03-n01",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g03-n02",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p01",
+          "ranked": [
+            "src/payments.py",
+            "src/conservation.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/visits.py",
+            "src/operations.py"
+          ],
+          "relevant": [
+            "src/payments.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p02",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": [
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n01",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/conservation.py",
+            "src/operations.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n02",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g05-p01",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py"
+          ],
+          "relevant": [
+            "src/access.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "caller_symbol",
+          "query_id": "g05-p02",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": [
+            "src/access.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n01",
+          "ranked": [
+            "src/access.py",
+            "src/notices.py",
+            "src/operations.py",
+            "src/visits.py",
+            "src/reports.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n02",
+          "ranked": [
+            "src/notices.py",
+            "docs/visitor-policy.md",
+            "src/operations.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g07-p01",
+          "ranked": [
+            "src/notices.py",
+            "src/operations.py"
+          ],
+          "relevant": [
+            "src/notices.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g07-p02",
+          "ranked": [
+            "src/operations.py",
+            "src/notices.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/conservation.py",
+            "src/payments.py",
+            "src/__init__.py",
+            "src/calendar.py",
+            "src/reports.py"
+          ],
+          "relevant": [
+            "src/notices.py",
+            "src/operations.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g09-n01",
+          "ranked": [
+            "docs/collection-policy.md",
+            "docs/visitor-policy.md",
+            "src/visits.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g09-n02",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/visits.py",
+            "src/access.py",
+            "docs/collection-policy.md",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g09-p01",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/access.py",
+            "src/reports.py",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "relevant": [
+            "docs/visitor-policy.md"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g09-p02",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/visits.py",
+            "src/access.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "src/__init__.py",
+            "src/reports.py"
+          ],
+          "relevant": [
+            "docs/visitor-policy.md"
+          ]
+        }
+      ],
+      "rrf": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g01-n01",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/conservation.py",
+            "src/visits.py",
+            "src/operations.py",
+            "src/__init__.py",
+            "src/access.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014493
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g01-n02",
+          "ranked": [
+            "src/visits.py",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014493
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g01-p01",
+          "ranked": [
+            "src/visits.py",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014493
+            }
+          ],
+          "relevant": [
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g01-p02",
+          "ranked": [
+            "src/visits.py",
+            "src/access.py",
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "docs/collection-policy.md",
+            "src/__init__.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014493
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014286
+            }
+          ],
+          "relevant": [
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g03-n01",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g03-n02",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.014925
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p01",
+          "ranked": [
+            "src/payments.py",
+            "src/conservation.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/visits.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015152
+            }
+          ],
+          "relevant": [
+            "src/payments.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p02",
+          "ranked": [
+            "src/conservation.py",
+            "src/payments.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            }
+          ],
+          "relevant": [
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n01",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/conservation.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/access.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015152
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n02",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/access.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015385
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g05-p01",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/access.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            }
+          ],
+          "relevant": [
+            "src/access.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "caller_symbol",
+          "query_id": "g05-p02",
+          "ranked": [
+            "src/access.py",
+            "src/visits.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/access.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            }
+          ],
+          "relevant": [
+            "src/access.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n01",
+          "ranked": [
+            "src/access.py",
+            "src/notices.py",
+            "src/operations.py",
+            "src/visits.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/access.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015385
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n02",
+          "ranked": [
+            "src/notices.py",
+            "docs/visitor-policy.md",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015873
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g07-p01",
+          "ranked": [
+            "src/notices.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.016129
+            }
+          ],
+          "relevant": [
+            "src/notices.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g07-p02",
+          "ranked": [
+            "src/operations.py",
+            "src/notices.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/conservation.py",
+            "src/payments.py",
+            "src/__init__.py",
+            "src/calendar.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014493
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014286
+            }
+          ],
+          "relevant": [
+            "src/notices.py",
+            "src/operations.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g09-n01",
+          "ranked": [
+            "docs/collection-policy.md",
+            "docs/visitor-policy.md",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015873
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g09-n02",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/visits.py",
+            "src/access.py",
+            "docs/collection-policy.md",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015152
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g09-p01",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/access.py",
+            "src/reports.py",
+            "src/payments.py",
+            "src/operations.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.014925
+            }
+          ],
+          "relevant": [
+            "docs/visitor-policy.md"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g09-p02",
+          "ranked": [
+            "docs/visitor-policy.md",
+            "src/payments.py",
+            "src/visits.py",
+            "src/access.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "src/__init__.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014493
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014286
+            }
+          ],
+          "relevant": [
+            "docs/visitor-policy.md"
+          ]
+        }
+      ],
+      "symbols": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g01-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g01-p01",
+          "ranked": [
+            "src/visits.py::src.visits.arrange_gallery_visit"
+          ],
+          "relevant": [
+            "src/visits.py::src.visits.arrange_gallery_visit"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g01-p02",
+          "ranked": [
+            "src/visits.py::src.visits.arrange_gallery_visit"
+          ],
+          "relevant": [
+            "src/visits.py::src.visits.arrange_gallery_visit"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p01",
+          "ranked": [
+            "src/payments.py::src.payments.hold"
+          ],
+          "relevant": [
+            "src/payments.py::src.payments.hold"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "same_name_symbol",
+          "query_id": "g03-p02",
+          "ranked": [
+            "src/conservation.py::src.conservation.hold"
+          ],
+          "relevant": [
+            "src/conservation.py::src.conservation.hold"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g05-n02",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g05-p01",
+          "ranked": [
+            "src/access.py::src.access.verify_badge"
+          ],
+          "relevant": [
+            "src/access.py::src.access.verify_badge"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "caller_symbol",
+          "query_id": "g05-p02",
+          "ranked": [
+            "src/access.py::src.access.grant_after_hours_access"
+          ],
+          "relevant": [
+            "src/access.py::src.access.grant_after_hours_access"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g07-n02",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g07-p01",
+          "ranked": [
+            "src/notices.py::src.notices.send_closure_notice"
+          ],
+          "relevant": [
+            "src/notices.py::src.notices.send_closure_notice"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g07-p02",
+          "ranked": [
+            "src/operations.py::src.operations.close_gallery_room"
+          ],
+          "relevant": [
+            "src/operations.py::src.operations.close_gallery_room"
+          ]
+        }
+      ],
+      "vector": []
+    },
+    "retrievers": {
+      "lexical": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "caller_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 1,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 1,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 1,
+            "valid_label_count": 1
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.75,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 3
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 3,
+            "grounded_query_count": 3,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 3,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 3,
+            "valid_label_count": 3
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 10,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 10,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "same_name_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          }
+        },
+        "grounded_query_count": 10,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g01-n01",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/conservation.py",
+              "src/visits.py",
+              "src/operations.py",
+              "src/__init__.py",
+              "src/access.py",
+              "src/reports.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g01-n02",
+            "ranked": [
+              "src/visits.py",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g01-p01",
+            "ranked": [
+              "src/visits.py",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py"
+            ],
+            "relevant": [
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g01-p02",
+            "ranked": [
+              "src/visits.py",
+              "src/access.py",
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "docs/collection-policy.md",
+              "src/__init__.py",
+              "src/reports.py"
+            ],
+            "relevant": [
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g03-n01",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g03-n02",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p01",
+            "ranked": [
+              "src/payments.py",
+              "src/conservation.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/visits.py",
+              "src/operations.py"
+            ],
+            "relevant": [
+              "src/payments.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p02",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": [
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n01",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/conservation.py",
+              "src/operations.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n02",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g05-p01",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py"
+            ],
+            "relevant": [
+              "src/access.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "caller_symbol",
+            "query_id": "g05-p02",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": [
+              "src/access.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n01",
+            "ranked": [
+              "src/access.py",
+              "src/notices.py",
+              "src/operations.py",
+              "src/visits.py",
+              "src/reports.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n02",
+            "ranked": [
+              "src/notices.py",
+              "docs/visitor-policy.md",
+              "src/operations.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g07-p01",
+            "ranked": [
+              "src/notices.py",
+              "src/operations.py"
+            ],
+            "relevant": [
+              "src/notices.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g07-p02",
+            "ranked": [
+              "src/operations.py",
+              "src/notices.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/conservation.py",
+              "src/payments.py",
+              "src/__init__.py",
+              "src/calendar.py",
+              "src/reports.py"
+            ],
+            "relevant": [
+              "src/notices.py",
+              "src/operations.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g09-n01",
+            "ranked": [
+              "docs/collection-policy.md",
+              "docs/visitor-policy.md",
+              "src/visits.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g09-n02",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/visits.py",
+              "src/access.py",
+              "docs/collection-policy.md",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g09-p01",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/access.py",
+              "src/reports.py",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "relevant": [
+              "docs/visitor-policy.md"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g09-p02",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/visits.py",
+              "src/access.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "src/__init__.py",
+              "src/reports.py"
+            ],
+            "relevant": [
+              "docs/visitor-policy.md"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 0.95,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 10,
+        "timing": {
+          "mean_seconds_per_call": 0.003169,
+          "measured_call_count": 20,
+          "note": null,
+          "retrieval_seconds": 0.063386
+        },
+        "valid_label_count": 11
+      },
+      "rrf": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "caller_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 1,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 1,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 1,
+            "valid_label_count": 1
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.75,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 3
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 3,
+            "grounded_query_count": 3,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 3,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 3,
+            "valid_label_count": 3
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 10,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 10,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "same_name_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          }
+        },
+        "grounded_query_count": 10,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g01-n01",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/conservation.py",
+              "src/visits.py",
+              "src/operations.py",
+              "src/__init__.py",
+              "src/access.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014493
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g01-n02",
+            "ranked": [
+              "src/visits.py",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014493
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g01-p01",
+            "ranked": [
+              "src/visits.py",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014493
+              }
+            ],
+            "relevant": [
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g01-p02",
+            "ranked": [
+              "src/visits.py",
+              "src/access.py",
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "docs/collection-policy.md",
+              "src/__init__.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014493
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014286
+              }
+            ],
+            "relevant": [
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g03-n01",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g03-n02",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.014925
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p01",
+            "ranked": [
+              "src/payments.py",
+              "src/conservation.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/visits.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015152
+              }
+            ],
+            "relevant": [
+              "src/payments.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p02",
+            "ranked": [
+              "src/conservation.py",
+              "src/payments.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              }
+            ],
+            "relevant": [
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n01",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/conservation.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/access.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015152
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n02",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/access.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015385
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g05-p01",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/access.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              }
+            ],
+            "relevant": [
+              "src/access.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "caller_symbol",
+            "query_id": "g05-p02",
+            "ranked": [
+              "src/access.py",
+              "src/visits.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/access.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              }
+            ],
+            "relevant": [
+              "src/access.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n01",
+            "ranked": [
+              "src/access.py",
+              "src/notices.py",
+              "src/operations.py",
+              "src/visits.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/access.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015385
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n02",
+            "ranked": [
+              "src/notices.py",
+              "docs/visitor-policy.md",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015873
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g07-p01",
+            "ranked": [
+              "src/notices.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.016129
+              }
+            ],
+            "relevant": [
+              "src/notices.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g07-p02",
+            "ranked": [
+              "src/operations.py",
+              "src/notices.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/conservation.py",
+              "src/payments.py",
+              "src/__init__.py",
+              "src/calendar.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014493
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014286
+              }
+            ],
+            "relevant": [
+              "src/notices.py",
+              "src/operations.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g09-n01",
+            "ranked": [
+              "docs/collection-policy.md",
+              "docs/visitor-policy.md",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015873
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g09-n02",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/visits.py",
+              "src/access.py",
+              "docs/collection-policy.md",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015152
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g09-p01",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/access.py",
+              "src/reports.py",
+              "src/payments.py",
+              "src/operations.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.014925
+              }
+            ],
+            "relevant": [
+              "docs/visitor-policy.md"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g09-p02",
+            "ranked": [
+              "docs/visitor-policy.md",
+              "src/payments.py",
+              "src/visits.py",
+              "src/access.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "src/__init__.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014493
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014286
+              }
+            ],
+            "relevant": [
+              "docs/visitor-policy.md"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 0.95,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 10,
+        "timing": {
+          "mean_seconds_per_call": 0.002349,
+          "measured_call_count": 20,
+          "note": "RRF wall time includes the channel searches it invokes.",
+          "retrieval_seconds": 0.046989
+        },
+        "valid_label_count": 11
+      },
+      "symbols": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "caller_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 1,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 1,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 1,
+            "valid_label_count": 1
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 0,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 2,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 3,
+            "grounded_query_count": 3,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 3,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 3,
+            "valid_label_count": 3
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 5,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 10,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "same_name_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          }
+        },
+        "grounded_query_count": 8,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g01-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g01-p01",
+            "ranked": [
+              "src/visits.py::src.visits.arrange_gallery_visit"
+            ],
+            "relevant": [
+              "src/visits.py::src.visits.arrange_gallery_visit"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g01-p02",
+            "ranked": [
+              "src/visits.py::src.visits.arrange_gallery_visit"
+            ],
+            "relevant": [
+              "src/visits.py::src.visits.arrange_gallery_visit"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p01",
+            "ranked": [
+              "src/payments.py::src.payments.hold"
+            ],
+            "relevant": [
+              "src/payments.py::src.payments.hold"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "same_name_symbol",
+            "query_id": "g03-p02",
+            "ranked": [
+              "src/conservation.py::src.conservation.hold"
+            ],
+            "relevant": [
+              "src/conservation.py::src.conservation.hold"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g05-n02",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g05-p01",
+            "ranked": [
+              "src/access.py::src.access.verify_badge"
+            ],
+            "relevant": [
+              "src/access.py::src.access.verify_badge"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "caller_symbol",
+            "query_id": "g05-p02",
+            "ranked": [
+              "src/access.py::src.access.grant_after_hours_access"
+            ],
+            "relevant": [
+              "src/access.py::src.access.grant_after_hours_access"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g07-n02",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g07-p01",
+            "ranked": [
+              "src/notices.py::src.notices.send_closure_notice"
+            ],
+            "relevant": [
+              "src/notices.py::src.notices.send_closure_notice"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g07-p02",
+            "ranked": [
+              "src/operations.py::src.operations.close_gallery_room"
+            ],
+            "relevant": [
+              "src/operations.py::src.operations.close_gallery_room"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 1.0,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 8,
+        "timing": {
+          "mean_seconds_per_call": 5.2e-05,
+          "measured_call_count": 13,
+          "note": "Only applicable exact-symbol queries are timed.",
+          "retrieval_seconds": 0.000682
+        },
+        "valid_label_count": 8
+      },
+      "vector": {
+        "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence.",
+        "status": "not_measured"
+      }
+    },
+    "status": "calibration_partition"
+  },
+  "dataset": {
+    "corpus_manifest": {
+      "file_count": 13,
+      "files": [
+        {
+          "path": "docs/collection-policy.md",
+          "sha256": "25b8765345675ca8097be167b6c1be518d9c8576536288932e607163292b1fa1",
+          "size_bytes": 278
+        },
+        {
+          "path": "docs/visitor-policy.md",
+          "sha256": "8237cae46e712284c88ff53e268d0b82990186f640242aeec25fb4a20240dbd7",
+          "size_bytes": 243
+        },
+        {
+          "path": "src/__init__.py",
+          "sha256": "7fd7e87e66e8732830196e5a66816935c8fc36f0066394eaf55e014311208d35",
+          "size_bytes": 82
+        },
+        {
+          "path": "src/access.py",
+          "sha256": "8aad67befbdbd578924632a8a0a989365faa3f6ce32e56a8e1862930f8836205",
+          "size_bytes": 427
+        },
+        {
+          "path": "src/calendar.py",
+          "sha256": "601996001d8e083004303ae3fb968065bf8c64f7c7a7291a3e5de3e8b6b8e63b",
+          "size_bytes": 419
+        },
+        {
+          "path": "src/catalog.py",
+          "sha256": "6ad32c8460319452ec548b7a1fc1da050fe0f19f8170520e7f2bbc65c9b0f289",
+          "size_bytes": 459
+        },
+        {
+          "path": "src/catalog_store.py",
+          "sha256": "977a341b3d9bc7184bdad31722a55aab33d646ad25cb005215e3f26a9112a5e2",
+          "size_bytes": 422
+        },
+        {
+          "path": "src/conservation.py",
+          "sha256": "70aca02384d474d2d2a6bb0371b9a75d38a66f43e1a192dc1daee6c924b21231",
+          "size_bytes": 474
+        },
+        {
+          "path": "src/notices.py",
+          "sha256": "8b4674ae68a04a85e396a6cd14c046824afd1782e8965708c144af57005b89ce",
+          "size_bytes": 224
+        },
+        {
+          "path": "src/operations.py",
+          "sha256": "755d35371fdf23a9c3ecbeba3d0b9d80695c710542e3f926fa278eedce412a86",
+          "size_bytes": 319
+        },
+        {
+          "path": "src/payments.py",
+          "sha256": "35604294d7f804927e780121238b10b2f6240423f7e224e502c9849c387d48a5",
+          "size_bytes": 335
+        },
+        {
+          "path": "src/reports.py",
+          "sha256": "454b09cc09f051b35f5bed286beaa8331a1319a5c2556217620f73d7f4cd1aba",
+          "size_bytes": 532
+        },
+        {
+          "path": "src/visits.py",
+          "sha256": "cbcf7a6cfe896a0be0135f1df1d4376cb5433d540f54c74505c65189c32a7edf",
+          "size_bytes": 663
+        }
+      ],
+      "manifest_sha256": "f187d406263d2a3a44cf234cbed128d1fbecc4cf973a187f0b837e4c1b7ce449",
+      "root_name": "retrieval_eval_generalization_repo"
+    },
+    "evidence_validation": {
+      "query_count": 40,
+      "verified_evidence_ranges": 25
+    },
+    "near_domain_negatives": 19,
+    "no_evidence_queries": 20,
+    "out_of_domain_negatives": 1,
+    "positive_queries": 20,
+    "query_total": 40,
+    "review_status": "provisional_ai",
+    "split_plan_validation": {
+      "groups_are_disjoint": true,
+      "summary": {
+        "calibration": {
+          "evidence": 10,
+          "leakage_group_count": 5,
+          "near_domain_negative": 10,
+          "no_evidence": 10,
+          "out_of_domain_negative": 0,
+          "query_count": 20
+        },
+        "validation": {
+          "evidence": 10,
+          "leakage_group_count": 5,
+          "near_domain_negative": 9,
+          "no_evidence": 10,
+          "out_of_domain_negative": 1,
+          "query_count": 20
+        }
+      }
+    },
+    "version": "agentforge-retrieval-generalization-v1"
+  },
+  "elapsed_seconds": 0.269853,
+  "fixed_experiment_configuration": {
+    "rrf_k": 60,
+    "top_score_rule": "top_score >= 0.70",
+    "validation_evaluations": 1,
+    "validation_used_for_tuning": false
+  },
+  "historical_reference": {
+    "dataset": "agentforge-retrieval-provisional-v3 (AI-only; 40 queries)",
+    "rrf_k": 60,
+    "rrf_metrics": {
+      "mrr": 1.0,
+      "recall_at": {
+        "1": 0.975,
+        "10": 1.0,
+        "5": 1.0
+      }
+    },
+    "source": "AF009FA_RRF_EVALUATION.md and AF009FA_RRF_RESULTS.json",
+    "validation_threshold_070": {
+      "coverage": 0.1,
+      "false_accept_rate": 0.0,
+      "false_reject_rate": 0.8,
+      "precision": 1.0,
+      "sample_counts": {
+        "evidence": 10,
+        "no_evidence": 10,
+        "total": 20
+      }
+    }
+  },
+  "human_reviewed": false,
+  "index": {
+    "database_status": {
+      "chunks": 13,
+      "database": ":memory:",
+      "files": 13,
+      "index_version": 3,
+      "indexed_at": "2026-10-25T16:58:40.189219+00:00",
+      "parse_failures": 0,
+      "references": 21,
+      "repository": "D:\\agent\\AgentForge\\tests\\fixtures\\retrieval_eval_generalization_repo",
+      "symbol_index_available": true,
+      "symbols": 29,
+      "vector_index_available": true,
+      "vectors": 0
+    },
+    "embedding_index_seconds": null,
+    "indexed_repository": {
+      "added": 13,
+      "changed": 0,
+      "chunks": 13,
+      "database": ":memory:",
+      "files": 13,
+      "index_version": 3,
+      "indexed_at": "2026-10-25T16:58:40.189219+00:00",
+      "parse_failure_paths": [],
+      "parse_failures": 0,
+      "parsed_python_files": 11,
+      "references": 21,
+      "removed": 0,
+      "repository": "D:\\agent\\AgentForge\\tests\\fixtures\\retrieval_eval_generalization_repo",
+      "skip_reasons": {},
+      "skipped": 0,
+      "symbol_index_available": true,
+      "symbols": 29,
+      "unchanged": 0,
+      "vector_index_available": true,
+      "vectors": 0
+    },
+    "store": "SQLite :memory:",
+    "vector_blob_bytes": 0,
+    "vector_index": null
+  },
+  "limitations": [
+    "All labels are AI evidence review and are not human ground truth.",
+    "The second corpus is synthetic and small; results do not establish general performance on user repositories.",
+    "RRF ranking quality and no-evidence rejection are separate; RRF does not provide abstention.",
+    "The historical threshold remains an offline analysis only and is not enabled in production.",
+    "Symbol metrics are applicable only to queries with explicit exact-symbol filters.",
+    "Server log reported loopback listening, but the local TCP readiness probe could not connect; no embedding HTTP request was sent. The test environment also denied OS listener-table queries."
+  ],
+  "model": null,
+  "production_threshold_enabled": false,
+  "rrf_decision": {
+    "productization_recommendation": "retain_explicit_RRF_prototype_only",
+    "reason": "Independent validation lacks measured vectors, so no vector-plus-rank-fusion claim is supportable.",
+    "status": "not_decidable_without_real_vector_measurement"
+  },
+  "status": "provisional_ai_generalization_experiment",
+  "threshold_transfer": null,
+  "validation": {
+    "category_counts": {
+      "business_to_implementation": 2,
+      "cross_file_call": 2,
+      "documentation_rule": 1,
+      "exact_symbol": 5,
+      "near_domain_negative": 9,
+      "out_of_domain_negative": 1
+    },
+    "historical_threshold_070": null,
+    "near_domain_negative_count": 9,
+    "no_evidence_query_count": 10,
+    "no_evidence_returns": {
+      "lexical": {
+        "applicable_no_evidence_queries": 10,
+        "near_domain": {
+          "count": 9,
+          "non_empty_returns": 9
+        },
+        "non_empty_return_rate": 0.9,
+        "non_empty_returns": 9,
+        "not_applicable_no_evidence_queries": 0,
+        "out_of_domain": {
+          "count": 1,
+          "non_empty_returns": 0
+        }
+      },
+      "rrf": {
+        "applicable_no_evidence_queries": 10,
+        "near_domain": {
+          "count": 9,
+          "non_empty_returns": 9
+        },
+        "non_empty_return_rate": 0.9,
+        "non_empty_returns": 9,
+        "not_applicable_no_evidence_queries": 0,
+        "out_of_domain": {
+          "count": 1,
+          "non_empty_returns": 0
+        }
+      },
+      "symbols": {
+        "applicable_no_evidence_queries": 5,
+        "near_domain": {
+          "count": 5,
+          "non_empty_returns": 0
+        },
+        "non_empty_return_rate": 0.0,
+        "non_empty_returns": 0,
+        "not_applicable_no_evidence_queries": 5,
+        "out_of_domain": {
+          "count": 0,
+          "non_empty_returns": 0
+        }
+      },
+      "vector": {
+        "applicable_no_evidence_queries": null,
+        "non_empty_return_rate": null,
+        "non_empty_returns": null,
+        "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence.",
+        "status": "not_measured"
+      }
+    },
+    "out_of_domain_negative_count": 1,
+    "positive_query_count": 10,
+    "query_count": 20,
+    "query_results": {
+      "lexical": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g02-n01",
+          "ranked": [
+            "src/visits.py",
+            "src/payments.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "src/reports.py",
+            "src/__init__.py",
+            "src/calendar.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g02-n02",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "src/catalog.py",
+            "src/calendar.py",
+            "src/reports.py",
+            "docs/collection-policy.md",
+            "docs/visitor-policy.md",
+            "src/catalog_store.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g02-p01",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "docs/visitor-policy.md"
+          ],
+          "relevant": [
+            "src/payments.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g02-p02",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py"
+          ],
+          "relevant": [
+            "src/payments.py",
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g04-n01",
+          "ranked": [
+            "src/conservation.py",
+            "src/operations.py",
+            "docs/visitor-policy.md",
+            "src/notices.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/catalog.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g04-n02",
+          "ranked": [
+            "src/operations.py",
+            "src/notices.py",
+            "src/conservation.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g04-p01",
+          "ranked": [
+            "src/conservation.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/reports.py"
+          ],
+          "relevant": [
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "business_to_implementation",
+          "query_id": "g04-p02",
+          "ranked": [
+            "docs/collection-policy.md",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/notices.py",
+            "src/visits.py"
+          ],
+          "relevant": [
+            "docs/collection-policy.md",
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g06-n01",
+          "ranked": [
+            "src/catalog.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/reports.py",
+            "src/catalog_store.py",
+            "src/visits.py",
+            "src/payments.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g06-n02",
+          "ranked": [
+            "src/catalog.py",
+            "src/calendar.py",
+            "src/reports.py",
+            "docs/collection-policy.md",
+            "src/catalog_store.py",
+            "src/notices.py",
+            "src/visits.py",
+            "src/payments.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g06-p01",
+          "ranked": [
+            "src/catalog.py",
+            "src/catalog_store.py",
+            "src/calendar.py",
+            "src/visits.py",
+            "src/payments.py",
+            "src/reports.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": [
+            "src/catalog.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g06-p02",
+          "ranked": [
+            "docs/collection-policy.md",
+            "src/catalog.py",
+            "src/catalog_store.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/reports.py",
+            "src/payments.py"
+          ],
+          "relevant": [
+            "docs/collection-policy.md"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g08-n01",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/payments.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g08-n02",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py",
+            "src/reports.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g08-p01",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "docs/collection-policy.md"
+          ],
+          "relevant": [
+            "src/catalog_store.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "business_to_implementation",
+          "query_id": "g08-p02",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/reports.py",
+            "src/visits.py"
+          ],
+          "relevant": [
+            "docs/collection-policy.md",
+            "src/catalog_store.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g10-n01",
+          "ranked": [
+            "src/reports.py",
+            "src/calendar.py",
+            "src/conservation.py",
+            "src/visits.py"
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "out_of_domain_negative",
+          "query_id": "g10-n02",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g10-p01",
+          "ranked": [
+            "src/reports.py",
+            "src/visits.py"
+          ],
+          "relevant": [
+            "src/reports.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g10-p02",
+          "ranked": [
+            "src/reports.py",
+            "src/calendar.py",
+            "src/visits.py",
+            "docs/visitor-policy.md"
+          ],
+          "relevant": [
+            "src/calendar.py",
+            "src/reports.py"
+          ]
+        }
+      ],
+      "rrf": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g02-n01",
+          "ranked": [
+            "src/visits.py",
+            "src/payments.py",
+            "docs/visitor-policy.md",
+            "src/access.py",
+            "src/operations.py",
+            "src/conservation.py",
+            "src/reports.py",
+            "src/__init__.py",
+            "src/calendar.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014493
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g02-n02",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "src/catalog.py",
+            "src/calendar.py",
+            "src/reports.py",
+            "docs/collection-policy.md",
+            "docs/visitor-policy.md",
+            "src/catalog_store.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.014706
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g02-p01",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "docs/visitor-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            }
+          ],
+          "relevant": [
+            "src/payments.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g02-p02",
+          "ranked": [
+            "src/payments.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/reports.py",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014493
+            }
+          ],
+          "relevant": [
+            "src/payments.py",
+            "src/visits.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g04-n01",
+          "ranked": [
+            "src/conservation.py",
+            "src/operations.py",
+            "docs/visitor-policy.md",
+            "src/notices.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/catalog.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014493
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.014286
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g04-n02",
+          "ranked": [
+            "src/operations.py",
+            "src/notices.py",
+            "src/conservation.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015625
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g04-p01",
+          "ranked": [
+            "src/conservation.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py",
+            "docs/visitor-policy.md",
+            "src/__init__.py",
+            "src/access.py",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/__init__.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/access.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.014706
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014493
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014286
+            }
+          ],
+          "relevant": [
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "business_to_implementation",
+          "query_id": "g04-p02",
+          "ranked": [
+            "docs/collection-policy.md",
+            "src/conservation.py",
+            "src/operations.py",
+            "src/notices.py",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015385
+            }
+          ],
+          "relevant": [
+            "docs/collection-policy.md",
+            "src/conservation.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g06-n01",
+          "ranked": [
+            "src/catalog.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/reports.py",
+            "src/catalog_store.py",
+            "src/visits.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014925
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g06-n02",
+          "ranked": [
+            "src/catalog.py",
+            "src/calendar.py",
+            "src/reports.py",
+            "docs/collection-policy.md",
+            "src/catalog_store.py",
+            "src/notices.py",
+            "src/visits.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/notices.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014706
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g06-p01",
+          "ranked": [
+            "src/catalog.py",
+            "src/catalog_store.py",
+            "src/calendar.py",
+            "src/visits.py",
+            "src/payments.py",
+            "src/reports.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.014925
+            }
+          ],
+          "relevant": [
+            "src/catalog.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "documentation_rule",
+          "query_id": "g06-p02",
+          "ranked": [
+            "docs/collection-policy.md",
+            "src/catalog.py",
+            "src/catalog_store.py",
+            "src/visits.py",
+            "docs/visitor-policy.md",
+            "src/calendar.py",
+            "src/reports.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.014925
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.014706
+            }
+          ],
+          "relevant": [
+            "docs/collection-policy.md"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g08-n01",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/payments.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.016129
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g08-n02",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "src/visits.py",
+            "docs/collection-policy.md",
+            "src/operations.py",
+            "src/reports.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/operations.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015152
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g08-p01",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "docs/collection-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            }
+          ],
+          "relevant": [
+            "src/catalog_store.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "business_to_implementation",
+          "query_id": "g08-p02",
+          "ranked": [
+            "src/catalog_store.py",
+            "src/catalog.py",
+            "docs/collection-policy.md",
+            "src/calendar.py",
+            "src/payments.py",
+            "src/reports.py",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/catalog_store.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/catalog.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "docs/collection-policy.md",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.015625
+            },
+            {
+              "relative_path": "src/payments.py",
+              "score": 0.015385
+            },
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.015152
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.014925
+            }
+          ],
+          "relevant": [
+            "docs/collection-policy.md",
+            "src/catalog_store.py"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g10-n01",
+          "ranked": [
+            "src/reports.py",
+            "src/calendar.py",
+            "src/conservation.py",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.016393
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/conservation.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015625
+            }
+          ],
+          "relevant": []
+        },
+        {
+          "applicable": false,
+          "category": "out_of_domain_negative",
+          "query_id": "g10-n02",
+          "ranked": [],
+          "ranked_scores": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g10-p01",
+          "ranked": [
+            "src/reports.py",
+            "src/visits.py"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.016129
+            }
+          ],
+          "relevant": [
+            "src/reports.py"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g10-p02",
+          "ranked": [
+            "src/reports.py",
+            "src/calendar.py",
+            "src/visits.py",
+            "docs/visitor-policy.md"
+          ],
+          "ranked_scores": [
+            {
+              "relative_path": "src/reports.py",
+              "score": 0.032787
+            },
+            {
+              "relative_path": "src/calendar.py",
+              "score": 0.016129
+            },
+            {
+              "relative_path": "src/visits.py",
+              "score": 0.015873
+            },
+            {
+              "relative_path": "docs/visitor-policy.md",
+              "score": 0.015625
+            }
+          ],
+          "relevant": [
+            "src/calendar.py",
+            "src/reports.py"
+          ]
+        }
+      ],
+      "symbols": [
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g02-n02",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g02-p01",
+          "ranked": [
+            "src/payments.py::src.payments.charge_deposit"
+          ],
+          "relevant": [
+            "src/payments.py::src.payments.charge_deposit"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g02-p02",
+          "ranked": [
+            "src/payments.py::src.payments.charge_deposit"
+          ],
+          "relevant": [
+            "src/payments.py::src.payments.charge_deposit"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g04-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g04-p01",
+          "ranked": [
+            "src/conservation.py::src.conservation.set_gallery_humidity"
+          ],
+          "relevant": [
+            "src/conservation.py::src.conservation.set_gallery_humidity"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g06-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g06-p01",
+          "ranked": [
+            "src/catalog.py::src.catalog.archive_exhibit"
+          ],
+          "relevant": [
+            "src/catalog.py::src.catalog.archive_exhibit"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g08-n02",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g08-p01",
+          "ranked": [
+            "src/catalog_store.py::src.catalog_store.retain_catalog_attachment"
+          ],
+          "relevant": [
+            "src/catalog_store.py::src.catalog_store.retain_catalog_attachment"
+          ]
+        },
+        {
+          "applicable": false,
+          "category": "near_domain_negative",
+          "query_id": "g10-n01",
+          "ranked": [],
+          "relevant": []
+        },
+        {
+          "applicable": true,
+          "category": "exact_symbol",
+          "query_id": "g10-p01",
+          "ranked": [
+            "src/reports.py::src.reports.daily_visit_summary"
+          ],
+          "relevant": [
+            "src/reports.py::src.reports.daily_visit_summary"
+          ]
+        },
+        {
+          "applicable": true,
+          "category": "cross_file_call",
+          "query_id": "g10-p02",
+          "ranked": [
+            "src/reports.py::src.reports.daily_visit_summary"
+          ],
+          "relevant": [
+            "src/reports.py::src.reports.daily_visit_summary"
+          ]
+        }
+      ],
+      "vector": []
+    },
+    "retrievers": {
+      "lexical": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "business_to_implementation": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.5,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 4
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.5,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 4
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 1,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 1,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 1,
+            "valid_label_count": 1
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 5,
+            "grounded_query_count": 5,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 5,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 5,
+            "valid_label_count": 5
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 9,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 9,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "out_of_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 1,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          }
+        },
+        "grounded_query_count": 10,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g02-n01",
+            "ranked": [
+              "src/visits.py",
+              "src/payments.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "src/reports.py",
+              "src/__init__.py",
+              "src/calendar.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g02-n02",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "src/catalog.py",
+              "src/calendar.py",
+              "src/reports.py",
+              "docs/collection-policy.md",
+              "docs/visitor-policy.md",
+              "src/catalog_store.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g02-p01",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "docs/visitor-policy.md"
+            ],
+            "relevant": [
+              "src/payments.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g02-p02",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py"
+            ],
+            "relevant": [
+              "src/payments.py",
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g04-n01",
+            "ranked": [
+              "src/conservation.py",
+              "src/operations.py",
+              "docs/visitor-policy.md",
+              "src/notices.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/catalog.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g04-n02",
+            "ranked": [
+              "src/operations.py",
+              "src/notices.py",
+              "src/conservation.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g04-p01",
+            "ranked": [
+              "src/conservation.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/reports.py"
+            ],
+            "relevant": [
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "business_to_implementation",
+            "query_id": "g04-p02",
+            "ranked": [
+              "docs/collection-policy.md",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/notices.py",
+              "src/visits.py"
+            ],
+            "relevant": [
+              "docs/collection-policy.md",
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g06-n01",
+            "ranked": [
+              "src/catalog.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/reports.py",
+              "src/catalog_store.py",
+              "src/visits.py",
+              "src/payments.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g06-n02",
+            "ranked": [
+              "src/catalog.py",
+              "src/calendar.py",
+              "src/reports.py",
+              "docs/collection-policy.md",
+              "src/catalog_store.py",
+              "src/notices.py",
+              "src/visits.py",
+              "src/payments.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g06-p01",
+            "ranked": [
+              "src/catalog.py",
+              "src/catalog_store.py",
+              "src/calendar.py",
+              "src/visits.py",
+              "src/payments.py",
+              "src/reports.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": [
+              "src/catalog.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g06-p02",
+            "ranked": [
+              "docs/collection-policy.md",
+              "src/catalog.py",
+              "src/catalog_store.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/reports.py",
+              "src/payments.py"
+            ],
+            "relevant": [
+              "docs/collection-policy.md"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g08-n01",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/payments.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g08-n02",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py",
+              "src/reports.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g08-p01",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "docs/collection-policy.md"
+            ],
+            "relevant": [
+              "src/catalog_store.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "business_to_implementation",
+            "query_id": "g08-p02",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/reports.py",
+              "src/visits.py"
+            ],
+            "relevant": [
+              "docs/collection-policy.md",
+              "src/catalog_store.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g10-n01",
+            "ranked": [
+              "src/reports.py",
+              "src/calendar.py",
+              "src/conservation.py",
+              "src/visits.py"
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "out_of_domain_negative",
+            "query_id": "g10-n02",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g10-p01",
+            "ranked": [
+              "src/reports.py",
+              "src/visits.py"
+            ],
+            "relevant": [
+              "src/reports.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g10-p02",
+            "ranked": [
+              "src/reports.py",
+              "src/calendar.py",
+              "src/visits.py",
+              "docs/visitor-policy.md"
+            ],
+            "relevant": [
+              "src/calendar.py",
+              "src/reports.py"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 0.8,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 10,
+        "timing": {
+          "mean_seconds_per_call": 0.003044,
+          "measured_call_count": 20,
+          "note": null,
+          "retrieval_seconds": 0.060885
+        },
+        "valid_label_count": 14
+      },
+      "rrf": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "business_to_implementation": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.5,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 4
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 0.5,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 4
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 1,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 1,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 1,
+            "valid_label_count": 1
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 5,
+            "grounded_query_count": 5,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 5,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 5,
+            "valid_label_count": 5
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 9,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 9,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "out_of_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 1,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 1,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          }
+        },
+        "grounded_query_count": 10,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g02-n01",
+            "ranked": [
+              "src/visits.py",
+              "src/payments.py",
+              "docs/visitor-policy.md",
+              "src/access.py",
+              "src/operations.py",
+              "src/conservation.py",
+              "src/reports.py",
+              "src/__init__.py",
+              "src/calendar.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014493
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g02-n02",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "src/catalog.py",
+              "src/calendar.py",
+              "src/reports.py",
+              "docs/collection-policy.md",
+              "docs/visitor-policy.md",
+              "src/catalog_store.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.014706
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g02-p01",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "docs/visitor-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              }
+            ],
+            "relevant": [
+              "src/payments.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g02-p02",
+            "ranked": [
+              "src/payments.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/reports.py",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014493
+              }
+            ],
+            "relevant": [
+              "src/payments.py",
+              "src/visits.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g04-n01",
+            "ranked": [
+              "src/conservation.py",
+              "src/operations.py",
+              "docs/visitor-policy.md",
+              "src/notices.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/catalog.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014493
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.014286
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g04-n02",
+            "ranked": [
+              "src/operations.py",
+              "src/notices.py",
+              "src/conservation.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015625
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g04-p01",
+            "ranked": [
+              "src/conservation.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py",
+              "docs/visitor-policy.md",
+              "src/__init__.py",
+              "src/access.py",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/__init__.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/access.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.014706
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014493
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014286
+              }
+            ],
+            "relevant": [
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "business_to_implementation",
+            "query_id": "g04-p02",
+            "ranked": [
+              "docs/collection-policy.md",
+              "src/conservation.py",
+              "src/operations.py",
+              "src/notices.py",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015385
+              }
+            ],
+            "relevant": [
+              "docs/collection-policy.md",
+              "src/conservation.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g06-n01",
+            "ranked": [
+              "src/catalog.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/reports.py",
+              "src/catalog_store.py",
+              "src/visits.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014925
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g06-n02",
+            "ranked": [
+              "src/catalog.py",
+              "src/calendar.py",
+              "src/reports.py",
+              "docs/collection-policy.md",
+              "src/catalog_store.py",
+              "src/notices.py",
+              "src/visits.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/notices.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014706
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g06-p01",
+            "ranked": [
+              "src/catalog.py",
+              "src/catalog_store.py",
+              "src/calendar.py",
+              "src/visits.py",
+              "src/payments.py",
+              "src/reports.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.014925
+              }
+            ],
+            "relevant": [
+              "src/catalog.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "documentation_rule",
+            "query_id": "g06-p02",
+            "ranked": [
+              "docs/collection-policy.md",
+              "src/catalog.py",
+              "src/catalog_store.py",
+              "src/visits.py",
+              "docs/visitor-policy.md",
+              "src/calendar.py",
+              "src/reports.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.014925
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.014706
+              }
+            ],
+            "relevant": [
+              "docs/collection-policy.md"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g08-n01",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/payments.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.016129
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g08-n02",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "src/visits.py",
+              "docs/collection-policy.md",
+              "src/operations.py",
+              "src/reports.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/operations.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015152
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g08-p01",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "docs/collection-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              }
+            ],
+            "relevant": [
+              "src/catalog_store.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "business_to_implementation",
+            "query_id": "g08-p02",
+            "ranked": [
+              "src/catalog_store.py",
+              "src/catalog.py",
+              "docs/collection-policy.md",
+              "src/calendar.py",
+              "src/payments.py",
+              "src/reports.py",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/catalog_store.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/catalog.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "docs/collection-policy.md",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.015625
+              },
+              {
+                "relative_path": "src/payments.py",
+                "score": 0.015385
+              },
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.015152
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.014925
+              }
+            ],
+            "relevant": [
+              "docs/collection-policy.md",
+              "src/catalog_store.py"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g10-n01",
+            "ranked": [
+              "src/reports.py",
+              "src/calendar.py",
+              "src/conservation.py",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.016393
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/conservation.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015625
+              }
+            ],
+            "relevant": []
+          },
+          {
+            "applicable": false,
+            "category": "out_of_domain_negative",
+            "query_id": "g10-n02",
+            "ranked": [],
+            "ranked_scores": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g10-p01",
+            "ranked": [
+              "src/reports.py",
+              "src/visits.py"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.016129
+              }
+            ],
+            "relevant": [
+              "src/reports.py"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g10-p02",
+            "ranked": [
+              "src/reports.py",
+              "src/calendar.py",
+              "src/visits.py",
+              "docs/visitor-policy.md"
+            ],
+            "ranked_scores": [
+              {
+                "relative_path": "src/reports.py",
+                "score": 0.032787
+              },
+              {
+                "relative_path": "src/calendar.py",
+                "score": 0.016129
+              },
+              {
+                "relative_path": "src/visits.py",
+                "score": 0.015873
+              },
+              {
+                "relative_path": "docs/visitor-policy.md",
+                "score": 0.015625
+              }
+            ],
+            "relevant": [
+              "src/calendar.py",
+              "src/reports.py"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 0.8,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 10,
+        "timing": {
+          "mean_seconds_per_call": 0.002452,
+          "measured_call_count": 20,
+          "note": "RRF wall time includes the channel searches it invokes.",
+          "retrieval_seconds": 0.049048
+        },
+        "valid_label_count": 14
+      },
+      "symbols": {
+        "aggregation": "macro average over queries with non-empty ground truth",
+        "by_category": {
+          "business_to_implementation": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 0,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 2,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "cross_file_call": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 2,
+            "grounded_query_count": 2,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 2,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 2,
+            "valid_label_count": 2
+          },
+          "documentation_rule": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 0,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 1,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "exact_symbol": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 5,
+            "grounded_query_count": 5,
+            "mrr": 1.0,
+            "not_applicable_reason": null,
+            "query_count": 5,
+            "recall_at": {
+              "1": 1.0,
+              "10": 1.0,
+              "5": 1.0
+            },
+            "scored_query_count": 5,
+            "valid_label_count": 5
+          },
+          "near_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 5,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 9,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          },
+          "out_of_domain_negative": {
+            "aggregation": "macro average over queries with non-empty ground truth",
+            "applicable_query_count": 0,
+            "grounded_query_count": 0,
+            "mrr": null,
+            "not_applicable_reason": "No non-empty ground-truth labels for this retriever/category.",
+            "query_count": 1,
+            "recall_at": {
+              "1": null,
+              "10": null,
+              "5": null
+            },
+            "scored_query_count": 0,
+            "valid_label_count": 0
+          }
+        },
+        "grounded_query_count": 7,
+        "mrr": 1.0,
+        "query_results": [
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g02-n02",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g02-p01",
+            "ranked": [
+              "src/payments.py::src.payments.charge_deposit"
+            ],
+            "relevant": [
+              "src/payments.py::src.payments.charge_deposit"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g02-p02",
+            "ranked": [
+              "src/payments.py::src.payments.charge_deposit"
+            ],
+            "relevant": [
+              "src/payments.py::src.payments.charge_deposit"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g04-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g04-p01",
+            "ranked": [
+              "src/conservation.py::src.conservation.set_gallery_humidity"
+            ],
+            "relevant": [
+              "src/conservation.py::src.conservation.set_gallery_humidity"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g06-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g06-p01",
+            "ranked": [
+              "src/catalog.py::src.catalog.archive_exhibit"
+            ],
+            "relevant": [
+              "src/catalog.py::src.catalog.archive_exhibit"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g08-n02",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g08-p01",
+            "ranked": [
+              "src/catalog_store.py::src.catalog_store.retain_catalog_attachment"
+            ],
+            "relevant": [
+              "src/catalog_store.py::src.catalog_store.retain_catalog_attachment"
+            ]
+          },
+          {
+            "applicable": false,
+            "category": "near_domain_negative",
+            "query_id": "g10-n01",
+            "ranked": [],
+            "relevant": []
+          },
+          {
+            "applicable": true,
+            "category": "exact_symbol",
+            "query_id": "g10-p01",
+            "ranked": [
+              "src/reports.py::src.reports.daily_visit_summary"
+            ],
+            "relevant": [
+              "src/reports.py::src.reports.daily_visit_summary"
+            ]
+          },
+          {
+            "applicable": true,
+            "category": "cross_file_call",
+            "query_id": "g10-p02",
+            "ranked": [
+              "src/reports.py::src.reports.daily_visit_summary"
+            ],
+            "relevant": [
+              "src/reports.py::src.reports.daily_visit_summary"
+            ]
+          }
+        ],
+        "recall_at": {
+          "1": 1.0,
+          "10": 1.0,
+          "5": 1.0
+        },
+        "scored_query_count": 7,
+        "timing": {
+          "mean_seconds_per_call": 3.7e-05,
+          "measured_call_count": 12,
+          "note": "Only applicable exact-symbol queries are timed.",
+          "retrieval_seconds": 0.000441
+        },
+        "valid_label_count": 7
+      },
+      "vector": {
+        "reason": "No validated local embedding provider is configured; deterministic test providers are not model evidence.",
+        "status": "not_measured"
+      }
+    },
+    "status": "evaluated_once_with_fixed_parameters"
+  },
+  "vector_measurement": {
+    "embedding_requests_sent": false,
+    "reason": "Server log reported loopback listening, but the local TCP readiness probe could not connect; no embedding HTTP request was sent. The test environment also denied OS listener-table queries.",
+    "status": "not_measured"
+  }
+}

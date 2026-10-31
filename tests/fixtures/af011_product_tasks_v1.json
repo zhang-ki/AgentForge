@@ -1,0 +1,30 @@
+{
+  "dataset_version": "af011-agentforge-source-tasks-v1",
+  "repository": ".",
+  "label_source": "deterministic_source_assertions",
+  "human_reviewed": false,
+  "notes": "Labels target the AgentForge source snapshot and are verified against scanner-approved paths and exact line ranges. They are not human ground truth.",
+  "tasks": [
+    {"id":"AF011-C01","split":"calibration","leakage_group":"agent-loop-definition","category":"exact_symbol","query":"AgentLoop","expected_route":"exact_symbol","relevant":[{"path":"agentforge/agent_loop.py","start_line":256,"end_line":385}]},
+    {"id":"AF011-C02","split":"calibration","leakage_group":"citation-parser-definition","category":"exact_symbol","query":"validate_model_citations","expected_route":"exact_symbol","relevant":[{"path":"agentforge/context.py","start_line":49,"end_line":126}]},
+    {"id":"AF011-C03","split":"calibration","leakage_group":"citation-parser-callers","category":"caller_relation","query":"Which caller calls validate_model_citations?","expected_route":"dependency_relation","relevant":[{"path":"agentforge/answer_contract.py","start_line":137,"end_line":137},{"path":"agentforge/providers/llama_server.py","start_line":148,"end_line":148}]},
+    {"id":"AF011-C04","split":"calibration","leakage_group":"scanner-link-safety","category":"business_implementation","query":"How does the scanner reject symbolic links and reparse points?","expected_route":"business_implementation","relevant":[{"path":"agentforge/scanner.py","start_line":162,"end_line":279}]},
+    {"id":"AF011-C05","split":"calibration","leakage_group":"no-shell-policy","category":"documentation","query":"Where is the read-only no shell policy documented?","expected_route":"documentation","relevant":[{"path":"SECURITY.md","start_line":35,"end_line":35}]},
+    {"id":"AF011-C06","split":"calibration","leakage_group":"llama-client-definition","category":"exact_symbol","query":"LlamaServerClient","expected_route":"exact_symbol","relevant":[{"path":"agentforge/providers/llama_server.py","start_line":32,"end_line":127}]},
+    {"id":"AF011-C07","split":"calibration","leakage_group":"missing-cloud-deployer","category":"no_evidence_exact","query":"CloudDeployer","expected_route":"exact_symbol","relevant":[]},
+    {"id":"AF011-C08","split":"calibration","leakage_group":"missing-shell-export","category":"no_evidence_relation","query":"Which package reexports execute_shell as a public API?","expected_route":"package_api","relevant":[]},
+    {"id":"AF011-C09","split":"calibration","leakage_group":"missing-patch-writer","category":"no_evidence_business","query":"How does repository_patch_writer apply source changes?","expected_route":"business_implementation","relevant":[]},
+    {"id":"AF011-C10","split":"calibration","leakage_group":"unknown-runtime-plugin","category":"no_evidence_dynamic","query":"Can a dynamic import resolve remote_plugin at runtime?","expected_route":"uncertain","relevant":[]},
+
+    {"id":"AF011-V01","split":"validation","leakage_group":"product-retriever-definition","category":"exact_symbol","query":"ProductRetriever","expected_route":"exact_symbol","relevant":[{"path":"agentforge/product_retrieval.py","start_line":93,"end_line":295}]},
+    {"id":"AF011-V02","split":"validation","leakage_group":"contract-validator-definition","category":"exact_symbol","query":"validate_answer_contract","expected_route":"exact_symbol","relevant":[{"path":"agentforge/answer_contract.py","start_line":71,"end_line":106}]},
+    {"id":"AF011-V03","split":"validation","leakage_group":"context-builder-callers","category":"caller_relation","query":"Which caller calls build_context?","expected_route":"dependency_relation","relevant":[{"path":"agentforge/agent_loop.py","start_line":356,"end_line":356},{"path":"agentforge/cli.py","start_line":210,"end_line":213}]},
+    {"id":"AF011-V04","split":"validation","leakage_group":"embedding-provider-export","category":"package_export","query":"Which package reexports EmbeddingProvider as a public API?","expected_route":"package_api","relevant":[{"path":"agentforge/embeddings/__init__.py","start_line":5,"end_line":16}]},
+    {"id":"AF011-V05","split":"validation","leakage_group":"loopback-policy","category":"documentation","query":"Where is the proxy and redirect rejection policy documented?","expected_route":"documentation","relevant":[{"path":"SECURITY.md","start_line":41,"end_line":41}]},
+    {"id":"AF011-V06","split":"validation","leakage_group":"citation-validation-behavior","category":"business_implementation","query":"How does AgentForge reject fabricated model citations?","expected_route":"business_implementation","relevant":[{"path":"agentforge/context.py","start_line":49,"end_line":126}]},
+    {"id":"AF011-V07","split":"validation","leakage_group":"missing-remote-executor","category":"no_evidence_exact","query":"RemotePatchExecutor","expected_route":"exact_symbol","relevant":[]},
+    {"id":"AF011-V08","split":"validation","leakage_group":"missing-production-rrf-export","category":"no_evidence_relation","query":"Which package reexports ProductionRrfRetriever as a public API?","expected_route":"package_api","relevant":[]},
+    {"id":"AF011-V09","split":"validation","leakage_group":"missing-quantum-sharding","category":"no_evidence_business","query":"How does quantum_fabric_sharding distribute repository chunks?","expected_route":"business_implementation","relevant":[]},
+    {"id":"AF011-V10","split":"validation","leakage_group":"unknown-reflection-hook","category":"no_evidence_dynamic","query":"Can runtime reflection prove the orbital_loader relationship?","expected_route":"uncertain","relevant":[]}
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "audit": "AF-010-S2-host-acceptance-audit-20261026",
+  "audit_date": "2026-10-26",
+  "source_result": {
+    "path": "AF010S2_RESULTS.json",
+    "bytes": 690258,
+    "sha256": "02C877EAEBA5A882668CBF1E02A7BAA7E843B67D922A6DAAF842364464C7655C",
+    "status": "completed",
+    "state": "COMPLETED"
+  },
+  "dataset": {
+    "version": "agentforge-package-relations-multirepo-v1",
+    "repositories": 3,
+    "queries": 120,
+    "calibration": {"queries": 60, "evidence": 30, "no_evidence": 30},
+    "validation": {"queries": 60, "evidence": 30, "no_evidence": 30},
+    "leakage_groups_disjoint": true,
+    "human_reviewed": false,
+    "validation_evaluations": 1,
+    "validation_used_for_tuning": false,
+    "files": {
+      "tests/fixtures/package_s2_eval_v1.json": {"bytes": 146043, "sha256": "AF8485FA2A62F976332E19D74E8E07DA6FE717A419C41286FF878A80C93CAC79"},
+      "tests/fixtures/package_s2_split_v1.json": {"bytes": 4429, "sha256": "D7357C244446EFF933C4F3D1F6E252B571FD7283AEED9ACFFE5DFEF4F000D5BA"},
+      "tests/fixtures/package_s2_design_v1.json": {"bytes": 3374, "sha256": "6EA0F900693B7EA96BB4EE7B708D2072E213EB4FE8CEC3DA4F187B8E725EC7B1"}
+    }
+  },
+  "model": {
+    "model_id": "Qwen/Qwen3-Embedding-0.6B-GGUF@370f27d7550e0def9b39c1f16d3fbaa13aa67728:Q8_0#06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
+    "dimension": 1024,
+    "pooling": "last",
+    "server_normalization": 2,
+    "query_document_roles_distinct": true,
+    "gguf_sha256": "06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
+    "exe_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+    "implementation_dll_sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+  },
+  "readiness": {
+    "tcp": {"status": "passed", "attempts": 2, "seconds": 0.623651},
+    "model": {"status": "passed", "poll_count": 1, "seconds": 0.047, "http_statuses": [200], "response_shape": "top_level_status", "status_value": "ok"},
+    "embedding_started_only_after_model_ready": true
+  },
+  "embedding_requests": {
+    "attempts": 165,
+    "sent": 165,
+    "successes": 165,
+    "failures": 0,
+    "expected_document_requests": 45,
+    "expected_query_requests": 120,
+    "counter_audit": "consistent"
+  },
+  "metrics": {
+    "calibration": {
+      "lexical": {"recall_at_1": 0.666667, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.816667, "no_evidence_nonempty": "30/30"},
+      "symbols": {"applicable_positive": 6, "recall_at_1": 1.0, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 1.0, "no_evidence_nonempty": "0/6"},
+      "package_relations": {"applicable_positive": 15, "recall_at_1": 0.533333, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.766667, "no_evidence_nonempty": "15/15"},
+      "vector": {"recall_at_1": 0.266667, "recall_at_5": 0.966667, "recall_at_10": 1.0, "mrr": 0.556984, "no_evidence_nonempty": "30/30"},
+      "rrf_four_channel": {"recall_at_1": 0.666667, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.833333, "no_evidence_nonempty": "30/30"},
+      "routed": {"recall_at_1": 0.6, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.788889, "no_evidence_nonempty": "30/30"}
+    },
+    "validation": {
+      "lexical": {"recall_at_1": 0.8, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.877778, "no_evidence_nonempty": "30/30"},
+      "symbols": {"applicable_positive": 6, "recall_at_1": 1.0, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 1.0, "no_evidence_nonempty": "0/3"},
+      "package_relations": {"applicable_positive": 18, "recall_at_1": 0.888889, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.944444, "no_evidence_nonempty": "21/21"},
+      "vector": {"recall_at_1": 0.533333, "recall_at_5": 0.933333, "recall_at_10": 1.0, "mrr": 0.706667, "no_evidence_nonempty": "30/30"},
+      "rrf_four_channel": {"recall_at_1": 0.633333, "recall_at_5": 0.9, "recall_at_10": 1.0, "mrr": 0.775397, "no_evidence_nonempty": "30/30"},
+      "routed": {"recall_at_1": 0.833333, "recall_at_5": 1.0, "recall_at_10": 1.0, "mrr": 0.916667, "no_evidence_nonempty": "30/30"}
+    },
+    "validation_complementarity": {
+      "package_top1_rescues_vs_lexical": 4,
+      "package_top1_rescues_vs_vector": 10,
+      "package_unique_top10_hits": 0,
+      "package_error_candidates": 159
+    }
+  },
+  "fixed_threshold_0_70": {
+    "measurement_status": "not_measured",
+    "coverage": "not_measured",
+    "false_accept_rate": "not_measured",
+    "false_reject_rate": "not_measured",
+    "precision": "not_measured",
+    "reason": "AF010S2_RESULTS.json contains ranked paths but no per-query Vector scores or threshold metrics."
+  },
+  "service_exit": {
+    "exit_code": 1,
+    "termination": "terminated",
+    "owned_process_stopped": true,
+    "semantics": "expected_controlled_windows_termination",
+    "evidence": "Runner reached COMPLETED before finally; cleanup called Popen.terminate(); this Windows Python implementation calls TerminateProcess(handle, 1)."
+  },
+  "cleanup": {
+    "llama_server_process_count_at_audit": 0,
+    "temporary_runtime_exists_at_audit": false,
+    "port_query_at_audit": "not_verifiable_cim_access_denied",
+    "runner_recorded_port_released": true,
+    "runtime_copy_removed": true
+  },
+  "integrity": {
+    "runner_protected_paths_checked": 135,
+    "runner_protected_path_mismatches_at_audit": 0,
+    "formal_index": {"bytes": 32768, "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"},
+    "read_only_evidence": {"bytes": 2885, "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"},
+    "original_runtime": {"file_count": 51, "manifest_sha256": "FEE757BB981EB76D4BF9D348BF1E94C95BF99DC46827842950239E0C595A5BD6"},
+    "model_and_key_runtime_assets_match_runner_after_snapshot": true
+  },
+  "decisions": {
+    "real_host_execution": "completed",
+    "real_vector_execution_acceptance": "passed",
+    "real_vector_product_quality": "failed",
+    "complete_four_channel_rrf_measured": true,
+    "fixed_abstention_threshold": "not_measured_and_not_approved",
+    "af009g_real_vector_and_rrf_evidence": "auditable_result_obtained",
+    "af010_productization": "deferred_not_approved",
+    "version_one_offline_delivery": "pass_freeze_allowed"
+  },
+  "tests": {
+    "command": "python -X utf8 -B -m unittest discover -s tests -v",
+    "status": "passed_with_skips",
+    "run": 188,
+    "passed": 183,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 5,
+    "skip_reason": "Windows privileges did not permit the symlink, substitution symlink, directory symlink, junction, or hard-link fixtures.",
+    "exit_code": 0
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "split_plan_version": "agentforge-retrieval-split-v2-proposal",
+  "dataset_version": "agentforge-retrieval-v2-candidates",
+  "dataset_sha256": "0FBB43BF71B2A6BCD79733670C2D87B6C43FA767135EB2008091F4B291D15D4D",
+  "frozen_baseline_sha256": "B3276E4309C08FAA8B8961DB8DDD457A6ABA7491C134E606FC037B0B1342AF87",
+  "af009d_parent_sha256": "877B30B0F7827243CA04C79450C3116059033557F2DBFA3F408CDA53EB6154C1",
+  "status": "proposed_pending_human_review",
+  "policy": "Assign every leakage_group wholly to one split. Calibration may select a threshold only after label approval. Validation remains sealed from threshold selection and is run once after the decision rule is frozen.",
+  "expected_distribution": {
+    "calibration": {"query_count": 20, "evidence": 10, "no_evidence": 10, "near_domain_negative": 8},
+    "validation": {"query_count": 20, "evidence": 10, "no_evidence": 10, "near_domain_negative": 10}
+  },
+  "splits": {
+    "calibration": [
+      "candidate-cross-file-renewal",
+      "candidate-renewal-implementation",
+      "candidate-rotation-output",
+      "candidate-rotation-import",
+      "candidate-handler-return",
+      "candidate-token-lookup",
+      "candidate-token-return-shape",
+      "candidate-theme-save",
+      "candidate-theme-return",
+      "candidate-fixture-nonexecution",
+      "candidate-no-password-reset",
+      "candidate-no-password-change",
+      "candidate-no-avatar-upload",
+      "candidate-no-invoice-refund",
+      "candidate-no-logout-all",
+      "candidate-no-invalidate-sessions",
+      "candidate-no-session-ip-audit",
+      "candidate-no-delete-token",
+      "candidate-no-export-preferences",
+      "candidate-no-compress-cache"
+    ],
+    "validation": [
+      "candidate-business-continuity",
+      "candidate-restore-principal",
+      "candidate-coordinator-renew",
+      "candidate-continuity-policy",
+      "candidate-preference-lookup",
+      "candidate-preference-return-shape",
+      "candidate-token-policy-save",
+      "candidate-token-policy-return",
+      "candidate-storage-separation",
+      "candidate-storage-shared-name",
+      "candidate-no-account-delete",
+      "candidate-no-mfa-enroll",
+      "candidate-no-oauth-link",
+      "candidate-no-revoke-lease",
+      "candidate-no-persist-lease",
+      "candidate-no-rate-limit",
+      "candidate-no-encrypt-token-cache",
+      "candidate-no-token-expiry",
+      "candidate-no-theme-contrast",
+      "candidate-no-locale-preference"
+    ]
+  }
+}

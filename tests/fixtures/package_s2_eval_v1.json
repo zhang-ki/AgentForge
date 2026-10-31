@@ -1,0 +1,3850 @@
+{
+  "dataset_version": "agentforge-package-relations-multirepo-v1",
+  "review_status": "provisional_ai",
+  "human_reviewed": false,
+  "label_rule": "Synthetic fixture design and cited source lines define relevance; retrieval output never defines or changes labels. No-evidence means no qualifying evidence in that repository snapshot.",
+  "repositories": [
+    {
+      "id": "harbor_registry",
+      "path": "harbor_registry"
+    },
+    {
+      "id": "clinic_gateway",
+      "path": "clinic_gateway"
+    },
+    {
+      "id": "observatory_sdk",
+      "path": "observatory_sdk"
+    }
+  ],
+  "queries": [
+    {
+      "id": "S2-HARBOR_REGISTRY-001",
+      "repository_id": "harbor_registry",
+      "query": "Which package re-exports dispatch_manifest under public name book_manifest?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "book_manifest"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor/__init__.py",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-002",
+      "repository_id": "harbor_registry",
+      "query": "Where does public harbor.book_manifest resolve?",
+      "category": "resolution",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "harbor",
+        "symbol_name": "book_manifest",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-003",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor export cold_chain_override?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "cold_chain_override"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-004",
+      "repository_id": "harbor_registry",
+      "query": "Does signal export alias book_manifest?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "signal",
+        "symbol_name": "book_manifest"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-005",
+      "repository_id": "harbor_registry",
+      "query": "Which module imports harbor.engine as harbor_core?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "client.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "client",
+        "target_module": "harbor.engine",
+        "symbol_name": "harbor_core"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "client.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-006",
+      "repository_id": "harbor_registry",
+      "query": "Which caller imports harbor.book_manifest as reserve and calls it?",
+      "category": "caller",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "client.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "client",
+        "symbol_name": "reserve"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "client.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-007",
+      "repository_id": "harbor_registry",
+      "query": "Which module imports signal.dispatch_manifest as reserve?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "target_module": "signal",
+        "symbol_name": "reserve"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-008",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor depend on package signal?",
+      "category": "dependency",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "harbor",
+        "target_module": "signal"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-009",
+      "repository_id": "harbor_registry",
+      "query": "Where is the function dispatch_manifest defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/engine.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "harbor/engine.py",
+          "qualified_name": "harbor.engine.dispatch_manifest"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "harbor.engine.dispatch_manifest"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-010",
+      "repository_id": "harbor_registry",
+      "query": "Which file defines class CargoPlan?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/models.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "harbor/models.py",
+          "qualified_name": "harbor.models.CargoPlan"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "harbor.models.CargoPlan"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor/models.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-011",
+      "repository_id": "harbor_registry",
+      "query": "Where is the function cold_chain_override defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "cold_chain_override"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-012",
+      "repository_id": "harbor_registry",
+      "query": "Which file defines class MissingCargoPlan?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "MissingCargoPlan"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-013",
+      "repository_id": "harbor_registry",
+      "query": "How does this repository implement route a cargo manifest to a berth queue?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor/engine.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-014",
+      "repository_id": "harbor_registry",
+      "query": "Which module handles the route a cargo manifest to a berth queue workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor/engine.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-015",
+      "repository_id": "harbor_registry",
+      "query": "How does this repository implement cold_chain_override behavior?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-016",
+      "repository_id": "harbor_registry",
+      "query": "Which module handles a quantum cold_chain_override workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-017",
+      "repository_id": "harbor_registry",
+      "query": "Which package has dynamically constructed __all__ for harbor_dynamic?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:dynamic",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor_dynamic/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "harbor_dynamic",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor_dynamic/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-018",
+      "repository_id": "harbor_registry",
+      "query": "Which module performs an unknown relationship dynamic import?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor_dynamic/items.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor_dynamic/items.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-019",
+      "repository_id": "harbor_registry",
+      "query": "Is there evidence for unknown relationship cold_chain_override in this repository?",
+      "category": "missing",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-020",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor_dynamic import cold_chain_override as a statically resolved dependency?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "harbor_registry:dynamic",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "harbor_dynamic",
+        "target_module": "cold_chain_override",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-021",
+      "repository_id": "harbor_registry",
+      "query": "Which package initializer lists book_manifest in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "book_manifest"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor/__init__.py",
+          "start_line": 10,
+          "end_line": 10,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-022",
+      "repository_id": "harbor_registry",
+      "query": "Which file resolves public harbor.book_manifest to its implementation?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "harbor",
+        "symbol_name": "book_manifest",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-023",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor publicly export dispatch_manifest under its original name?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "dispatch_manifest"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-024",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor publicly export cold_chain_override in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "cold_chain_override"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-025",
+      "repository_id": "harbor_registry",
+      "query": "Which initializer imports CargoPlan from harbor.models?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "harbor",
+        "symbol_name": "CargoPlan"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor/__init__.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-026",
+      "repository_id": "harbor_registry",
+      "query": "Which caller imports the public book_manifest alias and calls it?",
+      "category": "caller",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "client.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "client",
+        "symbol_name": "reserve"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "client.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-027",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor import dispatch_manifest from signal.engine?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "harbor",
+        "target_module": "signal.engine",
+        "symbol_name": "dispatch_manifest"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-028",
+      "repository_id": "harbor_registry",
+      "query": "Which caller aliases cold_chain_override as reserve?",
+      "category": "alias",
+      "split": "validation",
+      "leakage_group": "harbor_registry:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "symbol_name": "cold_chain_override"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-029",
+      "repository_id": "harbor_registry",
+      "query": "Where is the function signal.dispatch_manifest defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "harbor_registry:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "signal/engine.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "signal/engine.py",
+          "qualified_name": "signal.engine.dispatch_manifest"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "signal.engine.dispatch_manifest"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "signal/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-030",
+      "repository_id": "harbor_registry",
+      "query": "Where is class HarborVersion defined?",
+      "category": "exact_symbol",
+      "split": "validation",
+      "leakage_group": "harbor_registry:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor/__init__.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "harbor/__init__.py",
+          "qualified_name": "harbor.HarborVersion"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "harbor.HarborVersion"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "harbor/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-031",
+      "repository_id": "harbor_registry",
+      "query": "Where is function harbor.cold_chain_override defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "harbor_registry:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "cold_chain_override"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-032",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor.book_manifest resolve to signal.engine?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "harbor_registry:same-name",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "harbor",
+        "target_module": "signal.engine",
+        "symbol_name": "book_manifest",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-033",
+      "repository_id": "harbor_registry",
+      "query": "Which document states the harbor policy rule?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "harbor_registry:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-034",
+      "repository_id": "harbor_registry",
+      "query": "Which package imports all names from harbor_stars.items?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "harbor_registry:docs-star",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor_stars/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "harbor_stars",
+        "symbol_name": "*",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor_stars/__init__.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-035",
+      "repository_id": "harbor_registry",
+      "query": "Does documentation of cold_chain_override make it a public export?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "harbor_registry:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-036",
+      "repository_id": "harbor_registry",
+      "query": "Can public harbor_stars.alpha be deterministically resolved through star import?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "harbor_registry:docs-star",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "harbor_stars",
+        "symbol_name": "alpha",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-037",
+      "repository_id": "harbor_registry",
+      "query": "Which module imports pivot from harbor_cycle.right?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "harbor_registry:cycle-missing",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "harbor_cycle/left.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "harbor_cycle.left",
+        "target_module": "harbor_cycle.right",
+        "symbol_name": "pivot"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "harbor_cycle/left.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-038",
+      "repository_id": "harbor_registry",
+      "query": "Which document records that cold_chain_override is absent?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "harbor_registry:cycle-missing",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-039",
+      "repository_id": "harbor_registry",
+      "query": "Does harbor_cycle.pivot resolve to a concrete definition?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "harbor_registry:cycle-missing",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "harbor_cycle",
+        "symbol_name": "pivot",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-HARBOR_REGISTRY-040",
+      "repository_id": "harbor_registry",
+      "query": "Is there evidence for unclassified request cold_chain_override outside the documented absence?",
+      "category": "missing",
+      "split": "validation",
+      "leakage_group": "harbor_registry:cycle-missing",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen harbor_registry repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-001",
+      "repository_id": "clinic_gateway",
+      "query": "Which package re-exports assess_patient under public name screen_patient?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "care",
+        "symbol_name": "screen_patient"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care/__init__.py",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-002",
+      "repository_id": "clinic_gateway",
+      "query": "Where does public care.screen_patient resolve?",
+      "category": "resolution",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/triage/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "care",
+        "symbol_name": "screen_patient",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care/triage/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-003",
+      "repository_id": "clinic_gateway",
+      "query": "Does care export genome_routing?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "care",
+        "symbol_name": "genome_routing"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-004",
+      "repository_id": "clinic_gateway",
+      "query": "Does billing export alias screen_patient?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "billing",
+        "symbol_name": "screen_patient"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-005",
+      "repository_id": "clinic_gateway",
+      "query": "Which module imports care.triage.engine as triage_core?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "portal.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "portal",
+        "target_module": "care.triage.engine",
+        "symbol_name": "triage_core"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "portal.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-006",
+      "repository_id": "clinic_gateway",
+      "query": "Which caller imports care.screen_patient as screen and calls it?",
+      "category": "caller",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "portal.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "portal",
+        "symbol_name": "screen"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "portal.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-007",
+      "repository_id": "clinic_gateway",
+      "query": "Which module imports billing.assess_patient as screen?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "target_module": "billing",
+        "symbol_name": "screen"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-008",
+      "repository_id": "clinic_gateway",
+      "query": "Does care depend on package billing?",
+      "category": "dependency",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "care",
+        "target_module": "billing"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-009",
+      "repository_id": "clinic_gateway",
+      "query": "Where is the function assess_patient defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/triage/engine.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "care/triage/engine.py",
+          "qualified_name": "care.triage.engine.assess_patient"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "care.triage.engine.assess_patient"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care/triage/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-010",
+      "repository_id": "clinic_gateway",
+      "query": "Which file defines class VisitRecord?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/records.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "care/records.py",
+          "qualified_name": "care.records.VisitRecord"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "care.records.VisitRecord"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care/records.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-011",
+      "repository_id": "clinic_gateway",
+      "query": "Where is the function genome_routing defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "genome_routing"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-012",
+      "repository_id": "clinic_gateway",
+      "query": "Which file defines class MissingVisitRecord?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "MissingVisitRecord"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-013",
+      "repository_id": "clinic_gateway",
+      "query": "How does this repository implement assign a patient to a triage lane?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/triage/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care/triage/engine.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-014",
+      "repository_id": "clinic_gateway",
+      "query": "Which module handles the assign a patient to a triage lane workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/triage/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care/triage/engine.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-015",
+      "repository_id": "clinic_gateway",
+      "query": "How does this repository implement genome_routing behavior?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-016",
+      "repository_id": "clinic_gateway",
+      "query": "Which module handles a quantum genome_routing workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-017",
+      "repository_id": "clinic_gateway",
+      "query": "Which package has dynamically constructed __all__ for care_dynamic?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:dynamic",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care_dynamic/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "care_dynamic",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care_dynamic/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-018",
+      "repository_id": "clinic_gateway",
+      "query": "Which module performs an unknown relationship dynamic import?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care_dynamic/items.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care_dynamic/items.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-019",
+      "repository_id": "clinic_gateway",
+      "query": "Is there evidence for unknown relationship genome_routing in this repository?",
+      "category": "missing",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-020",
+      "repository_id": "clinic_gateway",
+      "query": "Does care_dynamic import genome_routing as a statically resolved dependency?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "clinic_gateway:dynamic",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "care_dynamic",
+        "target_module": "genome_routing",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-021",
+      "repository_id": "clinic_gateway",
+      "query": "Which package initializer lists screen_patient in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "care",
+        "symbol_name": "screen_patient"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care/__init__.py",
+          "start_line": 10,
+          "end_line": 10,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-022",
+      "repository_id": "clinic_gateway",
+      "query": "Which file resolves public care.screen_patient to its implementation?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/triage/engine.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "care",
+        "symbol_name": "screen_patient",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care/triage/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-023",
+      "repository_id": "clinic_gateway",
+      "query": "Does care publicly export assess_patient under its original name?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "care",
+        "symbol_name": "assess_patient"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-024",
+      "repository_id": "clinic_gateway",
+      "query": "Does care publicly export genome_routing in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "care",
+        "symbol_name": "genome_routing"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-025",
+      "repository_id": "clinic_gateway",
+      "query": "Which initializer imports VisitRecord from care.records?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "care",
+        "symbol_name": "VisitRecord"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care/__init__.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-026",
+      "repository_id": "clinic_gateway",
+      "query": "Which caller imports the public screen_patient alias and calls it?",
+      "category": "caller",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "portal.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "portal",
+        "symbol_name": "screen"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "portal.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-027",
+      "repository_id": "clinic_gateway",
+      "query": "Does care import assess_patient from billing.engine?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "care",
+        "target_module": "billing.engine",
+        "symbol_name": "assess_patient"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-028",
+      "repository_id": "clinic_gateway",
+      "query": "Which caller aliases genome_routing as screen?",
+      "category": "alias",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "symbol_name": "genome_routing"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-029",
+      "repository_id": "clinic_gateway",
+      "query": "Where is the function billing.assess_patient defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "billing/engine.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "billing/engine.py",
+          "qualified_name": "billing.engine.assess_patient"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "billing.engine.assess_patient"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "billing/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-030",
+      "repository_id": "clinic_gateway",
+      "query": "Where is class CareVersion defined?",
+      "category": "exact_symbol",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care/__init__.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "care/__init__.py",
+          "qualified_name": "care.CareVersion"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "care.CareVersion"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "care/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-031",
+      "repository_id": "clinic_gateway",
+      "query": "Where is function care.genome_routing defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "genome_routing"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-032",
+      "repository_id": "clinic_gateway",
+      "query": "Does care.screen_patient resolve to billing.engine?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:same-name",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "care",
+        "target_module": "billing.engine",
+        "symbol_name": "screen_patient",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-033",
+      "repository_id": "clinic_gateway",
+      "query": "Which document states the care policy rule?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-034",
+      "repository_id": "clinic_gateway",
+      "query": "Which package imports all names from care_stars.items?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:docs-star",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care_stars/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "care_stars",
+        "symbol_name": "*",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care_stars/__init__.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-035",
+      "repository_id": "clinic_gateway",
+      "query": "Does documentation of genome_routing make it a public export?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-036",
+      "repository_id": "clinic_gateway",
+      "query": "Can public care_stars.alpha be deterministically resolved through star import?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:docs-star",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "care_stars",
+        "symbol_name": "alpha",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-037",
+      "repository_id": "clinic_gateway",
+      "query": "Which module imports pivot from care_cycle.right?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:cycle-missing",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "care_cycle/left.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "care_cycle.left",
+        "target_module": "care_cycle.right",
+        "symbol_name": "pivot"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "care_cycle/left.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-038",
+      "repository_id": "clinic_gateway",
+      "query": "Which document records that genome_routing is absent?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:cycle-missing",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-039",
+      "repository_id": "clinic_gateway",
+      "query": "Does care_cycle.pivot resolve to a concrete definition?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:cycle-missing",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "care_cycle",
+        "symbol_name": "pivot",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-CLINIC_GATEWAY-040",
+      "repository_id": "clinic_gateway",
+      "query": "Is there evidence for unclassified request genome_routing outside the documented absence?",
+      "category": "missing",
+      "split": "validation",
+      "leakage_group": "clinic_gateway:cycle-missing",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen clinic_gateway repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-001",
+      "repository_id": "observatory_sdk",
+      "query": "Which package re-exports collect_frame under public name sample_frame?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "sample_frame"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit/__init__.py",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-002",
+      "repository_id": "observatory_sdk",
+      "query": "Where does public orbit.sample_frame resolve?",
+      "category": "resolution",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/adapters/telemetry.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "orbit",
+        "symbol_name": "sample_frame",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-003",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit export asteroid_deflection?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "asteroid_deflection"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-004",
+      "repository_id": "observatory_sdk",
+      "query": "Does weather export alias sample_frame?",
+      "category": "reexport",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:public-surface",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "weather",
+        "symbol_name": "sample_frame"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-005",
+      "repository_id": "observatory_sdk",
+      "query": "Which module imports orbit.adapters.telemetry as telemetry_core?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "console.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "console",
+        "target_module": "orbit.adapters.telemetry",
+        "symbol_name": "telemetry_core"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "console.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-006",
+      "repository_id": "observatory_sdk",
+      "query": "Which caller imports orbit.sample_frame as sample and calls it?",
+      "category": "caller",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "console.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "console",
+        "symbol_name": "sample"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "console.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-007",
+      "repository_id": "observatory_sdk",
+      "query": "Which module imports weather.collect_frame as sample?",
+      "category": "alias",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "target_module": "weather",
+        "symbol_name": "sample"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-008",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit depend on package weather?",
+      "category": "dependency",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:consumer-alias",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "orbit",
+        "target_module": "weather"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-009",
+      "repository_id": "observatory_sdk",
+      "query": "Where is the function collect_frame defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/adapters/telemetry.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "qualified_name": "orbit.adapters.telemetry.collect_frame"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "orbit.adapters.telemetry.collect_frame"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-010",
+      "repository_id": "observatory_sdk",
+      "query": "Which file defines class FramePlan?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/models.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "orbit/models.py",
+          "qualified_name": "orbit.models.FramePlan"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "orbit.models.FramePlan"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit/models.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-011",
+      "repository_id": "observatory_sdk",
+      "query": "Where is the function asteroid_deflection defined?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "asteroid_deflection"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-012",
+      "repository_id": "observatory_sdk",
+      "query": "Which file defines class MissingFramePlan?",
+      "category": "exact_symbol",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:symbols",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "MissingFramePlan"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-013",
+      "repository_id": "observatory_sdk",
+      "query": "How does this repository implement collect a telemetry frame from an instrument?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/adapters/telemetry.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-014",
+      "repository_id": "observatory_sdk",
+      "query": "Which module handles the collect a telemetry frame from an instrument workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:business",
+      "expected_route": "business_implementation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/adapters/telemetry.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-015",
+      "repository_id": "observatory_sdk",
+      "query": "How does this repository implement asteroid_deflection behavior?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-016",
+      "repository_id": "observatory_sdk",
+      "query": "Which module handles a quantum asteroid_deflection workflow?",
+      "category": "business",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:business",
+      "expected_route": "business_implementation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-017",
+      "repository_id": "observatory_sdk",
+      "query": "Which package has dynamically constructed __all__ for orbit_dynamic?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:dynamic",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit_dynamic/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "orbit_dynamic",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit_dynamic/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-018",
+      "repository_id": "observatory_sdk",
+      "query": "Which module performs an unknown relationship dynamic import?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit_dynamic/items.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit_dynamic/items.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-019",
+      "repository_id": "observatory_sdk",
+      "query": "Is there evidence for unknown relationship asteroid_deflection in this repository?",
+      "category": "missing",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:dynamic",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-020",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit_dynamic import asteroid_deflection as a statically resolved dependency?",
+      "category": "dynamic",
+      "split": "calibration",
+      "leakage_group": "observatory_sdk:dynamic",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports",
+        "source_module": "orbit_dynamic",
+        "target_module": "asteroid_deflection",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-021",
+      "repository_id": "observatory_sdk",
+      "query": "Which package initializer lists sample_frame in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "reexports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "sample_frame"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit/__init__.py",
+          "start_line": 10,
+          "end_line": 10,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-022",
+      "repository_id": "observatory_sdk",
+      "query": "Which file resolves public orbit.sample_frame to its implementation?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/adapters/telemetry.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "orbit",
+        "symbol_name": "sample_frame",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit/adapters/telemetry.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-023",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit publicly export collect_frame under its original name?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "collect_frame"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-024",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit publicly export asteroid_deflection in __all__?",
+      "category": "export",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-api",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "exports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "asteroid_deflection"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-025",
+      "repository_id": "observatory_sdk",
+      "query": "Which initializer imports FramePlan from orbit.models?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "orbit",
+        "symbol_name": "FramePlan"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit/__init__.py",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-026",
+      "repository_id": "observatory_sdk",
+      "query": "Which caller imports the public sample_frame alias and calls it?",
+      "category": "caller",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "console.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "source_module": "console",
+        "symbol_name": "sample"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "console.py",
+          "start_line": 2,
+          "end_line": 2,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-027",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit import collect_frame from weather.engine?",
+      "category": "import",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "orbit",
+        "target_module": "weather.engine",
+        "symbol_name": "collect_frame"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-028",
+      "repository_id": "observatory_sdk",
+      "query": "Which caller aliases asteroid_deflection as sample?",
+      "category": "alias",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:validation-import",
+      "expected_route": "dependency_relation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "import_alias",
+        "symbol_name": "asteroid_deflection"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-029",
+      "repository_id": "observatory_sdk",
+      "query": "Where is the function weather.collect_frame defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "weather/engine.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "weather/engine.py",
+          "qualified_name": "weather.engine.collect_frame"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "weather.engine.collect_frame"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "weather/engine.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-030",
+      "repository_id": "observatory_sdk",
+      "query": "Where is class OrbitVersion defined?",
+      "category": "exact_symbol",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit/__init__.py"
+      ],
+      "relevant_symbols": [
+        {
+          "path": "orbit/__init__.py",
+          "qualified_name": "orbit.OrbitVersion"
+        }
+      ],
+      "symbol_query": {
+        "qualified_name": "orbit.OrbitVersion"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "orbit/__init__.py",
+          "start_line": 6,
+          "end_line": 6,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-031",
+      "repository_id": "observatory_sdk",
+      "query": "Where is function orbit.asteroid_deflection defined?",
+      "category": "same_name",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:same-name",
+      "expected_route": "exact_symbol",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": {
+        "name": "asteroid_deflection"
+      },
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-032",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit.sample_frame resolve to weather.engine?",
+      "category": "resolution",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:same-name",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "orbit",
+        "target_module": "weather.engine",
+        "symbol_name": "sample_frame",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-033",
+      "repository_id": "observatory_sdk",
+      "query": "Which document states the orbit policy rule?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 3,
+          "end_line": 3,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-034",
+      "repository_id": "observatory_sdk",
+      "query": "Which package imports all names from orbit_stars.items?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:docs-star",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit_stars/__init__.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "orbit_stars",
+        "symbol_name": "*",
+        "resolution_status": "uncertain"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit_stars/__init__.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-035",
+      "repository_id": "observatory_sdk",
+      "query": "Does documentation of asteroid_deflection make it a public export?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:docs-star",
+      "expected_route": "documentation",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-036",
+      "repository_id": "observatory_sdk",
+      "query": "Can public orbit_stars.alpha be deterministically resolved through star import?",
+      "category": "star",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:docs-star",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "orbit_stars",
+        "symbol_name": "alpha",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-037",
+      "repository_id": "observatory_sdk",
+      "query": "Which module imports pivot from orbit_cycle.right?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:cycle-missing",
+      "expected_route": "dependency_relation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "orbit_cycle/left.py"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "imports_symbol",
+        "source_module": "orbit_cycle.left",
+        "target_module": "orbit_cycle.right",
+        "symbol_name": "pivot"
+      },
+      "package_applicable": true,
+      "evidence": [
+        {
+          "path": "orbit_cycle/left.py",
+          "start_line": 1,
+          "end_line": 1,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-038",
+      "repository_id": "observatory_sdk",
+      "query": "Which document records that asteroid_deflection is absent?",
+      "category": "documentation",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:cycle-missing",
+      "expected_route": "documentation",
+      "no_evidence": false,
+      "relevant_paths": [
+        "docs/policy.md"
+      ],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [
+        {
+          "path": "docs/policy.md",
+          "start_line": 4,
+          "end_line": 4,
+          "reason": "Fixture design line directly establishes the labelled evidence."
+        }
+      ],
+      "inclusion_reason": "Direct fixture-design evidence.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "grounded",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-039",
+      "repository_id": "observatory_sdk",
+      "query": "Does orbit_cycle.pivot resolve to a concrete definition?",
+      "category": "cycle",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:cycle-missing",
+      "expected_route": "package_api",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": {
+        "relation_type": "resolves_to",
+        "source_module": "orbit_cycle",
+        "symbol_name": "pivot",
+        "resolution_status": "resolved"
+      },
+      "package_applicable": true,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    },
+    {
+      "id": "S2-OBSERVATORY_SDK-040",
+      "repository_id": "observatory_sdk",
+      "query": "Is there evidence for unclassified request asteroid_deflection outside the documented absence?",
+      "category": "missing",
+      "split": "validation",
+      "leakage_group": "observatory_sdk:cycle-missing",
+      "expected_route": "uncertain",
+      "no_evidence": true,
+      "relevant_paths": [],
+      "relevant_symbols": [],
+      "symbol_query": null,
+      "package_query": null,
+      "package_applicable": false,
+      "evidence": [],
+      "inclusion_reason": "No qualifying evidence in the frozen repository.",
+      "exclusion_reason": "Names or relations outside the cited intent are excluded.",
+      "scope_checked": "Complete frozen observatory_sdk repository snapshot.",
+      "difficulty": "near_domain",
+      "label_source": "synthetic_fixture_design",
+      "review_status": "provisional_ai",
+      "review_method": "ai_evidence_review",
+      "human_reviewed": false
+    }
+  ]
+}

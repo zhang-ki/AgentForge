@@ -1,0 +1,447 @@
+{
+  "dataset_version": "af011-agentforge-source-tasks-v3",
+  "repository": ".",
+  "label_source": "ai_evidence_review",
+  "human_reviewed": false,
+  "notes": "AI evidence review against the declared frozen snapshot. All labels remain non-human-reviewed and exploratory, not human ground truth.",
+  "tasks": [
+    {
+      "id": "AF011-C01",
+      "split": "calibration",
+      "leakage_group": "agent-loop-definition",
+      "category": "exact_symbol",
+      "query": "AgentLoop",
+      "expected_route": "exact_symbol",
+      "relevant": [
+        {
+          "path": "agentforge/agent_loop.py",
+          "start_line": 258,
+          "end_line": 258,
+          "anchor": "class AgentLoop",
+          "evidence_type": "class_header",
+          "relevance_reason": "AgentLoop is the bounded agent-loop definition named by the exact-symbol query."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "AgentLoop is the bounded agent-loop definition named by the exact-symbol query."
+    },
+    {
+      "id": "AF011-C02",
+      "split": "calibration",
+      "leakage_group": "citation-parser-definition",
+      "category": "exact_symbol",
+      "query": "validate_model_citations",
+      "expected_route": "exact_symbol",
+      "relevant": [
+        {
+          "path": "agentforge/context.py",
+          "start_line": 49,
+          "end_line": 49,
+          "anchor": "def validate_model_citations",
+          "evidence_type": "function_header",
+          "relevance_reason": "This function parses and validates source-ID and path citation markers against the current request context."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "This function parses and validates source-ID and path citation markers against the current request context."
+    },
+    {
+      "id": "AF011-C03",
+      "split": "calibration",
+      "leakage_group": "citation-parser-callers",
+      "category": "caller_relation",
+      "query": "Which caller calls validate_model_citations?",
+      "expected_route": "dependency_relation",
+      "relevant": [
+        {
+          "path": "agentforge/answer_contract.py",
+          "start_line": 143,
+          "end_line": 143,
+          "anchor": "validate_model_citations(answer.text",
+          "evidence_type": "call_answer_contract",
+          "relevance_reason": "This call site validates generated answer citations in the answer-contract layer."
+        },
+        {
+          "path": "agentforge/providers/llama_server.py",
+          "start_line": 148,
+          "end_line": 148,
+          "anchor": "validate_model_citations(text, context)",
+          "evidence_type": "call_provider",
+          "relevance_reason": "This provider call site independently validates returned citation markers before returning an Answer."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "This call site validates generated answer citations in the answer-contract layer. This provider call site independently validates returned citation markers before returning an Answer."
+    },
+    {
+      "id": "AF011-C04",
+      "split": "calibration",
+      "leakage_group": "scanner-link-safety",
+      "category": "business_implementation",
+      "query": "How does the scanner reject symbolic links and reparse points?",
+      "expected_route": "business_implementation",
+      "relevant": [
+        {
+          "path": "agentforge/scanner.py",
+          "start_line": 104,
+          "end_line": 124,
+          "anchor": "def _canonical_inside",
+          "evidence_type": "function_body",
+          "relevance_reason": "This helper checks root containment and rejects reparse points in every path component."
+        },
+        {
+          "path": "agentforge/scanner.py",
+          "start_line": 162,
+          "end_line": 279,
+          "anchor": "def scan_repository",
+          "evidence_type": "function_body",
+          "relevance_reason": "The repository walk skips reparse points and rejects link-like entries before adding files."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "This helper checks root containment and rejects reparse points in every path component. The repository walk skips reparse points and rejects link-like entries before adding files."
+    },
+    {
+      "id": "AF011-C05",
+      "split": "calibration",
+      "leakage_group": "no-shell-policy",
+      "category": "documentation",
+      "query": "Where is the read-only no shell policy documented?",
+      "expected_route": "documentation",
+      "relevant": [
+        {
+          "path": "SECURITY.md",
+          "start_line": 35,
+          "end_line": 35,
+          "anchor": "shell",
+          "evidence_type": "document_line",
+          "relevance_reason": "The security policy states that shell commands and executable instructions in repository data are not executed."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The security policy states that shell commands and executable instructions in repository data are not executed."
+    },
+    {
+      "id": "AF011-C06",
+      "split": "calibration",
+      "leakage_group": "llama-client-definition",
+      "category": "exact_symbol",
+      "query": "LlamaServerClient",
+      "expected_route": "exact_symbol",
+      "relevant": [
+        {
+          "path": "agentforge/providers/llama_server.py",
+          "start_line": 32,
+          "end_line": 32,
+          "anchor": "class LlamaServerClient",
+          "evidence_type": "class_header",
+          "relevance_reason": "The exact class declaration identifies the local HTTP client."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The exact class declaration identifies the local HTTP client."
+    },
+    {
+      "id": "AF011-C07",
+      "split": "calibration",
+      "leakage_group": "missing-cloud-deployer",
+      "category": "no_evidence_exact",
+      "query": "CloudDeployer",
+      "expected_route": "exact_symbol",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "The scanner-approved snapshot contains no CloudDeployer definition or equivalent cloud deployment implementation."
+    },
+    {
+      "id": "AF011-C08",
+      "split": "calibration",
+      "leakage_group": "missing-shell-export",
+      "category": "no_evidence_relation",
+      "query": "Which package reexports execute_shell as a public API?",
+      "expected_route": "package_api",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "No package __init__.py or static __all__ export in the snapshot names execute_shell as a public API."
+    },
+    {
+      "id": "AF011-C09",
+      "split": "calibration",
+      "leakage_group": "missing-patch-writer",
+      "category": "no_evidence_business",
+      "query": "How does repository_patch_writer apply source changes?",
+      "expected_route": "business_implementation",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "The snapshot contains no repository_patch_writer implementation; source modification is outside the implemented read-only tool set."
+    },
+    {
+      "id": "AF011-C10",
+      "split": "calibration",
+      "leakage_group": "unknown-runtime-plugin",
+      "category": "no_evidence_dynamic",
+      "query": "Can a dynamic import resolve remote_plugin at runtime?",
+      "expected_route": "uncertain",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "The snapshot does not establish a remote_plugin dynamic import target or runtime resolution relationship."
+    },
+    {
+      "id": "AF011-V01",
+      "split": "validation",
+      "leakage_group": "product-retriever-definition",
+      "category": "exact_symbol",
+      "query": "ProductRetriever",
+      "expected_route": "exact_symbol",
+      "relevant": [
+        {
+          "path": "agentforge/product_retrieval.py",
+          "start_line": 103,
+          "end_line": 103,
+          "anchor": "class ProductRetriever",
+          "evidence_type": "class_header",
+          "relevance_reason": "The exact class declaration identifies the product intent-driven retriever."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The exact class declaration identifies the product intent-driven retriever."
+    },
+    {
+      "id": "AF011-V02",
+      "split": "validation",
+      "leakage_group": "contract-validator-definition",
+      "category": "exact_symbol",
+      "query": "validate_answer_contract",
+      "expected_route": "exact_symbol",
+      "relevant": [
+        {
+          "path": "agentforge/answer_contract.py",
+          "start_line": 71,
+          "end_line": 71,
+          "anchor": "def validate_answer_contract",
+          "evidence_type": "function_header",
+          "relevance_reason": "The named validator checks request-local evidence and answer-contract invariants."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The named validator checks request-local evidence and answer-contract invariants."
+    },
+    {
+      "id": "AF011-V03",
+      "split": "validation",
+      "leakage_group": "context-builder-callers",
+      "category": "caller_relation",
+      "query": "Which caller calls build_context?",
+      "expected_route": "dependency_relation",
+      "relevant": [
+        {
+          "path": "agentforge/agent_loop.py",
+          "start_line": 358,
+          "end_line": 358,
+          "anchor": "context = build_context(objective",
+          "evidence_type": "call_agent",
+          "relevance_reason": "The agent loop builds the final response context from retrieved search results."
+        },
+        {
+          "path": "agentforge/cli.py",
+          "start_line": 220,
+          "end_line": 220,
+          "anchor": "context = build_context(",
+          "evidence_type": "call_cli",
+          "relevance_reason": "The ask CLI builds the provider context from routed retrieval candidates."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The agent loop builds the final response context from retrieved search results. The ask CLI builds the provider context from routed retrieval candidates."
+    },
+    {
+      "id": "AF011-V04",
+      "split": "validation",
+      "leakage_group": "embedding-provider-export",
+      "category": "package_export",
+      "query": "Which package reexports EmbeddingProvider as a public API?",
+      "expected_route": "package_api",
+      "relevant": [
+        {
+          "path": "agentforge/embeddings/__init__.py",
+          "start_line": 5,
+          "end_line": 5,
+          "anchor": "EmbeddingProvider",
+          "evidence_type": "export_import",
+          "relevance_reason": "The package imports EmbeddingProvider into its public module namespace."
+        },
+        {
+          "path": "agentforge/embeddings/__init__.py",
+          "start_line": 14,
+          "end_line": 18,
+          "anchor": "EmbeddingProvider",
+          "evidence_type": "export_all",
+          "relevance_reason": "The __all__ list explicitly declares EmbeddingProvider as exported."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The package imports EmbeddingProvider into its public module namespace. The __all__ list explicitly declares EmbeddingProvider as exported."
+    },
+    {
+      "id": "AF011-V05",
+      "split": "validation",
+      "leakage_group": "loopback-policy",
+      "category": "documentation",
+      "query": "Where is the proxy and redirect rejection policy documented?",
+      "expected_route": "documentation",
+      "relevant": [
+        {
+          "path": "SECURITY.md",
+          "start_line": 41,
+          "end_line": 41,
+          "anchor": "3xx",
+          "evidence_type": "document_line",
+          "relevance_reason": "The local HTTP policy rejects all 3xx redirects and avoids proxies."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The local HTTP policy rejects all 3xx redirects and avoids proxies."
+    },
+    {
+      "id": "AF011-V06",
+      "split": "validation",
+      "leakage_group": "citation-validation-behavior",
+      "category": "business_implementation",
+      "query": "How does AgentForge reject fabricated model citations?",
+      "expected_route": "business_implementation",
+      "relevant": [
+        {
+          "path": "agentforge/context.py",
+          "start_line": 49,
+          "end_line": 126,
+          "anchor": "def validate_model_citations",
+          "evidence_type": "function_body",
+          "relevance_reason": "The implementation rejects unknown source IDs, malformed markers, and citations absent from this request context."
+        }
+      ],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "relevance_reason": "The implementation rejects unknown source IDs, malformed markers, and citations absent from this request context."
+    },
+    {
+      "id": "AF011-V07",
+      "split": "validation",
+      "leakage_group": "missing-remote-executor",
+      "category": "no_evidence_exact",
+      "query": "RemotePatchExecutor",
+      "expected_route": "exact_symbol",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "No RemotePatchExecutor symbol is defined in the frozen application package or included project documentation."
+    },
+    {
+      "id": "AF011-V08",
+      "split": "validation",
+      "leakage_group": "missing-production-rrf-export",
+      "category": "no_evidence_relation",
+      "query": "Which package reexports ProductionRrfRetriever as a public API?",
+      "expected_route": "package_api",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "No package export or public API evidence names ProductionRrfRetriever in the frozen snapshot."
+    },
+    {
+      "id": "AF011-V09",
+      "split": "validation",
+      "leakage_group": "missing-quantum-sharding",
+      "category": "no_evidence_business",
+      "query": "How does quantum_fabric_sharding distribute repository chunks?",
+      "expected_route": "business_implementation",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "No implementation or documentation in the frozen snapshot describes quantum_fabric_sharding."
+    },
+    {
+      "id": "AF011-V10",
+      "split": "validation",
+      "leakage_group": "unknown-reflection-hook",
+      "category": "no_evidence_dynamic",
+      "query": "Can runtime reflection prove the orbital_loader relationship?",
+      "expected_route": "uncertain",
+      "relevant": [],
+      "human_reviewed": false,
+      "review_method": "ai_evidence_review",
+      "review_status": "ai_reviewed_not_human",
+      "no_evidence_scope": "Complete isolated AF-011 evaluation snapshot: agentforge/ plus README.md, ARCHITECTURE.md, and SECURITY.md; no other repository is in scope.",
+      "absence_reason": "Static source evidence does not establish an orbital_loader relationship through runtime reflection."
+    }
+  ],
+  "repository_scope": "Isolated read-only evaluation snapshot containing agentforge/ and README.md, ARCHITECTURE.md, SECURITY.md.",
+  "snapshot_policy": "The runner copies only the declared paths into tests/.tmp, computes and records the resulting manifest hash, evaluates that snapshot, then removes it.",
+  "split_plan": {
+    "version": "af011-source-task-split-v3",
+    "calibration_ids": [
+      "AF011-C01",
+      "AF011-C02",
+      "AF011-C03",
+      "AF011-C04",
+      "AF011-C05",
+      "AF011-C06",
+      "AF011-C07",
+      "AF011-C08",
+      "AF011-C09",
+      "AF011-C10"
+    ],
+    "validation_ids": [
+      "AF011-V01",
+      "AF011-V02",
+      "AF011-V03",
+      "AF011-V04",
+      "AF011-V05",
+      "AF011-V06",
+      "AF011-V07",
+      "AF011-V08",
+      "AF011-V09",
+      "AF011-V10"
+    ],
+    "validation_policy": "Validation was evaluated once with fixed routing rules; no threshold or route rule was calibrated on Validation."
+  }
+}

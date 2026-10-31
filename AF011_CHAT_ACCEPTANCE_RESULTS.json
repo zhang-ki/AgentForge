@@ -1,0 +1,2376 @@
+{
+  "attempts": [
+    {
+      "attempt_id": "bf7fb3827bbf4ebf8c27cf84bc48a600",
+      "blocked_reason": "platform_network_disabled",
+      "cases": {},
+      "execution_environment": {
+        "classification": "network_restricted_codex_process",
+        "marker_was_not_modified": true,
+        "network_disabled_marker": "1",
+        "platform": "win32",
+        "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:17:27) [MSC v.1929 64 bit (AMD64)]"
+      },
+      "integrity": {
+        "agentexpr_accessed": false,
+        "formal_index": {
+          "bytes": 32768,
+          "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+        },
+        "read_only_evidence": {
+          "bytes": 2885,
+          "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+        }
+      },
+      "request_counts": {
+        "attempted": 0,
+        "failed": 0,
+        "retries": 0,
+        "sent": 0,
+        "succeeded": 0
+      },
+      "service": {
+        "model_ready": false,
+        "started": false
+      },
+      "status": "BLOCKED",
+      "summary": "Current process has CODEX_SANDBOX_NETWORK_DISABLED=1; no loopback test, asset access, service start, Health request, or chat request was attempted."
+    },
+    {
+      "ask_worker": {
+        "created": true,
+        "elapsed_seconds": 34.626267,
+        "exit_code": 1,
+        "payload": {
+          "cases": {
+            "evidence_question": {
+              "exit_code": 1,
+              "payload": null,
+              "stderr": "AgentForge error: Local server returned invalid JSON or an invalid chat response.\n",
+              "stdout_readable": false
+            },
+            "no_evidence_question": {
+              "exit_code": 0,
+              "payload": {
+                "answer": null,
+                "answer_contract": {
+                  "claims": [
+                    {
+                      "citations": [],
+                      "kind": "unknown",
+                      "text": "当前证据不足，无法确认代码结论。"
+                    }
+                  ],
+                  "content": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                  "evidence": [
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 12,
+                      "excerpt": "\"\"\"Synthetic session cache helpers.\"\"\"\n\n\ndef refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"\n\n\ndef cache_lookup(key, cache):\n    \"\"\"Read an existing cache entry without modifying the cache.\"\"\"\n    return cache.get(key)\n",
+                      "relative_path": "src/cache.py",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E1",
+                      "start_line": 1
+                    }
+                  ],
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "route_confidence": "low",
+                  "status": "refused",
+                  "version": "af011-answer-contract-v1"
+                },
+                "context_budget": {
+                  "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+                  "estimated_units": 328,
+                  "limit": 4000
+                },
+                "provider": "evidence_gate_refusal",
+                "provider_request_stats": {
+                  "attempted": 0,
+                  "failed": 0,
+                  "last_elapsed_seconds": null,
+                  "last_failure_phase": null,
+                  "last_finish_reason": null,
+                  "last_had_reasoning_content": false,
+                  "last_http_status": null,
+                  "last_response_chars": null,
+                  "retries": 0,
+                  "sent": 0,
+                  "succeeded": 0
+                },
+                "refused_output": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                "retrieval": {
+                  "confidence": "low",
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "rule": "explicit_symbol_reference",
+                  "unavailable_channels": [],
+                  "uncertainty": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates."
+                }
+              },
+              "stderr": "",
+              "stdout_readable": true
+            }
+          },
+          "elapsed_seconds": 33.908441,
+          "index": {
+            "added": 4,
+            "changed": 0,
+            "chunks": 4,
+            "database": ":memory:",
+            "files": 4,
+            "index_version": 3,
+            "indexed_at": "2026-10-27T02:23:58.837172+00:00",
+            "parse_failure_paths": [],
+            "parse_failures": 0,
+            "parsed_python_files": 1,
+            "references": 1,
+            "removed": 0,
+            "repository": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-b8a242675ad94a3483cee4aad845bf45\\repository",
+            "skip_reasons": {},
+            "skipped": 0,
+            "symbol_index_available": true,
+            "symbols": 3,
+            "unchanged": 0,
+            "vector_index_available": true,
+            "vectors": 0
+          },
+          "worker_status": "failed"
+        },
+        "stderr": "",
+        "stdout_readable": true,
+        "termination": "exited",
+        "timed_out": false
+      },
+      "assets_after": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_before": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "expected_sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB",
+          "matches": true,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "expected_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+          "matches": true,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "expected_sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+          "matches": true,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_unchanged": true,
+      "attempt_id": "4195390ca6974c94b7c93dfa7ebd9e9b",
+      "cases": {},
+      "error": {
+        "errno": null,
+        "message": "AgentForge ask worker did not return a complete structured result.",
+        "type": "RuntimeError",
+        "winerror": null
+      },
+      "execution_environment": {
+        "classification": "windows_host_candidate",
+        "marker_was_not_modified": true,
+        "network_disabled_marker": null,
+        "platform": "win32",
+        "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:17:27) [MSC v.1929 64 bit (AMD64)]"
+      },
+      "integrity": {
+        "agentexpr_accessed": false,
+        "formal_index": {
+          "bytes": 32768,
+          "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+        },
+        "historical_after": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "historical_before": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "passed": true,
+        "read_only_evidence": {
+          "bytes": 2885,
+          "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+        },
+        "source_fixture_after": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_before": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_unchanged": true
+      },
+      "loopback_preflight": {
+        "all_sockets_closed": true,
+        "client_received": "pong",
+        "host": "127.0.0.1",
+        "port": 49601,
+        "server": {
+          "accept_seconds": 0.012883,
+          "peer": [
+            "127.0.0.1",
+            49602
+          ],
+          "received": "ping"
+        },
+        "status": "passed",
+        "steps": {
+          "bind_seconds": 3e-05,
+          "connect_seconds": 0.012751,
+          "exchange_seconds": 0.000267,
+          "listen_seconds": 1e-05
+        }
+      },
+      "preexisting_llama_server_pids": [],
+      "request_counts": {
+        "attempted": 0,
+        "failed": 0,
+        "retries": 0,
+        "sent": 0,
+        "succeeded": 0
+      },
+      "runtime_copy": {
+        "copied_file_count": 51,
+        "copy_matches_source": true,
+        "extra_files": [],
+        "path": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-b8a242675ad94a3483cee4aad845bf45\\runtime",
+        "post_run_file_count": 51,
+        "post_run_matches_source": true,
+        "removed": true,
+        "source_file_count": 51,
+        "source_manifest_sha256": "FEE757BB981EB76D4BF9D348BF1E94C95BF99DC46827842950239E0C595A5BD6"
+      },
+      "service": {
+        "api_key_transport": "child_environment_only",
+        "arguments": [
+          "--model",
+          "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+          "--alias",
+          "qwen3.5-4b-q4_k_m-af011-chat",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "49603",
+          "--ctx-size",
+          "4096",
+          "--n-gpu-layers",
+          "0",
+          "--no-webui",
+          "--cors-origins",
+          "http://127.0.0.1:49603",
+          "--no-cors-credentials"
+        ],
+        "executable": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-b8a242675ad94a3483cee4aad845bf45\\runtime\\llama-server.exe",
+        "exit_code": 1,
+        "exit_semantics": "runner_initiated_termination",
+        "host": "127.0.0.1",
+        "listeners": [
+          {
+            "LocalAddress": "127.0.0.1",
+            "LocalPort": 49603,
+            "OwningProcess": 32456
+          }
+        ],
+        "model_readiness": {
+          "observations": [
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 0.047,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 15,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 1.094,
+              "http_status": 200,
+              "json_keys": [
+                "status"
+              ],
+              "response_body": "{\"status\":\"ok\"}",
+              "response_shape": "top_level_status",
+              "semantic_status": "ready",
+              "status": "ok",
+              "via_http_error": false
+            }
+          ],
+          "poll_count": 2,
+          "seconds": 1.094,
+          "status": "passed"
+        },
+        "model_ready": true,
+        "output_bytes": {
+          "stderr_bytes": 2238,
+          "stdout_bytes": 0
+        },
+        "owned_process_stopped": true,
+        "pid": 32456,
+        "port": 49603,
+        "port_released": true,
+        "resource_sample": {
+          "pagefile_bytes": 2476679168,
+          "peak_pagefile_bytes": 2476695552,
+          "peak_working_set_bytes": 4725538816,
+          "working_set_bytes": 2818269184
+        },
+        "running_before_cleanup": true,
+        "started": true,
+        "stderr_summary": [
+          "0.03.122.350 I srv  llama_server: model loaded",
+          "0.03.122.360 I srv  llama_server: listening on http://127.0.0.1:49603"
+        ],
+        "stdout_summary": [],
+        "tcp_readiness": {
+          "attempts": 2,
+          "seconds": 0.615646,
+          "status": "passed"
+        },
+        "termination": "terminated",
+        "working_directory": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-b8a242675ad94a3483cee4aad845bf45\\runtime"
+      },
+      "state": "FAILED",
+      "state_history": [
+        {
+          "monotonic_seconds": 160682.187,
+          "state": "PROCESS_STARTED"
+        },
+        {
+          "monotonic_seconds": 160682.812,
+          "state": "TCP_LISTENING"
+        },
+        {
+          "monotonic_seconds": 160684.687,
+          "state": "MODEL_LOADING"
+        },
+        {
+          "monotonic_seconds": 160685.781,
+          "state": "MODEL_READY"
+        },
+        {
+          "monotonic_seconds": 160685.781,
+          "state": "ASKING"
+        },
+        {
+          "monotonic_seconds": 160720.406,
+          "state": "FAILED"
+        }
+      ],
+      "status": "FAIL",
+      "summary": "Acceptance failed at state ASKING.",
+      "total_elapsed_seconds": 50.456962
+    },
+    {
+      "ask_worker": {
+        "created": true,
+        "elapsed_seconds": 60.622291,
+        "exit_code": 1,
+        "payload": {
+          "cases": {
+            "evidence_question": {
+              "exit_code": 1,
+              "failure": {
+                "code": "empty_final_content_with_reasoning",
+                "message": "AgentForge error: Local server returned an invalid chat response (empty_final_content_with_reasoning).",
+                "stage": "PROVIDER_RESPONSE",
+                "type": "CliExecutionError"
+              },
+              "payload": null,
+              "provider_request_stats": {
+                "attempted": 1,
+                "failed": 1,
+                "last_elapsed_seconds": 60.187,
+                "last_error_code": "empty_final_content_with_reasoning",
+                "last_failure_phase": "response validation",
+                "last_finish_reason": null,
+                "last_had_reasoning_content": false,
+                "last_http_status": 200,
+                "last_response_chars": null,
+                "last_response_diagnostic": {
+                  "body_bytes": 2654,
+                  "choice_count": 1,
+                  "choices_type": "list",
+                  "content_chars": 0,
+                  "content_type": "str",
+                  "message_type": "dict",
+                  "reasoning_content_chars": 1948,
+                  "reasoning_content_type": "str",
+                  "root_type": "dict"
+                },
+                "retries": 0,
+                "sent": 1,
+                "succeeded": 0
+              },
+              "stderr": "AgentForge error: Local server returned an invalid chat response (empty_final_content_with_reasoning).\n",
+              "stdout_readable": false
+            },
+            "no_evidence_question": {
+              "exit_code": 0,
+              "failure": null,
+              "payload": {
+                "answer": null,
+                "answer_contract": {
+                  "claims": [
+                    {
+                      "citations": [],
+                      "kind": "unknown",
+                      "text": "当前证据不足，无法确认代码结论。"
+                    }
+                  ],
+                  "content": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                  "evidence": [
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 12,
+                      "excerpt": "\"\"\"Synthetic session cache helpers.\"\"\"\n\n\ndef refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"\n\n\ndef cache_lookup(key, cache):\n    \"\"\"Read an existing cache entry without modifying the cache.\"\"\"\n    return cache.get(key)\n",
+                      "relative_path": "src/cache.py",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E1",
+                      "start_line": 1
+                    }
+                  ],
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "route_confidence": "low",
+                  "status": "refused",
+                  "version": "af011-answer-contract-v1"
+                },
+                "context_budget": {
+                  "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+                  "estimated_units": 328,
+                  "limit": 4000
+                },
+                "provider": "evidence_gate_refusal",
+                "provider_request_stats": {
+                  "attempted": 0,
+                  "failed": 0,
+                  "last_elapsed_seconds": null,
+                  "last_error_code": null,
+                  "last_failure_phase": null,
+                  "last_finish_reason": null,
+                  "last_had_reasoning_content": false,
+                  "last_http_status": null,
+                  "last_response_chars": null,
+                  "last_response_diagnostic": null,
+                  "retries": 0,
+                  "sent": 0,
+                  "succeeded": 0
+                },
+                "refused_output": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                "retrieval": {
+                  "confidence": "low",
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "rule": "explicit_symbol_reference",
+                  "unavailable_channels": [],
+                  "uncertainty": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates."
+                }
+              },
+              "provider_request_stats": {
+                "attempted": 0,
+                "failed": 0,
+                "last_elapsed_seconds": null,
+                "last_error_code": null,
+                "last_failure_phase": null,
+                "last_finish_reason": null,
+                "last_had_reasoning_content": false,
+                "last_http_status": null,
+                "last_response_chars": null,
+                "last_response_diagnostic": null,
+                "retries": 0,
+                "sent": 0,
+                "succeeded": 0
+              },
+              "stderr": "",
+              "stdout_readable": true
+            }
+          },
+          "elapsed_seconds": 60.250619,
+          "index": {
+            "added": 4,
+            "changed": 0,
+            "chunks": 4,
+            "database": ":memory:",
+            "files": 4,
+            "index_version": 3,
+            "indexed_at": "2026-10-27T02:52:39.041832+00:00",
+            "parse_failure_paths": [],
+            "parse_failures": 0,
+            "parsed_python_files": 1,
+            "references": 1,
+            "removed": 0,
+            "repository": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-edc33cb7c9d14a1f8b791e778f19a630\\repository",
+            "skip_reasons": {},
+            "skipped": 0,
+            "symbol_index_available": true,
+            "symbols": 3,
+            "unchanged": 0,
+            "vector_index_available": true,
+            "vectors": 0
+          },
+          "worker_status": "failed"
+        },
+        "stderr": "",
+        "stdout_readable": true,
+        "termination": "exited",
+        "timed_out": false
+      },
+      "assets_after": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_before": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "expected_sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB",
+          "matches": true,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "expected_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+          "matches": true,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "expected_sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+          "matches": true,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_unchanged": true,
+      "attempt_id": "abb79af4dd204927a628d0166936f06b",
+      "cases": {
+        "evidence_question": {
+          "exit_code": 1,
+          "failure": {
+            "code": "empty_final_content_with_reasoning",
+            "message": "AgentForge error: Local server returned an invalid chat response (empty_final_content_with_reasoning).",
+            "stage": "PROVIDER_RESPONSE",
+            "type": "CliExecutionError"
+          },
+          "provider_request_stats": {
+            "attempted": 1,
+            "failed": 1,
+            "last_elapsed_seconds": 60.187,
+            "last_error_code": "empty_final_content_with_reasoning",
+            "last_failure_phase": "response validation",
+            "last_finish_reason": null,
+            "last_had_reasoning_content": false,
+            "last_http_status": 200,
+            "last_response_chars": null,
+            "last_response_diagnostic": {
+              "body_bytes": 2654,
+              "choice_count": 1,
+              "choices_type": "list",
+              "content_chars": 0,
+              "content_type": "str",
+              "message_type": "dict",
+              "reasoning_content_chars": 1948,
+              "reasoning_content_type": "str",
+              "root_type": "dict"
+            },
+            "retries": 0,
+            "sent": 1,
+            "succeeded": 0
+          },
+          "stderr": "AgentForge error: Local server returned an invalid chat response (empty_final_content_with_reasoning).\n",
+          "stdout_readable": false
+        },
+        "no_evidence_question": {
+          "exit_code": 0,
+          "failure": null,
+          "provider_request_stats": {
+            "attempted": 0,
+            "failed": 0,
+            "last_elapsed_seconds": null,
+            "last_error_code": null,
+            "last_failure_phase": null,
+            "last_finish_reason": null,
+            "last_had_reasoning_content": false,
+            "last_http_status": null,
+            "last_response_chars": null,
+            "last_response_diagnostic": null,
+            "retries": 0,
+            "sent": 0,
+            "succeeded": 0
+          },
+          "stderr": "",
+          "stdout_readable": true
+        }
+      },
+      "error": {
+        "errno": null,
+        "message": "AgentForge ask worker failed at PROVIDER_RESPONSE (empty_final_content_with_reasoning).",
+        "type": "RuntimeError",
+        "winerror": null
+      },
+      "execution_environment": {
+        "classification": "windows_host_candidate",
+        "marker_was_not_modified": true,
+        "network_disabled_marker": null,
+        "platform": "win32",
+        "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:17:27) [MSC v.1929 64 bit (AMD64)]"
+      },
+      "integrity": {
+        "agentexpr_accessed": false,
+        "formal_index": {
+          "bytes": 32768,
+          "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+        },
+        "historical_after": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "historical_before": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "passed": true,
+        "read_only_evidence": {
+          "bytes": 2885,
+          "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+        },
+        "source_fixture_after": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_before": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_unchanged": true
+      },
+      "loopback_preflight": {
+        "all_sockets_closed": true,
+        "client_received": "pong",
+        "host": "127.0.0.1",
+        "port": 52370,
+        "server": {
+          "accept_seconds": 0.006416,
+          "peer": [
+            "127.0.0.1",
+            52371
+          ],
+          "received": "ping"
+        },
+        "status": "passed",
+        "steps": {
+          "bind_seconds": 2.6e-05,
+          "connect_seconds": 0.006368,
+          "exchange_seconds": 0.000164,
+          "listen_seconds": 1.6e-05
+        }
+      },
+      "preexisting_llama_server_pids": [],
+      "request_counts": {
+        "attempted": 1,
+        "failed": 1,
+        "retries": 0,
+        "sent": 1,
+        "succeeded": 0
+      },
+      "runtime_copy": {
+        "copied_file_count": 51,
+        "copy_matches_source": true,
+        "extra_files": [],
+        "path": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-edc33cb7c9d14a1f8b791e778f19a630\\runtime",
+        "post_run_file_count": 51,
+        "post_run_matches_source": true,
+        "removed": true,
+        "source_file_count": 51,
+        "source_manifest_sha256": "FEE757BB981EB76D4BF9D348BF1E94C95BF99DC46827842950239E0C595A5BD6"
+      },
+      "service": {
+        "api_key_transport": "child_environment_only",
+        "arguments": [
+          "--model",
+          "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+          "--alias",
+          "qwen3.5-4b-q4_k_m-af011-chat",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "52372",
+          "--ctx-size",
+          "4096",
+          "--n-gpu-layers",
+          "0",
+          "--no-webui",
+          "--cors-origins",
+          "http://127.0.0.1:52372",
+          "--no-cors-credentials"
+        ],
+        "executable": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-edc33cb7c9d14a1f8b791e778f19a630\\runtime\\llama-server.exe",
+        "exit_code": 1,
+        "exit_semantics": "runner_initiated_termination",
+        "host": "127.0.0.1",
+        "listeners": [
+          {
+            "LocalAddress": "127.0.0.1",
+            "LocalPort": 52372,
+            "OwningProcess": 39288
+          }
+        ],
+        "model_readiness": {
+          "observations": [
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 0.031,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 1.078,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 15,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 2.125,
+              "http_status": 200,
+              "json_keys": [
+                "status"
+              ],
+              "response_body": "{\"status\":\"ok\"}",
+              "response_shape": "top_level_status",
+              "semantic_status": "ready",
+              "status": "ok",
+              "via_http_error": false
+            }
+          ],
+          "poll_count": 3,
+          "seconds": 2.125,
+          "status": "passed"
+        },
+        "model_ready": true,
+        "output_bytes": {
+          "stderr_bytes": 3028,
+          "stdout_bytes": 0
+        },
+        "owned_process_stopped": true,
+        "pid": 39288,
+        "port": 52372,
+        "port_released": true,
+        "resource_sample": {
+          "pagefile_bytes": 2476429312,
+          "peak_pagefile_bytes": 2476572672,
+          "peak_working_set_bytes": 4596838400,
+          "working_set_bytes": 2925473792
+        },
+        "running_before_cleanup": true,
+        "started": true,
+        "stderr_summary": [
+          "0.03.902.906 I srv  llama_server: model loaded",
+          "0.03.902.916 I srv  llama_server: listening on http://127.0.0.1:52372"
+        ],
+        "stdout_summary": [],
+        "tcp_readiness": {
+          "attempts": 2,
+          "seconds": 0.636503,
+          "status": "passed"
+        },
+        "termination": "terminated",
+        "working_directory": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-edc33cb7c9d14a1f8b791e778f19a630\\runtime"
+      },
+      "state": "FAILED",
+      "state_history": [
+        {
+          "monotonic_seconds": 162402.25,
+          "state": "PROCESS_STARTED"
+        },
+        {
+          "monotonic_seconds": 162402.875,
+          "state": "TCP_LISTENING"
+        },
+        {
+          "monotonic_seconds": 162404.203,
+          "state": "MODEL_LOADING"
+        },
+        {
+          "monotonic_seconds": 162406.328,
+          "state": "MODEL_READY"
+        },
+        {
+          "monotonic_seconds": 162406.328,
+          "state": "ASKING"
+        },
+        {
+          "monotonic_seconds": 162466.953,
+          "state": "FAILED"
+        }
+      ],
+      "status": "FAIL",
+      "summary": "Acceptance failed at state ASKING.",
+      "total_elapsed_seconds": 73.497726
+    },
+    {
+      "ask_worker": {
+        "created": true,
+        "elapsed_seconds": 8.058873,
+        "exit_code": 1,
+        "payload": {
+          "cases": {
+            "evidence_question": {
+              "exit_code": 1,
+              "failure": {
+                "code": "provider_response_failed",
+                "message": "AgentForge error: Model output contains an unmarked or malformed line reference.",
+                "stage": "PROVIDER_RESPONSE",
+                "type": "CliExecutionError"
+              },
+              "payload": null,
+              "provider_request_stats": {
+                "attempted": 1,
+                "failed": 0,
+                "last_elapsed_seconds": 7.546,
+                "last_error_code": null,
+                "last_failure_phase": null,
+                "last_finish_reason": "stop",
+                "last_had_reasoning_content": false,
+                "last_http_status": 200,
+                "last_response_chars": 163,
+                "last_response_diagnostic": {
+                  "body_bytes": 814,
+                  "choice_count": 1,
+                  "choices_type": "list",
+                  "content_chars": 163,
+                  "content_type": "str",
+                  "finish_reason": "stop",
+                  "message_type": "dict",
+                  "reasoning_content_chars": null,
+                  "reasoning_content_type": "NoneType",
+                  "root_type": "dict"
+                },
+                "retries": 0,
+                "sent": 1,
+                "succeeded": 1
+              },
+              "stderr": "AgentForge error: Model output contains an unmarked or malformed line reference.\n",
+              "stdout_readable": false
+            },
+            "no_evidence_question": {
+              "exit_code": 0,
+              "failure": null,
+              "payload": {
+                "answer": null,
+                "answer_contract": {
+                  "claims": [
+                    {
+                      "citations": [],
+                      "kind": "unknown",
+                      "text": "当前证据不足，无法确认代码结论。"
+                    }
+                  ],
+                  "content": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                  "evidence": [
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 12,
+                      "excerpt": "\"\"\"Synthetic session cache helpers.\"\"\"\n\n\ndef refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"\n\n\ndef cache_lookup(key, cache):\n    \"\"\"Read an existing cache entry without modifying the cache.\"\"\"\n    return cache.get(key)\n",
+                      "relative_path": "src/cache.py",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E1",
+                      "start_line": 1
+                    }
+                  ],
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "route_confidence": "low",
+                  "status": "refused",
+                  "version": "af011-answer-contract-v1"
+                },
+                "context_budget": {
+                  "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+                  "estimated_units": 328,
+                  "limit": 4000
+                },
+                "provider": "evidence_gate_refusal",
+                "provider_request_stats": {
+                  "attempted": 0,
+                  "failed": 0,
+                  "last_elapsed_seconds": null,
+                  "last_error_code": null,
+                  "last_failure_phase": null,
+                  "last_finish_reason": null,
+                  "last_had_reasoning_content": false,
+                  "last_http_status": null,
+                  "last_response_chars": null,
+                  "last_response_diagnostic": null,
+                  "retries": 0,
+                  "sent": 0,
+                  "succeeded": 0
+                },
+                "refused_output": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                "retrieval": {
+                  "confidence": "low",
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "rule": "explicit_symbol_reference",
+                  "unavailable_channels": [],
+                  "uncertainty": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates."
+                }
+              },
+              "provider_request_stats": {
+                "attempted": 0,
+                "failed": 0,
+                "last_elapsed_seconds": null,
+                "last_error_code": null,
+                "last_failure_phase": null,
+                "last_finish_reason": null,
+                "last_had_reasoning_content": false,
+                "last_http_status": null,
+                "last_response_chars": null,
+                "last_response_diagnostic": null,
+                "retries": 0,
+                "sent": 0,
+                "succeeded": 0
+              },
+              "stderr": "",
+              "stdout_readable": true
+            }
+          },
+          "elapsed_seconds": 7.607619,
+          "index": {
+            "added": 4,
+            "changed": 0,
+            "chunks": 4,
+            "database": ":memory:",
+            "files": 4,
+            "index_version": 3,
+            "indexed_at": "2026-10-27T03:29:36.940328+00:00",
+            "parse_failure_paths": [],
+            "parse_failures": 0,
+            "parsed_python_files": 1,
+            "references": 1,
+            "removed": 0,
+            "repository": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-6bff1d2a2dce4b618b8f97611c750065\\repository",
+            "skip_reasons": {},
+            "skipped": 0,
+            "symbol_index_available": true,
+            "symbols": 3,
+            "unchanged": 0,
+            "vector_index_available": true,
+            "vectors": 0
+          },
+          "worker_status": "failed"
+        },
+        "stderr": "",
+        "stdout_readable": true,
+        "termination": "exited",
+        "timed_out": false
+      },
+      "assets_after": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_before": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "expected_sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB",
+          "matches": true,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "expected_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+          "matches": true,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "expected_sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+          "matches": true,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_unchanged": true,
+      "attempt_id": "c9913d5ceaaa4da9b8d7e8d6fd556df6",
+      "cases": {
+        "evidence_question": {
+          "exit_code": 1,
+          "failure": {
+            "code": "provider_response_failed",
+            "message": "AgentForge error: Model output contains an unmarked or malformed line reference.",
+            "stage": "PROVIDER_RESPONSE",
+            "type": "CliExecutionError"
+          },
+          "provider_request_stats": {
+            "attempted": 1,
+            "failed": 0,
+            "last_elapsed_seconds": 7.546,
+            "last_error_code": null,
+            "last_failure_phase": null,
+            "last_finish_reason": "stop",
+            "last_had_reasoning_content": false,
+            "last_http_status": 200,
+            "last_response_chars": 163,
+            "last_response_diagnostic": {
+              "body_bytes": 814,
+              "choice_count": 1,
+              "choices_type": "list",
+              "content_chars": 163,
+              "content_type": "str",
+              "finish_reason": "stop",
+              "message_type": "dict",
+              "reasoning_content_chars": null,
+              "reasoning_content_type": "NoneType",
+              "root_type": "dict"
+            },
+            "retries": 0,
+            "sent": 1,
+            "succeeded": 1
+          },
+          "stderr": "AgentForge error: Model output contains an unmarked or malformed line reference.\n",
+          "stdout_readable": false
+        },
+        "no_evidence_question": {
+          "exit_code": 0,
+          "failure": null,
+          "provider_request_stats": {
+            "attempted": 0,
+            "failed": 0,
+            "last_elapsed_seconds": null,
+            "last_error_code": null,
+            "last_failure_phase": null,
+            "last_finish_reason": null,
+            "last_had_reasoning_content": false,
+            "last_http_status": null,
+            "last_response_chars": null,
+            "last_response_diagnostic": null,
+            "retries": 0,
+            "sent": 0,
+            "succeeded": 0
+          },
+          "stderr": "",
+          "stdout_readable": true
+        }
+      },
+      "error": {
+        "errno": null,
+        "message": "AgentForge ask worker failed at PROVIDER_RESPONSE (provider_response_failed).",
+        "type": "RuntimeError",
+        "winerror": null
+      },
+      "execution_environment": {
+        "classification": "windows_host_candidate",
+        "marker_was_not_modified": true,
+        "network_disabled_marker": null,
+        "platform": "win32",
+        "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:17:27) [MSC v.1929 64 bit (AMD64)]"
+      },
+      "integrity": {
+        "agentexpr_accessed": false,
+        "formal_index": {
+          "bytes": 32768,
+          "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+        },
+        "historical_after": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "historical_before": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "passed": true,
+        "read_only_evidence": {
+          "bytes": 2885,
+          "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+        },
+        "source_fixture_after": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_before": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_unchanged": true
+      },
+      "loopback_preflight": {
+        "all_sockets_closed": true,
+        "client_received": "pong",
+        "host": "127.0.0.1",
+        "port": 60534,
+        "server": {
+          "accept_seconds": 0.008839,
+          "peer": [
+            "127.0.0.1",
+            60535
+          ],
+          "received": "ping"
+        },
+        "status": "passed",
+        "steps": {
+          "bind_seconds": 3e-05,
+          "connect_seconds": 0.008721,
+          "exchange_seconds": 0.000214,
+          "listen_seconds": 1.4e-05
+        }
+      },
+      "preexisting_llama_server_pids": [],
+      "request_counts": {
+        "attempted": 1,
+        "failed": 0,
+        "retries": 0,
+        "sent": 1,
+        "succeeded": 1
+      },
+      "runtime_copy": {
+        "copied_file_count": 51,
+        "copy_matches_source": true,
+        "extra_files": [],
+        "path": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-6bff1d2a2dce4b618b8f97611c750065\\runtime",
+        "post_run_file_count": 51,
+        "post_run_matches_source": true,
+        "removed": true,
+        "source_file_count": 51,
+        "source_manifest_sha256": "FEE757BB981EB76D4BF9D348BF1E94C95BF99DC46827842950239E0C595A5BD6"
+      },
+      "service": {
+        "api_key_transport": "child_environment_only",
+        "arguments": [
+          "--model",
+          "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+          "--alias",
+          "qwen3.5-4b-q4_k_m-af011-chat",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "60536",
+          "--ctx-size",
+          "4096",
+          "--n-gpu-layers",
+          "0",
+          "--no-webui",
+          "--cors-origins",
+          "http://127.0.0.1:60536",
+          "--no-cors-credentials"
+        ],
+        "executable": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-6bff1d2a2dce4b618b8f97611c750065\\runtime\\llama-server.exe",
+        "exit_code": 1,
+        "exit_semantics": "runner_initiated_termination",
+        "host": "127.0.0.1",
+        "listeners": [
+          {
+            "LocalAddress": "127.0.0.1",
+            "LocalPort": 60536,
+            "OwningProcess": 45200
+          }
+        ],
+        "model_readiness": {
+          "observations": [
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 0.046,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 1.093,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 15,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 2.14,
+              "http_status": 200,
+              "json_keys": [
+                "status"
+              ],
+              "response_body": "{\"status\":\"ok\"}",
+              "response_shape": "top_level_status",
+              "semantic_status": "ready",
+              "status": "ok",
+              "via_http_error": false
+            }
+          ],
+          "poll_count": 3,
+          "seconds": 2.14,
+          "status": "passed"
+        },
+        "model_ready": true,
+        "output_bytes": {
+          "stderr_bytes": 1468,
+          "stdout_bytes": 0
+        },
+        "owned_process_stopped": true,
+        "pid": 45200,
+        "port": 60536,
+        "port_released": true,
+        "resource_sample": {
+          "pagefile_bytes": 2477490176,
+          "peak_pagefile_bytes": 2477522944,
+          "peak_working_set_bytes": 4690132992,
+          "working_set_bytes": 4690132992
+        },
+        "running_before_cleanup": true,
+        "started": true,
+        "stderr_summary": [
+          "0.03.524.318 I srv  llama_server: model loaded",
+          "0.03.524.335 I srv  llama_server: listening on http://127.0.0.1:60536"
+        ],
+        "stdout_summary": [],
+        "tcp_readiness": {
+          "attempts": 2,
+          "seconds": 0.607969,
+          "status": "passed"
+        },
+        "termination": "terminated",
+        "working_directory": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-6bff1d2a2dce4b618b8f97611c750065\\runtime"
+      },
+      "state": "FAILED",
+      "state_history": [
+        {
+          "monotonic_seconds": 164620.14,
+          "state": "PROCESS_STARTED"
+        },
+        {
+          "monotonic_seconds": 164620.75,
+          "state": "TCP_LISTENING"
+        },
+        {
+          "monotonic_seconds": 164622.0,
+          "state": "MODEL_LOADING"
+        },
+        {
+          "monotonic_seconds": 164624.14,
+          "state": "MODEL_READY"
+        },
+        {
+          "monotonic_seconds": 164624.14,
+          "state": "ASKING"
+        },
+        {
+          "monotonic_seconds": 164632.203,
+          "state": "FAILED"
+        }
+      ],
+      "status": "FAIL",
+      "summary": "Acceptance failed at state ASKING.",
+      "total_elapsed_seconds": 22.300621
+    },
+    {
+      "ask_worker": {
+        "created": true,
+        "elapsed_seconds": 8.327749,
+        "exit_code": 0,
+        "payload": {
+          "cases": {
+            "evidence_question": {
+              "exit_code": 0,
+              "failure": null,
+              "payload": {
+                "answer": "The function `refresh_access_token` returns the string `\"offline-{session_id}\"`, where `{session_id}` is the input argument. This is defined in [E1].",
+                "answer_contract": {
+                  "claims": [
+                    {
+                      "citations": [
+                        "src/cache.py:4-6"
+                      ],
+                      "kind": "inference",
+                      "text": "The function `refresh_access_token` returns the string `\"offline-{session_id}\"`, where `{session_id}` is the input argument. This is defined in [E1]."
+                    }
+                  ],
+                  "content": "The function `refresh_access_token` returns the string `\"offline-{session_id}\"`, where `{session_id}` is the input argument. This is defined in [E1].",
+                  "evidence": [
+                    {
+                      "channels": [
+                        "symbols",
+                        "lexical"
+                      ],
+                      "end_line": 6,
+                      "excerpt": "def refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"",
+                      "relative_path": "src/cache.py",
+                      "resolution_status": "resolved",
+                      "source_id": "E1",
+                      "start_line": 4
+                    },
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 6,
+                      "excerpt": "# Cache design\n\ncache_lookup reads one existing entry.\nrefresh_access_token returns a deterministic placeholder.\n缓存查询只读取已有条目。\n",
+                      "relative_path": "docs/cache.md",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E2",
+                      "start_line": 1
+                    },
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 6,
+                      "excerpt": "# Synthetic repository\n\nThese files are handwritten examples for AgentForge's offline tests.\nThe cache helpers live in src/cache.py.\nNo credentials, user source code, models or external services are required.\n",
+                      "relative_path": "README.md",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E3",
+                      "start_line": 1
+                    }
+                  ],
+                  "reason": "Citations are request-local; semantic entailment has not been verified.",
+                  "route": "exact_symbol",
+                  "route_confidence": "high",
+                  "status": "limited",
+                  "version": "af011-answer-contract-v1"
+                },
+                "context_budget": {
+                  "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+                  "estimated_units": 570,
+                  "limit": 4000
+                },
+                "provider": "llama-server",
+                "provider_request_stats": {
+                  "attempted": 1,
+                  "failed": 0,
+                  "last_application_error_code": null,
+                  "last_application_failure_phase": null,
+                  "last_citation_diagnostic": null,
+                  "last_elapsed_seconds": 8.0,
+                  "last_error_code": null,
+                  "last_failure_phase": null,
+                  "last_finish_reason": "stop",
+                  "last_had_reasoning_content": false,
+                  "last_http_status": 200,
+                  "last_response_chars": 149,
+                  "last_response_diagnostic": {
+                    "body_bytes": 799,
+                    "choice_count": 1,
+                    "choices_type": "list",
+                    "content_chars": 149,
+                    "content_type": "str",
+                    "finish_reason": "stop",
+                    "message_type": "dict",
+                    "reasoning_content_chars": null,
+                    "reasoning_content_type": "NoneType",
+                    "root_type": "dict"
+                  },
+                  "retries": 0,
+                  "sent": 1,
+                  "succeeded": 1
+                },
+                "refused_output": null,
+                "retrieval": {
+                  "confidence": "high",
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup.",
+                  "route": "exact_symbol",
+                  "rule": "explicit_symbol_reference",
+                  "unavailable_channels": [],
+                  "uncertainty": null
+                }
+              },
+              "provider_request_stats": {
+                "attempted": 1,
+                "failed": 0,
+                "last_application_error_code": null,
+                "last_application_failure_phase": null,
+                "last_citation_diagnostic": null,
+                "last_elapsed_seconds": 8.0,
+                "last_error_code": null,
+                "last_failure_phase": null,
+                "last_finish_reason": "stop",
+                "last_had_reasoning_content": false,
+                "last_http_status": 200,
+                "last_response_chars": 149,
+                "last_response_diagnostic": {
+                  "body_bytes": 799,
+                  "choice_count": 1,
+                  "choices_type": "list",
+                  "content_chars": 149,
+                  "content_type": "str",
+                  "finish_reason": "stop",
+                  "message_type": "dict",
+                  "reasoning_content_chars": null,
+                  "reasoning_content_type": "NoneType",
+                  "root_type": "dict"
+                },
+                "retries": 0,
+                "sent": 1,
+                "succeeded": 1
+              },
+              "stderr": "",
+              "stdout_readable": true
+            },
+            "no_evidence_question": {
+              "exit_code": 0,
+              "failure": null,
+              "payload": {
+                "answer": null,
+                "answer_contract": {
+                  "claims": [
+                    {
+                      "citations": [],
+                      "kind": "unknown",
+                      "text": "当前证据不足，无法确认代码结论。"
+                    }
+                  ],
+                  "content": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                  "evidence": [
+                    {
+                      "channels": [
+                        "lexical"
+                      ],
+                      "end_line": 12,
+                      "excerpt": "\"\"\"Synthetic session cache helpers.\"\"\"\n\n\ndef refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"\n\n\ndef cache_lookup(key, cache):\n    \"\"\"Read an existing cache entry without modifying the cache.\"\"\"\n    return cache.get(key)\n",
+                      "relative_path": "src/cache.py",
+                      "resolution_status": "not_applicable",
+                      "source_id": "E1",
+                      "start_line": 1
+                    }
+                  ],
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "route_confidence": "low",
+                  "status": "refused",
+                  "version": "af011-answer-contract-v1"
+                },
+                "context_budget": {
+                  "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+                  "estimated_units": 328,
+                  "limit": 4000
+                },
+                "provider": "evidence_gate_refusal",
+                "provider_request_stats": {
+                  "attempted": 0,
+                  "failed": 0,
+                  "last_application_error_code": null,
+                  "last_application_failure_phase": null,
+                  "last_citation_diagnostic": null,
+                  "last_elapsed_seconds": null,
+                  "last_error_code": null,
+                  "last_failure_phase": null,
+                  "last_finish_reason": null,
+                  "last_had_reasoning_content": false,
+                  "last_http_status": null,
+                  "last_response_chars": null,
+                  "last_response_diagnostic": null,
+                  "retries": 0,
+                  "sent": 0,
+                  "succeeded": 0
+                },
+                "refused_output": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+                "retrieval": {
+                  "confidence": "low",
+                  "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+                  "route": "exact_symbol",
+                  "rule": "explicit_symbol_reference",
+                  "unavailable_channels": [],
+                  "uncertainty": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates."
+                }
+              },
+              "provider_request_stats": {
+                "attempted": 0,
+                "failed": 0,
+                "last_application_error_code": null,
+                "last_application_failure_phase": null,
+                "last_citation_diagnostic": null,
+                "last_elapsed_seconds": null,
+                "last_error_code": null,
+                "last_failure_phase": null,
+                "last_finish_reason": null,
+                "last_had_reasoning_content": false,
+                "last_http_status": null,
+                "last_response_chars": null,
+                "last_response_diagnostic": null,
+                "retries": 0,
+                "sent": 0,
+                "succeeded": 0
+              },
+              "stderr": "",
+              "stdout_readable": true
+            }
+          },
+          "elapsed_seconds": 8.040488,
+          "index": {
+            "added": 4,
+            "changed": 0,
+            "chunks": 4,
+            "database": ":memory:",
+            "files": 4,
+            "index_version": 3,
+            "indexed_at": "2026-10-27T04:48:21.522422+00:00",
+            "parse_failure_paths": [],
+            "parse_failures": 0,
+            "parsed_python_files": 1,
+            "references": 1,
+            "removed": 0,
+            "repository": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-2ec9dd0c8d1242c499d1f589bc1140af\\repository",
+            "skip_reasons": {},
+            "skipped": 0,
+            "symbol_index_available": true,
+            "symbols": 3,
+            "unchanged": 0,
+            "vector_index_available": true,
+            "vectors": 0
+          },
+          "worker_status": "completed"
+        },
+        "stderr": "",
+        "stdout_readable": true,
+        "termination": "exited",
+        "timed_out": false
+      },
+      "assets_after": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_before": {
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server-impl.dll": {
+          "bytes": 9160704,
+          "expected_sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB",
+          "matches": true,
+          "sha256": "F020D94DF5E91840F2C9626B86F9AFE414C16D17ED5E1F41FE9CB614D3CDCDCB"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\.runtime\\llama-b11424\\llama-server.exe": {
+          "bytes": 9216,
+          "expected_sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D",
+          "matches": true,
+          "sha256": "F8DF891A5E4D10FA8CFC0F86C8D99617A06EDD18D046E18B59EC3354F17FC12D"
+        },
+        "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf": {
+          "bytes": 2740937888,
+          "expected_sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4",
+          "matches": true,
+          "sha256": "00FE7986FF5F6B463E62455821146049DB6F9313603938A70800D1FB69EF11A4"
+        }
+      },
+      "assets_unchanged": true,
+      "attempt_id": "3bb475f1ee2b4a98be6fccd308a7f06d",
+      "cases": {
+        "evidence_question": {
+          "answer": "The function `refresh_access_token` returns the string `\"offline-{session_id}\"`, where `{session_id}` is the input argument. This is defined in [E1].",
+          "context_budget": {
+            "estimate_kind": "UTF-8 byte upper-bound proxy; not a tokenizer count",
+            "estimated_units": 570,
+            "limit": 4000
+          },
+          "contract_status": "limited",
+          "evidence": [
+            {
+              "channels": [
+                "symbols",
+                "lexical"
+              ],
+              "end_line": 6,
+              "excerpt": "def refresh_access_token(session_id):\n    \"\"\"Return a deterministic placeholder for a session.\"\"\"\n    return f\"offline-{session_id}\"",
+              "relative_path": "src/cache.py",
+              "resolution_status": "resolved",
+              "source_id": "E1",
+              "start_line": 4
+            },
+            {
+              "channels": [
+                "lexical"
+              ],
+              "end_line": 6,
+              "excerpt": "# Cache design\n\ncache_lookup reads one existing entry.\nrefresh_access_token returns a deterministic placeholder.\n缓存查询只读取已有条目。\n",
+              "relative_path": "docs/cache.md",
+              "resolution_status": "not_applicable",
+              "source_id": "E2",
+              "start_line": 1
+            },
+            {
+              "channels": [
+                "lexical"
+              ],
+              "end_line": 6,
+              "excerpt": "# Synthetic repository\n\nThese files are handwritten examples for AgentForge's offline tests.\nThe cache helpers live in src/cache.py.\nNo credentials, user source code, models or external services are required.\n",
+              "relative_path": "README.md",
+              "resolution_status": "not_applicable",
+              "source_id": "E3",
+              "start_line": 1
+            }
+          ],
+          "failure": null,
+          "provider": "llama-server",
+          "request_stats": {
+            "attempted": 1,
+            "failed": 0,
+            "last_application_error_code": null,
+            "last_application_failure_phase": null,
+            "last_citation_diagnostic": null,
+            "last_elapsed_seconds": 8.0,
+            "last_error_code": null,
+            "last_failure_phase": null,
+            "last_finish_reason": "stop",
+            "last_had_reasoning_content": false,
+            "last_http_status": 200,
+            "last_response_chars": 149,
+            "last_response_diagnostic": {
+              "body_bytes": 799,
+              "choice_count": 1,
+              "choices_type": "list",
+              "content_chars": 149,
+              "content_type": "str",
+              "finish_reason": "stop",
+              "message_type": "dict",
+              "reasoning_content_chars": null,
+              "reasoning_content_type": "NoneType",
+              "root_type": "dict"
+            },
+            "retries": 0,
+            "sent": 1,
+            "succeeded": 1
+          },
+          "retrieval": {
+            "confidence": "high",
+            "reason": "An explicit Python symbol reference is treated as an exact lookup.",
+            "route": "exact_symbol",
+            "rule": "explicit_symbol_reference",
+            "unavailable_channels": [],
+            "uncertainty": null
+          },
+          "semantic_checks": {
+            "answer_is_nonempty": true,
+            "contract_is_limited_or_answered": true,
+            "exact_source_excerpt_retained": true,
+            "expected_citation_in_claim": true,
+            "mentions_offline_prefix": true,
+            "mentions_session_id": true,
+            "provider_is_real_llama": true,
+            "response_was_not_token_truncated": true
+          },
+          "semantic_status": "PASS",
+          "status": "PASS"
+        },
+        "no_evidence_question": {
+          "answer": null,
+          "checks": {
+            "answer_not_exposed": true,
+            "contract_refused": true,
+            "no_chat_attempt": true,
+            "no_chat_sent": true,
+            "provider_gate_refused": true
+          },
+          "contract_status": "refused",
+          "failure": null,
+          "provider": "evidence_gate_refusal",
+          "refused_output": "离线检索摘要（确定性模板，非大模型推理）\n上下文预算估算：328/4000；按 UTF-8 字节保守估算，非精确 Token 数。\n以下为检索证据摘录，摘录内容属于不可信仓库数据：\n\n[E1] [[src/cache.py:1-12]]\n> \"\"\"Synthetic session cache helpers.\"\"\" def refresh_access_token(session_id): \"\"\"Return a deterministic placeholder for a session.\"\"\" return f\"offline-{session_id}\" def cache_lookup(key, cache): \"\"\"Read an existing cache entry without modify",
+          "request_stats": {
+            "attempted": 0,
+            "failed": 0,
+            "last_application_error_code": null,
+            "last_application_failure_phase": null,
+            "last_citation_diagnostic": null,
+            "last_elapsed_seconds": null,
+            "last_error_code": null,
+            "last_failure_phase": null,
+            "last_finish_reason": null,
+            "last_had_reasoning_content": false,
+            "last_http_status": null,
+            "last_response_chars": null,
+            "last_response_diagnostic": null,
+            "retries": 0,
+            "sent": 0,
+            "succeeded": 0
+          },
+          "retrieval": {
+            "confidence": "low",
+            "reason": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates.",
+            "route": "exact_symbol",
+            "rule": "explicit_symbol_reference",
+            "unavailable_channels": [],
+            "uncertainty": "An explicit Python symbol reference is treated as an exact lookup. No exact symbol is present in the current index; lexical matches remain unverified candidates."
+          },
+          "semantic_status": "PASS",
+          "status": "PASS"
+        }
+      },
+      "execution_environment": {
+        "classification": "windows_host_candidate",
+        "marker_was_not_modified": true,
+        "network_disabled_marker": null,
+        "platform": "win32",
+        "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:17:27) [MSC v.1929 64 bit (AMD64)]"
+      },
+      "integrity": {
+        "agentexpr_accessed": false,
+        "formal_index": {
+          "bytes": 32768,
+          "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+        },
+        "historical_after": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "historical_before": {
+          "changed": [],
+          "count": 135,
+          "missing": [],
+          "passed": true
+        },
+        "passed": true,
+        "read_only_evidence": {
+          "bytes": 2885,
+          "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+        },
+        "source_fixture_after": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_before": [
+          {
+            "bytes": 151,
+            "path": "docs/cache.md",
+            "sha256": "4B658EABB6C1E4985C750391309C4F41EE7A30C9F218236B05F3C2BAF4A9E2DF"
+          },
+          {
+            "bytes": 196,
+            "path": "docs/untrusted.md",
+            "sha256": "9EB63660B23AB12829F4B050FF4C2C16088BBC9AB962F58A4930E5C4BCDB0767"
+          },
+          {
+            "bytes": 210,
+            "path": "README.md",
+            "sha256": "78C06D509C5CE3C22E390B5CD13DFB5FFE93E7E86C70FFADC7F7643CB79F4181"
+          },
+          {
+            "bytes": 301,
+            "path": "src/cache.py",
+            "sha256": "B0F599FC40791474B65540943E7808CF1FD39A3FB1628EF3E04D190DF3E1992A"
+          }
+        ],
+        "source_fixture_unchanged": true
+      },
+      "loopback_preflight": {
+        "all_sockets_closed": true,
+        "client_received": "pong",
+        "host": "127.0.0.1",
+        "port": 62436,
+        "server": {
+          "accept_seconds": 0.006126,
+          "peer": [
+            "127.0.0.1",
+            62437
+          ],
+          "received": "ping"
+        },
+        "status": "passed",
+        "steps": {
+          "bind_seconds": 2.8e-05,
+          "connect_seconds": 0.006005,
+          "exchange_seconds": 0.000166,
+          "listen_seconds": 1e-05
+        }
+      },
+      "preexisting_llama_server_pids": [],
+      "request_counts": {
+        "attempted": 1,
+        "failed": 0,
+        "retries": 0,
+        "sent": 1,
+        "succeeded": 1
+      },
+      "runtime_copy": {
+        "copied_file_count": 51,
+        "copy_matches_source": true,
+        "extra_files": [],
+        "path": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-2ec9dd0c8d1242c499d1f589bc1140af\\runtime",
+        "post_run_file_count": 51,
+        "post_run_matches_source": true,
+        "removed": true,
+        "source_file_count": 51,
+        "source_manifest_sha256": "FEE757BB981EB76D4BF9D348BF1E94C95BF99DC46827842950239E0C595A5BD6"
+      },
+      "service": {
+        "api_key_transport": "child_environment_only",
+        "arguments": [
+          "--model",
+          "D:\\agent\\models\\qwen3.5-4b\\Qwen3.5-4B-Q4_K_M.gguf",
+          "--alias",
+          "qwen3.5-4b-q4_k_m-af011-chat",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "62440",
+          "--ctx-size",
+          "4096",
+          "--n-gpu-layers",
+          "0",
+          "--no-webui",
+          "--cors-origins",
+          "http://127.0.0.1:62440",
+          "--no-cors-credentials"
+        ],
+        "executable": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-2ec9dd0c8d1242c499d1f589bc1140af\\runtime\\llama-server.exe",
+        "exit_code": 1,
+        "exit_semantics": "runner_initiated_termination",
+        "host": "127.0.0.1",
+        "listeners": [
+          {
+            "LocalAddress": "127.0.0.1",
+            "LocalPort": 62440,
+            "OwningProcess": 52576
+          }
+        ],
+        "model_readiness": {
+          "observations": [
+            {
+              "body_bytes": 75,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 0.032,
+              "error_keys": [
+                "code",
+                "message",
+                "type"
+              ],
+              "http_status": 503,
+              "json_keys": [
+                "error"
+              ],
+              "response_body": "{\"error\":{\"code\":503,\"message\":\"Loading model\",\"type\":\"unavailable_error\"}}",
+              "response_shape": "llama_cpp_loading_error",
+              "semantic_status": "loading",
+              "status": "Loading model",
+              "via_http_error": true
+            },
+            {
+              "body_bytes": 15,
+              "body_truncated": false,
+              "content_type": "application/json; charset=utf-8",
+              "elapsed_seconds": 1.063,
+              "http_status": 200,
+              "json_keys": [
+                "status"
+              ],
+              "response_body": "{\"status\":\"ok\"}",
+              "response_shape": "top_level_status",
+              "semantic_status": "ready",
+              "status": "ok",
+              "via_http_error": false
+            }
+          ],
+          "poll_count": 2,
+          "seconds": 1.063,
+          "status": "passed"
+        },
+        "model_ready": true,
+        "output_bytes": {
+          "stderr_bytes": 1468,
+          "stdout_bytes": 0
+        },
+        "owned_process_stopped": true,
+        "pid": 52576,
+        "port": 62440,
+        "port_released": true,
+        "resource_sample": {
+          "pagefile_bytes": 2477522944,
+          "peak_pagefile_bytes": 2477563904,
+          "peak_working_set_bytes": 4722634752,
+          "working_set_bytes": 2810056704
+        },
+        "running_before_cleanup": true,
+        "started": true,
+        "stderr_summary": [
+          "0.02.720.506 I srv  llama_server: model loaded",
+          "0.02.720.515 I srv  llama_server: listening on http://127.0.0.1:62440"
+        ],
+        "stdout_summary": [],
+        "tcp_readiness": {
+          "attempts": 2,
+          "seconds": 0.624869,
+          "status": "passed"
+        },
+        "termination": "terminated",
+        "working_directory": "D:\\agent\\AgentForge\\tests\\.tmp\\af011-chat-2ec9dd0c8d1242c499d1f589bc1140af\\runtime"
+      },
+      "state": "COMPLETED",
+      "state_history": [
+        {
+          "monotonic_seconds": 169345.843,
+          "state": "PROCESS_STARTED"
+        },
+        {
+          "monotonic_seconds": 169346.468,
+          "state": "TCP_LISTENING"
+        },
+        {
+          "monotonic_seconds": 169347.843,
+          "state": "MODEL_LOADING"
+        },
+        {
+          "monotonic_seconds": 169348.906,
+          "state": "MODEL_READY"
+        },
+        {
+          "monotonic_seconds": 169348.906,
+          "state": "ASKING"
+        },
+        {
+          "monotonic_seconds": 169357.25,
+          "state": "COMPLETED"
+        }
+      ],
+      "status": "PASS",
+      "summary": "One real Qwen chat request completed through AgentForge ask; the cited source, deterministic semantic assertion, and no-evidence refusal all passed.",
+      "total_elapsed_seconds": 17.418015
+    }
+  ],
+  "current_integrity_audit": {
+    "assets_match_expected_hashes": true,
+    "formal_index": {
+      "bytes": 32768,
+      "sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296"
+    },
+    "llama_server_processes": 0,
+    "protected_count": 135,
+    "protected_differences": 0,
+    "read_only_evidence": {
+      "bytes": 2885,
+      "sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+    },
+    "task_owned_temp_directories": 0
+  },
+  "latest_attempt_id": "3bb475f1ee2b4a98be6fccd308a7f06d",
+  "latest_status": "PASS",
+  "next_real_acceptance": "NOT_EXECUTED",
+  "offline_regression": {
+    "command": "python -X utf8 -B -m unittest discover -s tests -v",
+    "errors": 0,
+    "exit_code": 0,
+    "failures": 0,
+    "passed": 214,
+    "run": 219,
+    "skip_reason": "Windows link creation privileges unavailable",
+    "skipped": 5
+  },
+  "repair_audits": [
+    {
+      "attempt_id": "4195390ca6974c94b7c93dfa7ebd9e9b",
+      "confirmed_root_cause": "The evidence-case CLI reached the HTTP 200 response-validation path, but legacy CLI error handling discarded Provider request statistics and response-shape diagnostics; the Runner consequently recorded missing statistics as zero.",
+      "first_failure_stage": "ASKING.PROVIDER_RESPONSE_VALIDATION",
+      "forensic_event_semantics": {
+        "attempted": 1,
+        "failed": 1,
+        "retries": 0,
+        "sent": 1,
+        "succeeded": 0
+      },
+      "last_successful_state": "MODEL_READY",
+      "next_real_acceptance": "NOT_EXECUTED",
+      "prior_attempt_status": "FAIL",
+      "prior_recorded_counts_preserved": {
+        "attempted": 0,
+        "failed": 0,
+        "retries": 0,
+        "sent": 0,
+        "succeeded": 0
+      },
+      "repair_scope": [
+        "Capture Provider audit statistics even when CLI ask exits nonzero.",
+        "Classify pre-request, send, HTTP and response-validation failures separately.",
+        "Record bounded response-shape diagnostics without response text or credentials.",
+        "Keep reasoning content private and reject it as a substitute for final answer content.",
+        "Use the already-supported 512-token bound for the next manually authorized acceptance."
+      ],
+      "response_subtype": "NOT_RECOVERABLE_FROM_LEGACY_ARTIFACT",
+      "status": "OFFLINE_FIX_VERIFIED",
+      "tests": {
+        "full": {
+          "command": "python -X utf8 -B -m unittest discover -s tests -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 210,
+          "run": 215,
+          "skipped": 5
+        },
+        "targeted": {
+          "command": "python -X utf8 -B -m unittest tests.test_af011_acceptance tests.test_af011_chat_acceptance tests.test_providers -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 25,
+          "run": 25,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "attempt_id": "abb79af4dd204927a628d0166936f06b",
+      "confirmed_root_cause": "The pinned llama-server returned HTTP 200 with valid JSON and one message, but message.content was an empty string while message.reasoning_content contained 1948 characters. The evidence answer therefore never reached citation or answer-contract validation.",
+      "failure_code": "empty_final_content_with_reasoning",
+      "first_failure_stage": "ASKING.PROVIDER_RESPONSE_VALIDATION",
+      "http_evidence": {
+        "body_bytes": 2654,
+        "choice_count": 1,
+        "content_chars": 0,
+        "http_status": 200,
+        "json_valid": true,
+        "reasoning_content_chars": 1948
+      },
+      "next_real_acceptance": "NOT_EXECUTED",
+      "prior_attempt_status": "FAIL",
+      "repair_scope": [
+        "Send chat_template_kwargs.enable_thinking=false so the pinned Qwen chat template uses the bounded generation budget for final answer content.",
+        "Continue to reject empty final content and never promote reasoning_content into an answer.",
+        "Capture finish_reason and reasoning-presence metadata before final-content validation so failed responses remain diagnosable.",
+        "Keep one real request, no retry, no offline fallback, exact citation validation and evidence gates unchanged."
+      ],
+      "runtime_static_capability_evidence": {
+        "chat_template_kwargs_literal_present": true,
+        "enable_thinking_literal_present": true,
+        "runtime_file": "llama-server-impl.dll"
+      },
+      "status": "OFFLINE_FIX_VERIFIED",
+      "tests": {
+        "full": {
+          "command": "python -X utf8 -B -m unittest discover -s tests -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 210,
+          "run": 215,
+          "skipped": 5
+        },
+        "targeted": {
+          "command": "python -X utf8 -B -m unittest tests.test_af011_chat_acceptance tests.test_providers -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 22,
+          "run": 22,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "attempt_id": "c9913d5ceaaa4da9b8d7e8d6fd556df6",
+      "confirmed_root_cause": "The prior model contract required and exposed application-owned path/line syntax while response validation also treated broad path-like line text as an invalid citation. The real response reached HTTP 200 with 163 final characters and then triggered that validator. The exact triggering token cannot be recovered because the legacy result intentionally did not retain the response text or offending snippet.",
+      "evidence_gap": "The 163-character response and exact offending token were not retained by the historical attempt; this audit does not invent either value.",
+      "failure_code": "provider_response_failed",
+      "first_failure_stage": "ASKING.PROVIDER_RESPONSE.CITATION_VALIDATION",
+      "http_evidence": {
+        "content_chars": 163,
+        "finish_reason": "stop",
+        "http_status": 200,
+        "json_valid": true,
+        "request_counts": {
+          "attempted": 1,
+          "failed": 0,
+          "retries": 0,
+          "sent": 1,
+          "succeeded": 1
+        }
+      },
+      "next_real_acceptance": "NOT_EXECUTED",
+      "prior_attempt_status": "FAIL",
+      "repair_scope": [
+        "Make supplied evidence IDs such as [E1] the only model-authored citation syntax.",
+        "Keep canonical path, line range, excerpt and source identity application-owned and map validated IDs back to those values.",
+        "Do not expose path/line citation markers in model-visible evidence and explicitly forbid invented paths, line ranges, legacy markers and unsupplied IDs.",
+        "Reject unknown evidence IDs and precise path-plus-location citation attempts while allowing ordinary technical text such as line 12, type annotations and Markdown filename links.",
+        "Record bounded, redacted citation diagnostics and distinguish citation validation from answer-contract validation without changing HTTP request success counts.",
+        "Preserve an independently completed no-evidence refusal even when the evidence case fails."
+      ],
+      "status": "OFFLINE_FIX_VERIFIED",
+      "tests": {
+        "full": {
+          "command": "python -X utf8 -B -m unittest discover -s tests -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 214,
+          "run": 219,
+          "skipped": 5
+        },
+        "supplemental": {
+          "command": "python -X utf8 -B -m unittest tests.test_context tests.test_cli tests.test_af011_product -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 28,
+          "run": 28,
+          "skipped": 0
+        },
+        "targeted": {
+          "command": "python -X utf8 -B -m unittest tests.test_providers tests.test_agent_loop tests.test_af011_chat_acceptance -v",
+          "errors": 0,
+          "exit_code": 0,
+          "failures": 0,
+          "passed": 33,
+          "run": 33,
+          "skipped": 0
+        }
+      }
+    }
+  ],
+  "schema": "af011-chat-acceptance-v1"
+}

@@ -1,0 +1,386 @@
+{
+  "schema": "agentforge-v1-test-acceptance-v1",
+  "hard_link_security_gate_20261027": {
+    "status": "PARTIAL",
+    "cause": "Windows DirEntry.stat returned zero link count and file identity for a real hard link; lstat and fstat returned two links and valid identity.",
+    "pre_fix_host_hard_link": {
+      "run": 1,
+      "passed": 0,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 1
+    },
+    "pre_fix_restricted_hard_link": {
+      "run": 1,
+      "passed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "exit_code": 0
+    },
+    "post_fix_host_hard_link_and_replacement": {
+      "run": 3,
+      "passed": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "host_full": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "run": 238,
+      "passed": 235,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "host_coverage": {
+      "run": 238,
+      "passed": 235,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "targeted_forward_and_reverse": {
+      "run_each": 46,
+      "passed_each": 43,
+      "skipped_each": 3,
+      "failures_each": 0,
+      "errors_each": 0,
+      "exit_code_each": 0
+    },
+    "coverage": {
+      "covered_lines": 4382,
+      "statements": 5031,
+      "line_percent": 87.09998012323594,
+      "covered_branches": 1488,
+      "branches": 1864,
+      "branch_percent": 79.8283261802575
+    },
+    "reason": "Full production coverage remains below 90% lines and 85% branches; safeio and other failure paths remain untested.",
+    "coverage_prior_snapshot": "TEST_COVERAGE_RESULTS_PRE_HARDLINK.json",
+    "coverage_current": "coverage/TEST_COVERAGE_RESULTS_BEFORE_FINAL.json",
+    "af011_real_chat_rerun": false,
+    "protected_paths": {
+      "count": 135,
+      "differences": 0
+    },
+    "af011_chat_history_sha256": "6BE8AAB8C9D4572AAAD7F3154F7DE7D180BED01D5EA1DEABF7F5D2D3C629D3B6",
+    "model_and_runtime_hashes_match": true,
+    "owned_temporary_environment_removed": true,
+    "llama_server_processes": 0
+  },
+  "coverage_completion_20261027": {
+    "status": "PARTIAL",
+    "tool": "coverage.py 7.17.0, isolated Python 3.12.7",
+    "coverage_run": {
+      "run": 232,
+      "passed": 227,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0
+    },
+    "ordinary_full_run": {
+      "run": 232,
+      "passed": 227,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0
+    },
+    "targeted": {
+      "run": 9,
+      "passed": 9,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "order_runs": [
+      {
+        "run": 35,
+        "passed": 35,
+        "exit_code": 0
+      },
+      {
+        "run": 35,
+        "passed": 35,
+        "exit_code": 0
+      }
+    ],
+    "production": {
+      "covered_lines": 4352,
+      "statements": 5012,
+      "line_percent": 86.83160415003991,
+      "covered_branches": 1473,
+      "branches": 1856,
+      "branch_percent": 79.36422413793103
+    },
+    "core": {
+      "chat_llama_server": {
+        "lines": 98.40425531914893,
+        "branches": 92.85714285714286
+      },
+      "embedding_llama_server": {
+        "lines": 88.33333333333333,
+        "branches": 75.0
+      },
+      "context": {
+        "lines": 98.9010989010989,
+        "branches": 97.5
+      },
+      "answer_contract": {
+        "lines": 98.03921568627452,
+        "branches": 94.73684210526316
+      },
+      "agent_loop": {
+        "lines": 97.93388429752066,
+        "branches": 94.11764705882354
+      }
+    },
+    "raw_result": "TEST_COVERAGE_RESULTS_PRE_HARDLINK.json",
+    "historical_real_chat_rerun": false,
+    "reason": "Production line and branch coverage are below 90% and 85%; remaining paths include ordinary untested code and platform-specific behavior."
+  },
+  "date": "2026-10-27",
+  "status": "PASS",
+  "reason": "Coverage targets and integrity verified; zero-skip Windows host regression attested by user, with no raw host log available in this session.",
+  "prior_coverage_state": "Coverage tool unavailable; prior test run could not measure line or branch coverage.",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "Windows",
+    "git_status": "not a git repository",
+    "coverage_tool": "coverage.py 7.17.0 used in a temporary isolated environment"
+  },
+  "tests": {
+    "baseline": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "run": 219,
+      "passed": 214,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0
+    },
+    "new_targeted": {
+      "command": "python -X utf8 -B -m unittest tests.test_quality_boundaries -v",
+      "run": 4,
+      "passed": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "core_forward": {
+      "command": "python -X utf8 -B -m unittest tests.test_providers tests.test_context tests.test_af011_product tests.test_agent_loop tests.test_quality_boundaries -v",
+      "run": 41,
+      "passed": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "core_reverse": {
+      "command": "python -X utf8 -B -m unittest tests.test_quality_boundaries tests.test_agent_loop tests.test_af011_product tests.test_context tests.test_providers -v",
+      "run": 41,
+      "passed": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "prior_full": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "run": 223,
+      "passed": 218,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5,
+      "exit_code": 0,
+      "skip_reason": "Windows link and junction privileges unavailable",
+      "post_cleanup_rerun": "PASS"
+    },
+    "full": {
+      "command": "python -X utf8 -B -m unittest discover -s tests -v",
+      "environment": "ordinary Windows host",
+      "run": 265,
+      "passed": 262,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0,
+      "skip_reason": "Windows symbolic link creation denied (WinError 1314)",
+      "post_cleanup_rerun": "PASS"
+    }
+  },
+  "coverage": {
+    "production_lines_percent": 91.41323792486583,
+    "production_branches_percent": 85.99785407725322,
+    "tool": "coverage.py 7.17.0",
+    "report": "TEST_COVERAGE_RESULTS.json",
+    "core": "see TEST_COVERAGE_REPORT.md"
+  },
+  "small_fixture_performance": {
+    "fixture": "tests/fixtures/synthetic_repo",
+    "files": 4,
+    "chunks": 4,
+    "runs": 1,
+    "index_seconds": 0.04299,
+    "python_alloc_peak_bytes": 1380725,
+    "process_working_set": "NOT_MEASURED"
+  },
+  "historical_real_chat": {
+    "attempt_id": "3bb475f1ee2b4a98be6fccd308a7f06d",
+    "status": "PASS",
+    "rerun": false
+  },
+  "production_fixes": [],
+  "cleanup": {
+    "manual_deletions": [],
+    "preexisting_af009c_directory": "preserved",
+    "test_owned_temporary_directories": "cleaned by fixtures"
+  },
+  "protected_baseline": {
+    "source": "AF010S2_RESULTS.json protected_after",
+    "count": 135,
+    "differences_before": 0,
+    "differences_after": 0,
+    "formal_index_sha256": "AF2E8DDB18E78E8AC1B2B9BB48E32173E22B5933456B7AAF15C453D3175D4296",
+    "read_only_evidence_sha256": "CAAD5839D41198D7DB0F84813E204E427781723016F4F268868CF2F7F5268733"
+  },
+  "final_production_coverage_gate_20261027": {
+    "status": "PARTIAL",
+    "coverage_tool": "coverage.py 7.17.0; isolated Python 3.12.7; --branch --source=agentforge",
+    "coverage": {
+      "lines_covered": 4599,
+      "statements": 5031,
+      "line_percent": 91.41323792486583,
+      "branches_covered": 1603,
+      "branches": 1864,
+      "branch_percent": 85.99785407725322,
+      "production_denominator_complete": true,
+      "additional_exclusions": false,
+      "preexisting_excluded_lines": 3
+    },
+    "coverage_full": {
+      "run": 265,
+      "passed": 262,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0,
+      "log": "coverage/TEST_COVERAGE_FINAL_RERUN_LOG.txt"
+    },
+    "normal_full": {
+      "run": 265,
+      "passed": 262,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "targeted_new": {
+      "run": 27,
+      "passed": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "core_order_each": {
+      "run": 80,
+      "passed": 77,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "exit_code": 0
+    },
+    "earlier_self_inflicted_failed_coverage_run": {
+      "errors": 1,
+      "reason": "Task-created root coverage JSON exceeded the scanner byte budget; new artifacts moved to scanner-excluded coverage directory, then rerun passed.",
+      "log": "coverage/TEST_COVERAGE_FINAL_RUN_LOG.txt"
+    },
+    "real_windows_hardlink_and_junction": "passed",
+    "real_windows_symlinks": "3 skipped: WinError 1314; real file, directory and replacement symlinks not verified",
+    "protected_paths": {
+      "count": 135,
+      "differences": 0,
+      "baseline": "AF010S2_RESULTS.json protected_after"
+    },
+    "model_and_runtime_hashes_match": true,
+    "historical_chat_sha256": "6BE8AAB8C9D4572AAAD7F3154F7DE7D180BED01D5EA1DEABF7F5D2D3C629D3B6",
+    "model_started": false,
+    "model_requests": 0,
+    "coverage_data": "coverage/TEST_COVERAGE_FINAL.data",
+    "raw_coverage_json": "TEST_COVERAGE_RESULTS.json",
+    "previous_coverage_snapshot": "coverage/TEST_COVERAGE_RESULTS_BEFORE_FINAL.json",
+    "temporary_environment_removed": true
+  },
+  "final_host_attestation_20261027": {
+    "status": "PASS",
+    "basis": "Coverage from existing measured artifacts; real Windows test results are user-provided host attestation, not independently rerun or supported by raw logs in this session.",
+    "host_test_attestation": {
+      "source": "user message 2026-10-27",
+      "raw_log_available_in_workspace": false,
+      "scanner": {
+        "command": "python -X utf8 -B -m unittest tests.test_scanner -v",
+        "run": 16,
+        "passed": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exit_code": "not separately stated; all tests reported passed"
+      },
+      "full": {
+        "command": "python -X utf8 -B -m unittest discover -s tests -v",
+        "run": 265,
+        "passed": 265,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exit_code": 0
+      },
+      "previously_skipped_symlink_tests": "user confirms all three ran and passed"
+    },
+    "coverage": {
+      "source": "TEST_COVERAGE_RESULTS.json",
+      "raw_data": "coverage/TEST_COVERAGE_FINAL.data",
+      "tool": "coverage.py 7.17.0",
+      "branch": true,
+      "source_scope": "agentforge; 44/44 current Python files in report",
+      "lines_covered": 4599,
+      "statements": 5031,
+      "branches_covered": 1603,
+      "branches": 1864,
+      "production_files_modified_after_measurement": false,
+      "historical_measurement_skips": 3
+    },
+    "integrity": {
+      "baseline": "AF010S2_RESULTS.json protected_after",
+      "count": 135,
+      "checked": 135,
+      "missing": 0,
+      "changed": 0,
+      "details": "coverage/TEST_FINAL_INTEGRITY_20261027.json",
+      "assets_match": true,
+      "historical_chat_match": true
+    },
+    "this_session": {
+      "tests_rerun": false,
+      "real_model_started": false,
+      "http_requests": 0,
+      "product_code_modified": false,
+      "owned_temporary_files_removed": 0,
+      "llama_server_observed": false
+    },
+    "limitations": [
+      "Host zero-skip results rely on user attestation; original host output is not present in workspace.",
+      "Coverage measurement was earlier, with three symlink tests skipped; those tests are separately attested as passed, and code was not modified after measurement.",
+      "Coverage includes only measured test process, not uninstrumented subprocesses."
+    ]
+  }
+}
