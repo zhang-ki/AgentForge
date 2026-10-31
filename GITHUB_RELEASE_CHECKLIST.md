@@ -18,7 +18,9 @@
 - [x] Focused offline tests.
 - [x] Full offline regression test (344 run, 336 pass, 0 fail/error, 8 skipped; skips listed in machine results).
 - [x] Review staged file list, staged diff, ignore/exclusion result, and secret/path scan (276 final tree files; 73 added/modified; 75 removed; zero confirmed sensitive matches).
-- [ ] Confirm release commit and `v1.0.0-mvp` tag.
-- [ ] Push `main` and the release tag; verify remote refs.
+- [x] Confirm release commit and local `v1.0.0-mvp` tag (tag points to release commit and uses noreply identity).
+- [ ] Push `main` and the release tag; verify remote refs. **Blocked:** this environment could not connect to `github.com:443`; remote remained at the base commit and the tag is absent remotely.
+
+The local release is committed. After network access is available, run `git push origin main refs/tags/v1.0.0-mvp` from the project directory, then verify the remote `main` SHA and tag target.
 
 Execution facts and command exit codes are in `GITHUB_RELEASE_RESULTS.json`.

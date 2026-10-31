@@ -3,17 +3,25 @@
   "release": "MVP 1.0",
   "tag_name": "v1.0.0-mvp",
   "target_repository": "https://github.com/zhang-ki/AgentForge.git",
-  "status": "ready_for_commit",
+  "status": "committed_locally_push_blocked_by_network",
   "git": {
     "branch": "main",
     "base_commit": "069e0c4813230b48cd770a0cdd0327679cbd9e6f",
-    "release_commit": null,
-    "tag_created": false,
+    "release_commit": "73bd11992acce90d4d0bc06ef7f242dca5c285f1",
+    "tag_created_locally": true,
+    "tag_target_commit": "73bd11992acce90d4d0bc06ef7f242dca5c285f1",
     "origin": "https://github.com/zhang-ki/AgentForge.git",
     "remote_main_before": "069e0c4813230b48cd770a0cdd0327679cbd9e6f",
     "remote_check_source": "GitHub repository branch API",
-    "remote_main_after": null,
-    "pushed": false
+    "remote_main_after_failed_push": "069e0c4813230b48cd770a0cdd0327679cbd9e6f",
+    "remote_tag_exists_after_failed_push": false,
+    "push_attempt": {
+      "command": "git push origin main refs/tags/v1.0.0-mvp",
+      "exit_code": 1,
+      "error": "Could not connect to github.com port 443 after 21103 ms; GitHub API verification showed main unchanged and the tag absent."
+    },
+    "pushed": false,
+    "required_followup_command": "git push origin main refs/tags/v1.0.0-mvp"
   },
   "tests": {
     "real_model_run": "not_run_by_instruction",
@@ -75,6 +83,7 @@
     "An initial full run before the final SECURITY anchor correction failed (1 failure, 1 error, 8 skips); the corrected run above passed. Do not mix those run counts.",
     "No force push, reset, or history rewrite is permitted.",
     "Seventy-five historical AF/coverage paths are removed from the current release tree and remain present in the local working directory; no prior commit was rewritten.",
-    "The staged release snapshot contains 276 files; 73 paths are added or modified and 75 paths are removed from the current tree."
+    "The staged release snapshot contains 276 files; 73 paths are added or modified and 75 paths are removed from the current tree.",
+    "The release commit is locally based directly on verified remote main. A documentation-only follow-up commit records the blocked push result; the v1.0.0-mvp tag targets the release commit, not the follow-up record."
   ]
 }
