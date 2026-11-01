@@ -61,6 +61,7 @@ class ConversationSummary(Base):
     covered_through: Mapped[int] = mapped_column(Integer, nullable=False)
     covered_message_id = mapped_column(Uuid, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    fact_ledger = mapped_column(JSON, nullable=True)
     model_name = mapped_column(String(512))
     created_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

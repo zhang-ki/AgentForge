@@ -25,12 +25,12 @@ class ChromaMemoryRetriever:
             if source.source_type != "memory" or source.file_path:
                 return False
             record = self.memory_store.approved_by_id(source.chunk_id, repository_id)
-            if record is None or record["repository_id"] != repository_id:
+            if record is None or record["repository_id"] != source.repository_id:
                 return False
             digest = hashlib.sha256(record["content"].encode("utf-8")).hexdigest()
             if digest != source.content_hash:
                 return False
-            sources = self.memory_store.source_records(record["id"], repository_id)
+            sources = self.memory_store.source_records(record["id"], record["repository_id"])
             if not sources:
                 return False
             record["sources"] = tuple(MemorySourceReference(
@@ -42,8 +42,11 @@ class ChromaMemoryRetriever:
             active[source.chunk_id] = record
             return True
 
-        matches = self.vectors.search_with_documents(vector, repository_id=repository_id,
-            model_id=self.model_id, source_type="memory", verify_source=verify, limit=limit)
+        from .memory_store import GLOBAL_MEMORY_REPOSITORY_ID
+        matches = []
+        for scope_id in dict.fromkeys((repository_id, GLOBAL_MEMORY_REPOSITORY_ID)):
+            matches.extend(self.vectors.search_with_documents(vector, repository_id=scope_id,
+                model_id=self.model_id, source_type="memory", verify_source=verify, limit=limit))
         results = []
         for source, distance, document in matches:
             record = active.get(source.chunk_id)
@@ -60,6 +63,7 @@ class ChromaMemoryRetriever:
                 memory_type=record["memory_type"],
                 version=record["version"],
                 sources=record["sources"],
+                scope=record["scope"],
             ), distance))
         results.sort(key=lambda pair: (pair[1], pair[0].content))
         return [item for item, _distance in results]

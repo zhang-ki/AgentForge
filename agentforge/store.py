@@ -14,10 +14,12 @@ from .config import (
     DATA_DIR,
     INDEX_VERSION,
     PROJECT_ROOT,
+    REPOSITORY_INDEX_DIR,
     STRUCTURED_INDEX_VERSION,
     VECTOR_INDEX_VERSION,
 )
 from .errors import IndexConflictError, StoreError
+from .repositories import repository_identity
 
 
 def _ordinary(path: Path, directory: bool) -> None:
@@ -42,8 +44,15 @@ class IndexStore:
             raise StoreError("An in-memory index cannot be opened read-only.")
         if not memory:
             supplied = Path(os.path.abspath(self.database))
-            if os.path.normcase(str(supplied)) != os.path.normcase(str(DATABASE_PATH)):
-                raise StoreError("Database path is fixed to AgentForge/.agentforge/data/index.sqlite3.")
+            default_database = os.path.normcase(str(supplied)) == os.path.normcase(str(DATABASE_PATH))
+            repository_database = (
+                os.path.normcase(str(supplied.parent)) == os.path.normcase(str(REPOSITORY_INDEX_DIR))
+                and supplied.name.endswith(".sqlite3")
+                and len(supplied.stem) == 64
+                and all(char in "0123456789abcdef" for char in supplied.stem)
+            )
+            if not (default_database or repository_database):
+                raise StoreError("Database path must be the legacy index or an AgentForge repository index.")
             _ordinary(PROJECT_ROOT, directory=True)
             for directory in (PROJECT_ROOT / ".agentforge", DATA_DIR):
                 if directory.exists() or directory.is_symlink():
@@ -52,6 +61,13 @@ class IndexStore:
                     raise StoreError("No index exists. Run index --repo PATH first.")
                 else:
                     directory.mkdir()
+            if repository_database:
+                if REPOSITORY_INDEX_DIR.exists() or REPOSITORY_INDEX_DIR.is_symlink():
+                    _ordinary(REPOSITORY_INDEX_DIR, directory=True)
+                elif readonly:
+                    raise StoreError("No repository index exists. Run index --repo PATH first.")
+                else:
+                    REPOSITORY_INDEX_DIR.mkdir()
             existed = supplied.exists() or supplied.is_symlink()
             if existed:
                 _ordinary(supplied, directory=False)
@@ -65,7 +81,7 @@ class IndexStore:
             existed = False
         self.connection = None
         try:
-            target = DATABASE_PATH.as_uri() + "?mode=ro" if readonly else self.database
+            target = Path(self.database).as_uri() + "?mode=ro" if readonly and not memory else self.database
             self.connection = sqlite3.connect(target, uri=readonly, timeout=2)
             self.connection.row_factory = sqlite3.Row
             self.connection.execute("PRAGMA foreign_keys = ON")
@@ -265,12 +281,15 @@ class IndexStore:
                 "This index is bound to another repository. Use --replace-repository to explicitly replace its index."
             )
 
-    def sync(self, root: Path, documents: list[dict], signature: str, replace_repository: bool = False) -> dict:
+    def sync(self, root: Path, documents: list[dict], signature: str,
+             replace_repository: bool = False, *, force_rebuild: bool = False) -> dict:
         if self.schema_version != INDEX_VERSION:
             raise StoreError("Writable index schema migration did not complete.")
         self.check_repository(root, replace_repository)
         old_root = self.metadata().get("repository")
-        switching = bool(old_root and os.path.normcase(old_root) != os.path.normcase(str(root)))
+        changing_owner = bool(old_root and os.path.normcase(old_root) != os.path.normcase(str(root)))
+        rebuilding = bool(old_root and not changing_owner and force_rebuild)
+        switching = changing_owner or rebuilding
         previous = {
             row["relative_path"]: row
             for row in self.connection.execute("SELECT * FROM files")
@@ -279,7 +298,7 @@ class IndexStore:
         added = changed = unchanged = removed = 0
         with self.connection:
             if switching:
-                removed = len(previous)
+                removed = len(previous) if changing_owner else 0
                 self.connection.execute("DELETE FROM files")
                 previous = {}
             for document in documents:
@@ -321,6 +340,7 @@ class IndexStore:
             self._sync_structured(documents)
             for key, value in (
                 ("repository", str(root)),
+                ("repository_id", repository_identity(root)),
                 ("indexed_at", datetime.now(timezone.utc).isoformat()),
                 ("chunk_signature", signature),
                 ("parser_version", "python-ast-v1"),
@@ -459,6 +479,35 @@ class IndexStore:
               "symbols.qualified_name COLLATE NOCASE, symbols.symbol_id LIMIT ?"
         )
         return [dict(row) for row in self.connection.execute(query, values)]
+
+    def search_symbols_by_ids(self, symbol_ids: list[str] | tuple[str, ...], *, limit: int = 100) -> list[dict]:
+        """Fetch exact indexed definitions by parser-issued symbol identity.
+
+        This is used to attach a definition excerpt to a uniquely resolved
+        relationship. It deliberately does not fall back to name matching.
+        """
+        if self.schema_version is None or self.schema_version < STRUCTURED_INDEX_VERSION:
+            raise StoreError("Structured symbols are not available in this legacy index; run index --repo PATH to migrate it.")
+        if (not isinstance(symbol_ids, (list, tuple)) or not symbol_ids
+                or len(symbol_ids) > 100
+                or any(not isinstance(value, str) or not value.strip() or len(value) > 128
+                       or any(ord(char) < 32 for char in value) for value in symbol_ids)):
+            raise ValueError("symbol_ids must contain 1 to 100 valid identities.")
+        if len(set(symbol_ids)) != len(symbol_ids):
+            raise ValueError("symbol_ids must be unique.")
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 500:
+            raise ValueError("symbol limit must be between 1 and 500.")
+        placeholders = ",".join("?" for _ in symbol_ids)
+        return [dict(row) for row in self.connection.execute(
+            "SELECT symbols.symbol_id, symbols.source_id, files.relative_path, symbols.kind, "
+            "symbols.name, symbols.qualified_name, symbols.start_line, symbols.end_line, "
+            "symbols.parent_symbol_id, symbols.signature, symbols.docstring, symbols.structure_hash "
+            "FROM symbols JOIN files ON files.id = symbols.file_id "
+            f"WHERE symbols.symbol_id IN ({placeholders}) "
+            "ORDER BY files.relative_path COLLATE NOCASE, symbols.start_line, "
+            "symbols.end_line, symbols.symbol_id LIMIT ?",
+            (*symbol_ids, limit),
+        )]
 
     def search_references(
         self, *, relative_path: str | None = None, target: str | None = None,

@@ -12,6 +12,7 @@ class SearchResult:
     text: str
     content_hash: str
     score: float
+    evidence_roles: tuple[str, ...] = ()
 
     @property
     def citation(self) -> str:

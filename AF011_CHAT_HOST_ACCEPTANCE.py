@@ -318,7 +318,7 @@ class _BorrowedStore:
 def _invoke_cli(cli_module, store, arguments: list[str]) -> dict:
     output = io.StringIO()
     errors = io.StringIO()
-    original_store = cli_module.IndexStore
+    original_open_index = cli_module._open_current_index
     original_client = cli_module.LlamaServerClient
     clients = []
 
@@ -327,13 +327,13 @@ def _invoke_cli(cli_module, store, arguments: list[str]) -> dict:
         clients.append(client)
         return client
 
-    cli_module.IndexStore = lambda readonly=False: _BorrowedStore(store)
+    cli_module._open_current_index = lambda readonly=False: _BorrowedStore(store)
     cli_module.LlamaServerClient = capture_client
     try:
         with redirect_stdout(output), redirect_stderr(errors):
             code = cli_module.main(arguments)
     finally:
-        cli_module.IndexStore = original_store
+        cli_module._open_current_index = original_open_index
         cli_module.LlamaServerClient = original_client
     text = output.getvalue()
     payload = None

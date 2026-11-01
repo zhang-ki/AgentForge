@@ -14,6 +14,7 @@ import re
 
 from .chunker import split_source_lines
 from .errors import StoreError
+from .evidence_roles import required_evidence_roles
 from .models import SearchResult
 from .package_relations import (
     PackageRelationRetriever, PackageSnapshotReadError, build_package_relation_graph,
@@ -25,7 +26,7 @@ from .scanner import ScanLimits, ScanReport, read_candidate, scan_repository
 
 PRODUCT_ROUTE_VERSION = "af011-product-route-v1"
 _SYMBOL_SHAPE = re.compile(
-    r"\b(?:class|function|method|module|symbol)\s+[`'\"]?([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)",
+    r"(?:\b(?:class|function|method|module|symbol)\s+|(?:函数|方法|类|模块|符号)\s*)[`'\"]?([A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)",
     re.IGNORECASE,
 )
 _CALL_WORDS = {"caller", "callers", "callee", "callees", "call", "calls",
@@ -54,6 +55,7 @@ class ProductCandidate:
     symbol_ids: tuple[str, ...] = ()
     relation_ids: tuple[str, ...] = ()
     resolution_status: str = "not_applicable"
+    evidence_roles: tuple[str, ...] = ()
 
     @property
     def citation(self) -> str:
@@ -62,7 +64,7 @@ class ProductCandidate:
     def as_search_result(self) -> SearchResult:
         return SearchResult(
             self.repository, self.relative_path, self.start_line, self.end_line,
-            self.text, self.content_hash, self.score,
+            self.text, self.content_hash, self.score, self.evidence_roles,
         )
 
 
@@ -87,7 +89,7 @@ class ProductIntentRouter:
 
     def route(self, query: str) -> RouteDecision:
         stripped = query.strip() if isinstance(query, str) else query
-        if isinstance(stripped, str) and (_BARE_IDENTIFIER.fullmatch(stripped) or _SYMBOL_SHAPE.search(stripped)):
+        if _is_explicit_symbol_reference(stripped):
             return RouteDecision(
                 "exact_symbol", ("symbols", "lexical"), "explicit_symbol_reference",
                 "An explicit Python symbol reference is treated as an exact lookup.", "high",
@@ -177,7 +179,10 @@ class ProductRetriever:
         if _BARE_IDENTIFIER.fullmatch(stripped):
             return stripped.split(".")[-1]
         match = _SYMBOL_SHAPE.search(query)
-        return match.group(1).split(".")[-1] if match else None
+        if match:
+            return match.group(1).split(".")[-1]
+        mentioned = _mentioned_code_symbol(query)
+        return mentioned.split(".")[-1] if mentioned else None
 
     @staticmethod
     def _qualified_symbol_name(query: str) -> str | None:
@@ -185,7 +190,7 @@ class ProductRetriever:
         if _BARE_IDENTIFIER.fullmatch(stripped) and "." in stripped:
             return stripped
         match = _SYMBOL_SHAPE.search(query)
-        value = match.group(1) if match else None
+        value = match.group(1) if match else _mentioned_code_symbol(query)
         return value if value and "." in value else None
 
     @staticmethod
@@ -231,11 +236,25 @@ class ProductRetriever:
                 name=None if qualified_name else name,
                 limit=min(500, top_k * 4),
             )
+            # Comparison questions need both definitions, including a plain
+            # identifier without an underscore. Only exact indexed names are
+            # accepted; unrelated words produce no candidates.
+            if re.search(r"(?:与|和|\bversus\b|\bvs\.?\b)", query, re.IGNORECASE):
+                seen = {row["symbol_id"] for row in rows}
+                for other in re.findall(r"[A-Za-z_]\w*", query):
+                    if other == name:
+                        continue
+                    for row in self.store.search_symbols(name=other, limit=min(500, top_k * 4)):
+                        if row["symbol_id"] not in seen:
+                            rows.append(row)
+                            seen.add(row["symbol_id"])
         except StoreError:
             self._channel_failures.append(("symbols", "structured_symbol_index_unavailable"))
             return []
         results = []
-        ambiguous = len(rows) > 1 and self._qualified_symbol_name(query) is None
+        name_counts = {}
+        for row in rows:
+            name_counts[row["name"]] = name_counts.get(row["name"], 0) + 1
         for rank, row in enumerate(rows):
             if not self._indexed_file_is_current(row["relative_path"]):
                 continue
@@ -246,7 +265,8 @@ class ProductRetriever:
                 text, _content_hash(row["relative_path"], row["start_line"], row["end_line"], text),
                 score, ("symbols",), (("symbols", score),),
                 symbol_ids=(row["symbol_id"],),
-                resolution_status="ambiguous" if ambiguous else "resolved",
+                resolution_status="ambiguous" if name_counts[row["name"]] > 1 and qualified_name is None else "resolved",
+                evidence_roles=("definition",),
             ))
         return results
 
@@ -267,11 +287,16 @@ class ProductRetriever:
             return []
         by_id = {item.relation_id: item for item in self._relation_graph.relations}
         relation_target = self._relation_target(query)
+        query_words = {word.casefold() for word in re.findall(r"[A-Za-z_]+", query)}
+        call_query = bool(query_words & _CALL_WORDS) or "callsite" in required_evidence_roles(query)
         raw = PackageRelationRetriever(self._relation_graph).search(
             query, top_k=top_k,
             symbol_name=relation_target if relation_target else None,
         )
         results = []
+        caller_evidence = []
+        callsite_evidence = []
+        definition_evidence = []
         for item in raw:
             relation = by_id[item.relation_id]
             # A relation is evidenced at its source statement.  A resolves_to target
@@ -284,21 +309,71 @@ class ProductRetriever:
                 relation.start_line, relation.end_line, text,
                 _content_hash(relation.source_path, relation.start_line, relation.end_line, text),
                 item.score, ("package_relations",), (("package_relations", item.score),),
-                symbol_ids=tuple(filter(None, (relation.source_symbol_id,
-                                                relation.target_symbol_id))),
+                # PackageRelation currently assigns graph-local symbol IDs;
+                # retain its own relation ID, but do not expose those IDs as
+                # identities from the SQLite symbol table.
+                symbol_ids=(),
                 relation_ids=(relation.relation_id,),
                 resolution_status=relation.resolution_status,
+                evidence_roles=({
+                    "imports": ("import",),
+                    "imports_symbol": ("import",),
+                    "import_alias": ("import",),
+                    "exports_symbol": ("reexport",),
+                    "reexports_symbol": ("reexport",),
+                    "resolves_to": ("static_resolution",),
+                }.get(relation.relation_type, ("static_relation",))),
             ))
-        identifiers = re.findall(r"[A-Za-z_]\w*", query)
-        reference_target = next((item for item in reversed(identifiers)
-                                 if item.casefold() not in _CALL_WORDS
-                                 and item.casefold() not in {"which", "what", "the", "a",
-                                                            "function", "method"}), None)
-        if reference_target is not None and any(
-                word.casefold() in _CALL_WORDS for word in identifiers):
+            # Add the actual definition only when the static graph resolved a
+            # unique import/re-export target. A relation's import line is never
+            # reused as the target definition's line range.
+            if (relation.relation_type in {"resolves_to", "reexports_symbol"}
+                    and relation.resolution_status == "resolved"
+                    and relation.target_symbol_id and relation.target_path):
+                try:
+                    definitions = self.store.search_symbols(
+                        name=relation.target_definition_name,
+                        relative_path=relation.target_path, limit=100,
+                    ) if relation.target_definition_name else []
+                except StoreError:
+                    definitions = []
+                    self._channel_failures.append((
+                        "symbols", "structured_symbol_index_unavailable",
+                    ))
+                matches = [row for row in definitions
+                           if row["relative_path"].casefold() == relation.target_path.casefold()
+                           and row["kind"] in {"class", "function", "method"}
+                           and row["end_line"] == relation.target_definition_end_line
+                           and relation.target_definition_start_line is not None
+                           and row["start_line"] <= relation.target_definition_start_line]
+                # The graph and symbol table have independent identity formulas.
+                # Join only when path, name and source range identify one exact
+                # indexed definition; otherwise omit the supplemental excerpt.
+                definition = matches[0] if len(matches) == 1 else None
+                if definition is not None and self._indexed_file_is_current(definition["relative_path"]):
+                    definition_text = self._excerpt(
+                        definition["relative_path"], definition["start_line"], definition["end_line"],
+                    )
+                    definition_candidate = ProductCandidate(
+                        str(self.repository), definition["relative_path"],
+                        definition["start_line"], definition["end_line"], definition_text,
+                        _content_hash(definition["relative_path"], definition["start_line"],
+                                      definition["end_line"], definition_text),
+                        950.0 if call_query else max(0.01, item.score - 0.01), ("package_relations",),
+                        (("package_relations", 950.0 if call_query else max(0.01, item.score - 0.01)),),
+                        symbol_ids=(definition["symbol_id"],),
+                        relation_ids=(relation.relation_id,),
+                        resolution_status="resolved",
+                        evidence_roles=("target_definition", "definition"),
+                    )
+                    (definition_evidence if call_query else results).append(definition_candidate)
+        # The relation graph describes import and re-export statements.  Actual
+        # callsites live in the AST reference index and must be retrieved by the
+        # code-shaped target, never by the last prose word in the question.
+        if relation_target is not None and call_query:
             try:
                 references = self.store.search_references(
-                    target=reference_target, limit=min(500, top_k * 4),
+                    target=relation_target, limit=min(500, top_k * 20),
                 )
             except StoreError:
                 references = []
@@ -306,6 +381,51 @@ class ProductRetriever:
             for rank, row in enumerate(references):
                 if not self._indexed_file_is_current(row["relative_path"]):
                     continue
+                if row["reference_type"] == "call" and row["source_symbol_id"]:
+                    try:
+                        callers = self.store.search_symbols_by_ids(
+                            (row["source_symbol_id"],), limit=1,
+                        )
+                    except StoreError:
+                        callers = []
+                        self._channel_failures.append((
+                            "symbols", "structured_symbol_index_unavailable",
+                        ))
+                    caller = next((item for item in callers
+                                   if item["symbol_id"] == row["source_symbol_id"]
+                                   and item["relative_path"].casefold() == row["relative_path"].casefold()
+                                   and item["kind"] in {"class", "function", "method"}), None)
+                    if caller is not None and self._indexed_file_is_current(caller["relative_path"]):
+                        caller_text = self._excerpt(
+                            caller["relative_path"], caller["start_line"], caller["end_line"],
+                        )
+                        caller_score = float(91 - rank)
+                        caller_evidence.append(ProductCandidate(
+                            str(self.repository), caller["relative_path"], caller["start_line"],
+                            caller["end_line"], caller_text,
+                            _content_hash(caller["relative_path"], caller["start_line"],
+                                          caller["end_line"], caller_text),
+                            caller_score, ("references",), (("references", caller_score),),
+                            symbol_ids=(caller["symbol_id"],),
+                            relation_ids=(row["reference_id"],),
+                            resolution_status="resolved",
+                            evidence_roles=("caller_definition", "definition"),
+                        ))
+                    # Preserve the exact call expression as a separate source
+                    # range.  An import or re-export on the same file is not a
+                    # substitute for the caller's executed syntax.
+                    call_text = self._excerpt(row["relative_path"], row["line"], row["line"])
+                    callsite_evidence.append(ProductCandidate(
+                        str(self.repository), row["relative_path"], row["line"], row["line"],
+                        call_text, _content_hash(row["relative_path"], row["line"],
+                                                 row["line"], call_text),
+                        990.0 - rank, ("references",), (("references", 990.0 - rank),),
+                        symbol_ids=tuple(filter(None, (row["source_symbol_id"],
+                                                        row["target_symbol_id"]))),
+                        relation_ids=(row["reference_id"],),
+                        resolution_status=row["resolution_status"],
+                        evidence_roles=("callsite",),
+                    ))
                 text = self._excerpt(row["relative_path"], row["line"], row["line"])
                 score = float(90 - rank)
                 results.append(ProductCandidate(
@@ -316,9 +436,17 @@ class ProductRetriever:
                                                     row["target_symbol_id"]))),
                     relation_ids=(row["reference_id"],),
                     resolution_status=row["resolution_status"],
+                    evidence_roles=("import",) if row["reference_type"] in {
+                        "import", "from_import", "import_alias",
+                    } else ("callsite",) if row["reference_type"] == "call" else ("reference",),
                 ))
         results.sort(key=lambda item: (-item.score, item.relative_path.casefold(),
-                                       item.start_line, item.relation_ids))
+                                       item.start_line, item.end_line, item.relation_ids))
+        if call_query:
+            # A call answer needs the caller and callee first; static import
+            # edges follow as supporting route evidence.  Keep all ranges so
+            # same-file imports cannot hide the actual call statement.
+            return [*caller_evidence, *callsite_evidence, *definition_evidence, *results]
         return results
 
     def _vector(self, query: str, top_k: int) -> list[ProductCandidate]:
@@ -359,6 +487,7 @@ class ProductRetriever:
             symbol_ids=tuple(dict.fromkeys(existing.symbol_ids + incoming.symbol_ids)),
             relation_ids=tuple(dict.fromkeys(existing.relation_ids + incoming.relation_ids)),
             resolution_status=status,
+            evidence_roles=tuple(dict.fromkeys(existing.evidence_roles + incoming.evidence_roles)),
         )
 
     def search(self, query: str, *, top_k: int = 5) -> ProductRetrievalOutcome:
@@ -372,6 +501,8 @@ class ProductRetriever:
         self._relation_failures = ()
         self._relation_attempted = False
         decision = self.router.route(query)
+        required_roles = required_evidence_roles(query)
+        effective_top_k = max(top_k, len(required_roles))
         channel_results = {}
         unavailable = []
         for channel in decision.channels:
@@ -391,6 +522,12 @@ class ProductRetriever:
             else:
                 unavailable.append(channel)
                 values = []
+            if required_roles:
+                values = [item for _position, item in sorted(
+                    enumerate(values),
+                    key=lambda pair: (0 if set(pair[1].evidence_roles) & set(required_roles) else 1,
+                                      pair[0]),
+                )]
             channel_results[channel] = values
 
         if (decision.route == "exact_symbol" and not channel_results.get("symbols")
@@ -421,19 +558,19 @@ class ProductRetriever:
                     -item.score, item.relative_path.casefold(), item.start_line,
                 ))
             for item in values:
-                # A product answer needs one stable source excerpt per file.  If a
-                # higher-priority structured result already represents the file,
-                # merge provenance instead of replacing its precise line range.
-                key = item.relative_path.casefold()
+                # Merge duplicate channel hits for the same source range.  A
+                # different line range in the same file is complementary
+                # evidence (for example an import and a real callsite).
+                key = (item.relative_path.casefold(), item.start_line, item.end_line)
                 if key in positions:
                     index = positions[key]
                     ordered[index] = self._merge(ordered[index], item)
                     continue
                 positions[key] = len(ordered)
                 ordered.append(item)
-                if len(ordered) >= top_k:
+                if len(ordered) >= effective_top_k:
                     break
-            if len(ordered) >= top_k:
+            if len(ordered) >= effective_top_k:
                 break
 
         parse_failures = (
@@ -463,3 +600,40 @@ __all__ = [
     "PRODUCT_ROUTE_VERSION", "ProductCandidate", "ProductRetrievalOutcome",
     "ProductIntentRouter", "ProductRetriever",
 ]
+
+
+_ROUTE_STOPWORDS = {
+    "what", "which", "where", "when", "why", "how", "does", "do", "is", "are",
+    "the", "a", "an", "function", "method", "class", "module", "symbol", "return",
+    "returns", "parameter", "parameters", "cite", "source", "evidence", "please",
+}
+_RELATION_WORDS = _CALL_WORDS | {
+    "import", "imports", "imported", "export", "exports", "reexport", "reexports",
+}
+
+
+def _mentioned_code_symbol(query: str) -> str | None:
+    """Recognize one code-shaped identifier embedded in multilingual prose."""
+    if not isinstance(query, str):
+        return None
+    names = []
+    for match in re.finditer(r"\b[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*\b", query):
+        value = match.group(0)
+        if value.casefold() in _ROUTE_STOPWORDS:
+            continue
+        if ("_" in value or any(char.isdigit() for char in value)
+                or any(char.isupper() for char in value[1:])):
+            names.append(value)
+    unique = tuple(dict.fromkeys(names))
+    return unique[0] if len(unique) == 1 else None
+
+
+def _is_explicit_symbol_reference(query: object) -> bool:
+    if not isinstance(query, str):
+        return False
+    relation_intent = bool(set(re.findall(r"[A-Za-z_]+", query.casefold())) & _RELATION_WORDS)
+    return not relation_intent and (
+        bool(_BARE_IDENTIFIER.fullmatch(query))
+        or bool(_SYMBOL_SHAPE.search(query))
+        or bool(_mentioned_code_symbol(query))
+    )

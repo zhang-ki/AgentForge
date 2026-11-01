@@ -26,6 +26,7 @@ def index_repository(
     overlap_lines: int = DEFAULT_OVERLAP_LINES,
     limits: ScanLimits | None = None,
     replace_repository: bool = False,
+    force_rebuild: bool = False,
 ) -> dict:
     signature = chunk_signature(window_lines, overlap_lines)
     limits = limits or ScanLimits()
@@ -91,7 +92,8 @@ def index_repository(
         parsed = document["parsed_file"]
         if parsed is not None:
             document["parsed_file"] = resolved[parsed.relative_path]
-    changes = store.sync(report.root, documents, signature, replace_repository)
+    changes = store.sync(report.root, documents, signature, replace_repository,
+                         force_rebuild=force_rebuild)
     parse_failures = [item for item in resolved.values() if item.status == "failed"]
     return {
         **store.status(),

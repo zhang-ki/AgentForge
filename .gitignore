@@ -36,6 +36,7 @@ venv/
 *.log
 .coverage
 .coverage.*
+*.coverage
 htmlcov/
 /coverage/
 /AF*.json
@@ -45,6 +46,10 @@ htmlcov/
 /AF*.sql
 /AF*_*.py
 /AF*_*.ps1
+!/AF011_1_JOINT_HOST.py
+!/AF011_1_JOINT_HOST.ps1
+!/AF011_1_FULL_HOST_ACCEPTANCE.py
+!/AF011_1_FULL_HOST_ACCEPTANCE.ps1
 !/AF009GR3_HOST_RUNNER.py
 !/AF011_CHAT_HOST_ACCEPTANCE.py
 !/AF012_B2_HOST_DATABASE_CHECK.py

@@ -72,6 +72,9 @@ class PackageRelation:
     resolution_status: str
     cycle_detected: bool = False
     note: str = ""
+    target_definition_name: str | None = None
+    target_definition_start_line: int | None = None
+    target_definition_end_line: int | None = None
 
 
 @dataclass(frozen=True)
@@ -392,7 +395,8 @@ def _build_package_relation_graph(repository, modules, failures,
 
     def add(kind, source, line, end_line=None, target_module=None, target_name=None, local=None,
             target_path=None, target_symbol_id=None, candidates=(), status="unresolved",
-            cycle=False, note=""):
+            cycle=False, note="", target_definition_name=None,
+            target_definition_start_line=None, target_definition_end_line=None):
         if kind not in RELATION_TYPES or status not in RESOLUTION_STATES:
             raise ValueError("Invalid package relation.")
         semantic = (source.path, kind, target_module, target_name, local)
@@ -407,6 +411,9 @@ def _build_package_relation_graph(repository, modules, failures,
             target_path=target_path, target_symbol_id=target_symbol_id,
             candidate_symbol_ids=tuple(sorted(set(candidates))), resolution_status=status,
             cycle_detected=cycle, note=note,
+            target_definition_name=target_definition_name,
+            target_definition_start_line=target_definition_start_line,
+            target_definition_end_line=target_definition_end_line,
         ))
 
     bindings = defaultdict(lambda: defaultdict(list))
@@ -466,14 +473,14 @@ def _build_package_relation_graph(repository, modules, failures,
             return [], False
         if local_name in module.definitions:
             symbol_id, start, end = module.definitions[local_name]
-            return [(module.path, symbol_id, start, end)], False
+            return [(module.path, symbol_id, start, end, local_name)], False
         results = []
         cycle = False
         for target_module, target_name, _line in bindings[module_name].get(local_name, ()):
             if target_name is None:
                 target = modules.get(target_module or "")
                 if target:
-                    results.append((target.path, target.module_symbol_id, 1, 1))
+                    results.append((target.path, target.module_symbol_id, 1, 1, None))
             else:
                 found, hit_cycle = resolve_binding(target_module, target_name, trail + (key,))
                 results.extend(found)
@@ -494,7 +501,7 @@ def _build_package_relation_graph(repository, modules, failures,
                 if target_name is None:
                     target = modules.get(target_module or "")
                     if target:
-                        found.append((target.path, target.module_symbol_id, 1, 1))
+                        found.append((target.path, target.module_symbol_id, 1, 1, None))
                     continue
                 nested, hit_cycle = resolve_binding(target_module, target_name)
                 found.extend(nested)
@@ -509,7 +516,10 @@ def _build_package_relation_graph(repository, modules, failures,
             add("resolves_to", source, bound[0][2], target_module=target_module,
                 target_name=local_name, local=local_name, target_path=target_path,
                 target_symbol_id=target_id, candidates=ids, status=status, cycle=cycle,
-                note="import binding cycle detected" if cycle else "import binding resolution")
+                note="import binding cycle detected" if cycle else "import binding resolution",
+                target_definition_name=found[0][4] if target_id and found else None,
+                target_definition_start_line=found[0][2] if target_id and found else None,
+                target_definition_end_line=found[0][3] if target_id and found else None)
 
     for source in sorted(modules.values(), key=lambda item: item.path.casefold()):
         if not include(source) or not source.is_init:
@@ -527,11 +537,15 @@ def _build_package_relation_graph(repository, modules, failures,
                 add("exports_symbol", source, source.all_line or direct[1], source.all_end_line,
                     target_module=source.name,
                     target_name=name, local=name, target_path=source.path,
-                    target_symbol_id=direct[0], candidates=(direct[0],), status="resolved")
+                    target_symbol_id=direct[0], candidates=(direct[0],), status="resolved",
+                    target_definition_name=name, target_definition_start_line=direct[1],
+                    target_definition_end_line=direct[2])
                 add("resolves_to", source, source.all_line or direct[1], source.all_end_line,
                     target_module=source.name,
                     target_name=name, local=name, target_path=source.path,
-                    target_symbol_id=direct[0], candidates=(direct[0],), status="resolved")
+                    target_symbol_id=direct[0], candidates=(direct[0],), status="resolved",
+                    target_definition_name=name, target_definition_start_line=direct[1],
+                    target_definition_end_line=direct[2])
                 continue
             found, cycle = resolve_binding(source.name, name)
             ids = tuple(item[1] for item in found)
@@ -545,12 +559,18 @@ def _build_package_relation_graph(repository, modules, failures,
                 target_module=target_module,
                 target_name=name, local=name, target_path=target_path,
                 target_symbol_id=target_id, candidates=ids, status=status, cycle=cycle,
-                note="cycle detected" if cycle else "")
+                note="cycle detected" if cycle else "",
+                target_definition_name=found[0][4] if target_id and found else None,
+                target_definition_start_line=found[0][2] if target_id and found else None,
+                target_definition_end_line=found[0][3] if target_id and found else None)
             if target_id:
                 add("resolves_to", source, source.all_line or 1, source.all_end_line,
                     target_module=target_module,
                     target_name=name, local=name, target_path=target_path,
-                    target_symbol_id=target_id, candidates=(target_id,), status="resolved")
+                    target_symbol_id=target_id, candidates=(target_id,), status="resolved",
+                    target_definition_name=found[0][4],
+                    target_definition_start_line=found[0][2],
+                    target_definition_end_line=found[0][3])
 
     return PackageRelationGraph(
         repository=str(repository),

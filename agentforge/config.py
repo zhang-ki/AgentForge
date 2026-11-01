@@ -5,6 +5,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / ".agentforge" / "data"
 DATABASE_PATH = DATA_DIR / "index.sqlite3"
+REPOSITORY_INDEX_DIR = DATA_DIR / "repositories"
+REPOSITORY_CATALOG_PATH = DATA_DIR / "repositories.sqlite3"
 INDEX_VERSION = 3
 STRUCTURED_INDEX_VERSION = 2
 VECTOR_INDEX_VERSION = 3

@@ -114,6 +114,26 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual(1, second["completed"])
         self.assertEqual(2, vector_store.upsert.call_count)
 
+    def test_rebuild_requeues_only_active_repository_memories_once(self):
+        active = self.propose()
+        self.memories.approve(active["id"], self.repo)
+        pending = self.propose()
+        global_memory = self.propose(scope="global")
+        from agentforge.memory_store import GLOBAL_MEMORY_REPOSITORY_ID
+        self.memories.approve(global_memory["id"], GLOBAL_MEMORY_REPOSITORY_ID)
+        class Provider:
+            model_id = "embedding-test"
+            dimension = 2
+            def embed_document(self, text): return (1.0, 0.0)
+        vectors = Mock()
+        self.assertEqual(2, self.memories.sync_outbox(vectors, Provider())["completed"])
+        self.assertEqual(1, self.memories.requeue_approved(self.repo))
+        self.assertEqual(0, self.memories.requeue_approved(self.repo))
+        self.assertEqual({"pending": 1}, self.memories.outbox_status(self.repo))
+        self.assertEqual({"completed": 1}, self.memories.outbox_status(GLOBAL_MEMORY_REPOSITORY_ID))
+        self.assertEqual("pending", self.memories.get(pending["id"], self.repo)["approval_status"])
+        self.assertEqual(1, self.memories.sync_outbox(vectors, Provider())["completed"])
+
     def test_chroma_memory_retrieval_preserves_source_identity_and_repository_scope(self):
         from agentforge.embeddings.chroma_store import ChromaCandidateStore
         from agentforge.memory_retrieval import ChromaMemoryRetriever
@@ -187,6 +207,21 @@ class MemoryStoreTests(unittest.TestCase):
                 expires_at=datetime.now(timezone.utc) - timedelta(seconds=1)))
         expired_results = retriever.search("same query", repository_id=self.repo)
         self.assertFalse(any(item.memory_id == expiring["id"] for item in expired_results))
+
+        from agentforge.memory_store import GLOBAL_MEMORY_REPOSITORY_ID
+        global_memory = self.propose(scope="global")
+        self.assertEqual("global", global_memory["scope"])
+        self.memories.approve(global_memory["id"], GLOBAL_MEMORY_REPOSITORY_ID)
+        self.assertGreaterEqual(self.memories.sync_outbox(vectors, Provider())["completed"], 1)
+        other_repo_results = retriever.search("different wording for preferred response style",
+                                               repository_id="another-repo")
+        global_candidate = next(item for item in other_repo_results
+                                if item.memory_id == global_memory["id"])
+        self.assertEqual("global", global_candidate.scope)
+        self.assertEqual("another-repo", global_candidate.repository_id)
+        self.memories.revoke(global_memory["id"], GLOBAL_MEMORY_REPOSITORY_ID)
+        self.assertFalse(any(item.memory_id == global_memory["id"] for item in
+                             retriever.search("different wording", repository_id="another-repo")))
 
 
 @unittest.skipUnless(importlib.util.find_spec("sqlalchemy") and importlib.util.find_spec("alembic"),

@@ -138,13 +138,15 @@ class ReadOnlyAgentLoopTests(LocalTestCase):
     def test_cli_agent_uses_injected_memory_store_and_reports_json(self):
         self.write("src/value.py", "def lookup_value():\n    return 42\n")
         output, errors = io.StringIO(), io.StringIO()
-        with IndexStore(":memory:") as store, patch("agentforge.cli.IndexStore") as factory:
-            factory.return_value.__enter__.return_value = store
-            with redirect_stdout(output), redirect_stderr(errors):
-                code = main([
-                    "agent", "lookup_value", "--repo", str(self.root),
-                    "--max-steps", "4", "--top-k", "3",
-                ])
+        with IndexStore(":memory:") as store:
+            from contextlib import nullcontext
+            with patch("agentforge.repositories.open_index_for_repository",
+                       return_value=nullcontext(store)):
+                with redirect_stdout(output), redirect_stderr(errors):
+                    code = main([
+                        "agent", "lookup_value", "--repo", str(self.root),
+                        "--max-steps", "4", "--top-k", "3",
+                    ])
         payload = json.loads(output.getvalue())
         self.assertEqual((code, errors.getvalue()), (0, ""))
         self.assertEqual(payload["status"], "completed")

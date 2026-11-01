@@ -29,7 +29,9 @@ def main():
         repository = config["repository"]
         print("当前仓库：" + repository)
         print("命令：/new 标题、/list、/switch 编号、/rename 标题、/history、/delete、"
-              "/memory list|suggest|save|approve|update|revoke|sync、/chroma status|index|rebuild|on|off、/exit")
+              "/repo list|register 路径|switch 编号或ID|index [ID或路径]|rebuild [ID或路径]|remove ID、"
+              "/memory list|suggest|save|approve|update|revoke|sync|rebuild、/memory global list|approve ID|revoke ID、"
+              "/chroma status|index|rebuild|on|off、/exit")
         while True:
             config = _call("session", "current")
             if config["repository"] != repository:
@@ -47,6 +49,44 @@ def main():
                     sessions = _call("session", "list")["result"]
                     for i, item in enumerate(sessions, 1):
                         print(f"{i}. {item['title']} ({item['id']})")
+                elif line == "/repo list":
+                    repositories = _call("repo", "list")["repositories"]
+                    for index, item in enumerate(repositories, 1):
+                        marker = " *" if item.get("active") else ""
+                        print(f"{index}. {item['display_name']} ({item['repository_id']}){marker}")
+                elif line.startswith("/repo register "):
+                    path = line[len("/repo register "):].strip().strip('"')
+                    result = _call("repo", "register", path)
+                    item = result["repository"]
+                    print(f"已登记仓库 {item['display_name']} ({item['repository_id']})；索引状态："
+                          f"{'已建立' if result['indexed'] else '未建立，请执行 /repo index ' + item['repository_id']}。")
+                elif line.startswith("/repo switch "):
+                    selector = line[len("/repo switch "):].strip()
+                    repositories = _call("repo", "list")["repositories"]
+                    if selector.isdigit():
+                        number = int(selector)
+                        if number < 1 or number > len(repositories):
+                            raise ValueError("仓库编号无效。")
+                        selector = repositories[number - 1]["repository_id"]
+                    result = _call("repo", "switch", selector)["repository"]
+                    repository = result["canonical_path"]
+                    current = _call("session", "current")["result"]
+                    suggestions = []
+                    print("已切换仓库：" + repository)
+                elif line == "/repo index" or line.startswith("/repo index ") or line == "/repo rebuild" or line.startswith("/repo rebuild "):
+                    parts = line.split(maxsplit=2)
+                    action = parts[1]
+                    args = ["repo", action]
+                    if len(parts) == 3:
+                        args.append(parts[2].strip().strip('"'))
+                    result = _call(*args)
+                    print(json.dumps(result, ensure_ascii=False, indent=2))
+                elif line.startswith("/repo remove "):
+                    repository_id = line[len("/repo remove "):].strip()
+                    if input("将移除该仓库的 AgentForge 索引和 Chroma 向量，不删除源代码；请先切换到其他已索引仓库。输入 DELETE 确认：").strip() == "DELETE":
+                        _call("repo", "remove", repository_id, "--confirm")
+                        current = None
+                        print("仓库索引已移除；PostgreSQL 会话与记忆保留。")
                 elif line.startswith("/new "):
                     made = _call("session", "create", line[5:].strip())["result"]
                     current = _call("session", "switch", made["id"])["result"]
@@ -83,6 +123,17 @@ def main():
                 elif line == "/memory list":
                     result = _call("memory", "list")["result"]
                     print(json.dumps(result, ensure_ascii=False, indent=2))
+                elif line == "/memory global list":
+                    result = _call("memory", "list", "--scope", "global")["result"]
+                    print(json.dumps(result, ensure_ascii=False, indent=2))
+                elif line.startswith("/memory global approve "):
+                    memory_id = line[len("/memory global approve "):].strip()
+                    result = _call("memory", "approve", memory_id, "--scope", "global")["result"]
+                    print(f"已批准全局记忆 {result['id']}。")
+                elif line.startswith("/memory global revoke "):
+                    memory_id = line[len("/memory global revoke "):].strip()
+                    result = _call("memory", "revoke", memory_id, "--scope", "global")["result"]
+                    print(f"已撤销全局记忆 {result['id']}。")
                 elif line == "/memory suggest" and current:
                     result = _call("memory", "suggest", current["id"],
                         "--base-url", "http://127.0.0.1:56572/v1/chat/completions",
@@ -124,6 +175,8 @@ def main():
                                        ensure_ascii=False, indent=2))
                 elif line == "/memory sync":
                     print(json.dumps(_call("memory", "sync")["result"], ensure_ascii=False, indent=2))
+                elif line == "/memory rebuild":
+                    print(json.dumps(_call("memory", "sync", "--rebuild")["result"], ensure_ascii=False, indent=2))
                 elif line == "/memory status":
                     print(json.dumps(_call("memory", "status")["result"], ensure_ascii=False, indent=2))
                 elif line == "/memory expire":

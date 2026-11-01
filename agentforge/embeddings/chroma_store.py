@@ -131,3 +131,16 @@ class ChromaCandidateStore:
             if verify_source(source) is True:
                 found.append((source, float(distance), document))
         return found
+
+
+def delete_repository_vectors(client, repository_id: str) -> list[str]:
+    """Delete only records tagged with one repository ID across local collections."""
+    if not isinstance(repository_id, str) or not repository_id.strip() or len(repository_id) > 512:
+        raise ValueError("Repository ID is invalid.")
+    names = []
+    for item in client.list_collections():
+        name = item.name if hasattr(item, "name") else str(item)
+        collection = client.get_collection(name=name)
+        collection.delete(where={"repository_id": repository_id})
+        names.append(name)
+    return sorted(names)

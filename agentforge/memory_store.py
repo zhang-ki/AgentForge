@@ -14,6 +14,7 @@ from .af012_schema import (
 
 
 _MEMORY_TYPES = {"preference", "project_fact", "workflow", "other"}
+GLOBAL_MEMORY_REPOSITORY_ID = "__agentforge_global__"
 _SECRET_LIKE = re.compile(
     r"(?i)(?:api[_-]?key|password|passwd|secret|access[_-]?token|private[_-]?key)\s*[:=]"
     r"\s*\S+"
@@ -50,6 +51,7 @@ def _utc(value):
 
 def _memory(row):
     return {"id": str(row.id), "repository_id": row.repository_id,
+            "scope": "global" if row.repository_id == GLOBAL_MEMORY_REPOSITORY_ID else "repository",
             "memory_type": row.memory_type, "content": row.content,
             "approval_status": row.approval_status, "version": row.version,
             "created_at": row.created_at, "updated_at": row.updated_at,
@@ -90,7 +92,7 @@ class MemoryStore:
                     "display_name": row.display_name}
 
     def propose(self, repository_id, conversation_id, content, source_message_ids, *,
-                memory_type="other", expires_at=None):
+                memory_type="other", expires_at=None, scope="repository"):
         """Store a pending suggestion; it is never made active without approval."""
         if memory_type not in _MEMORY_TYPES:
             raise ValueError("Unsupported memory type.")
@@ -109,6 +111,9 @@ class MemoryStore:
         repo_id = repository_id.strip() if isinstance(repository_id, str) else ""
         if not repo_id or len(repo_id) > 256:
             raise ValueError("Invalid repository ID.")
+        if scope not in {"repository", "global"}:
+            raise ValueError("Memory scope must be repository or global.")
+        memory_repository_id = GLOBAL_MEMORY_REPOSITORY_ID if scope == "global" else repo_id
         conversation_uuid = _uuid(conversation_id, "conversation ID")
         with self.sessions.begin() as session:
             conversation = session.scalar(select(Conversation).where(
@@ -122,7 +127,7 @@ class MemoryStore:
                     by_id[identity].request_status != "completed"
                     or by_id[identity].role not in ("user", "assistant") for identity in source_ids):
                 raise ValueError("Every source message must be completed and belong to this conversation.")
-            memory = Memory(id=memory_id, repository_id=repo_id, memory_type=memory_type,
+            memory = Memory(id=memory_id, repository_id=memory_repository_id, memory_type=memory_type,
                             content=content, approval_status="pending", version=1,
                             expires_at=expires_at)
             session.add(memory)
@@ -257,7 +262,7 @@ class MemoryStore:
         now = _now()
         with self.sessions() as session:
             rows = session.scalars(select(Memory).where(
-                Memory.repository_id == repository_id,
+                Memory.repository_id.in_((repository_id, GLOBAL_MEMORY_REPOSITORY_ID)),
                 Memory.approval_status == "approved",
                 (Memory.expires_at.is_(None) | (Memory.expires_at > now)))
                 .order_by(Memory.updated_at.desc(), Memory.id).limit(limit))
@@ -266,15 +271,52 @@ class MemoryStore:
     def approved_by_id(self, memory_id, repository_id):
         """Resolve an authoritative active memory for Chroma candidate validation."""
         with self.sessions() as session:
-            row = self._scoped_memory(session, memory_id, repository_id)
+            row = session.scalar(select(Memory).where(
+                Memory.id == _uuid(memory_id, "memory ID"),
+                Memory.repository_id.in_((repository_id, GLOBAL_MEMORY_REPOSITORY_ID))))
+            if row is None:
+                return None
             if (row.approval_status != "approved"
                     or row.expires_at is not None and _utc(row.expires_at) <= _now()):
                 return None
             return _memory(row)
 
+    def requeue_approved(self, repository_id):
+        """Explicitly rebuild this repository's active memory vectors via the outbox."""
+        if not isinstance(repository_id, str) or not repository_id.strip():
+            raise ValueError("Repository ID is required.")
+        now = _now()
+        with self.sessions.begin() as session:
+            rows = list(session.scalars(select(Memory).where(
+                Memory.repository_id == repository_id,
+                Memory.approval_status == "approved",
+                (Memory.expires_at.is_(None) | (Memory.expires_at > now)))
+                .order_by(Memory.id).limit(5001).with_for_update()))
+            if len(rows) > 5000:
+                raise ValueError("Too many approved memories for one rebuild; no jobs were changed.")
+            queued = 0
+            for row in rows:
+                job = session.scalar(select(VectorSyncOutbox).where(
+                    VectorSyncOutbox.repository_id == repository_id,
+                    VectorSyncOutbox.source_type == "memory",
+                    VectorSyncOutbox.source_id == str(row.id),
+                    VectorSyncOutbox.source_version == row.version,
+                    VectorSyncOutbox.action == "upsert").with_for_update())
+                if job is None:
+                    self._queue(session, row, "upsert")
+                    queued += 1
+                elif job.status in ("completed", "dead"):
+                    job.status, job.attempts, job.last_error, job.updated_at = "pending", 0, None, now
+                    queued += 1
+            return queued
+
     def source_records(self, memory_id, repository_id):
         with self.sessions() as session:
-            row = self._scoped_memory(session, memory_id, repository_id)
+            row = session.scalar(select(Memory).where(
+                Memory.id == _uuid(memory_id, "memory ID"),
+                Memory.repository_id.in_((repository_id, GLOBAL_MEMORY_REPOSITORY_ID))))
+            if row is None:
+                raise ValueError("Memory not found in the current repository or global scope.")
             sources = session.scalars(select(MemorySource).where(
                 MemorySource.memory_id == row.id).order_by(MemorySource.source_sequence))
             return [{"message_id": str(item.message_id) if item.message_id else None,
@@ -289,20 +331,32 @@ class MemoryStore:
             return [{"event_type": item.event_type, "details": dict(item.details or {}),
                      "created_at": item.created_at} for item in events]
 
-    def sync_outbox(self, vector_store, embedding_provider, *, limit=50):
+    def sync_outbox(self, vector_store, embedding_provider, *, limit=50, repository_ids=None):
         """Attempt each claimed item once. Retry is explicit on a later invocation."""
         from .embeddings.base import embed_text
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 500:
             raise ValueError("Outbox batch limit must be between 1 and 500.")
+        if repository_ids is not None:
+            if (not isinstance(repository_ids, (list, tuple)) or not 1 <= len(repository_ids) <= 50
+                    or any(not isinstance(value, str) or not value.strip() or len(value) > 256
+                           for value in repository_ids)):
+                raise ValueError("Outbox repository scope is invalid.")
+            repository_ids = tuple(dict.fromkeys(repository_ids))
         now = _now()
         with self.sessions.begin() as session:
             stale_before = now - timedelta(minutes=5)
-            session.execute(update(VectorSyncOutbox).where(
+            stale = update(VectorSyncOutbox).where(
+                VectorSyncOutbox.source_type == "memory",
                 VectorSyncOutbox.status == "processing",
-                VectorSyncOutbox.updated_at < stale_before).values(status="pending", updated_at=now))
-            jobs = list(session.scalars(select(VectorSyncOutbox).where(
-                VectorSyncOutbox.status == "pending").order_by(
-                    VectorSyncOutbox.created_at, VectorSyncOutbox.id).limit(limit)
+                VectorSyncOutbox.updated_at < stale_before)
+            pending = select(VectorSyncOutbox).where(
+                VectorSyncOutbox.source_type == "memory", VectorSyncOutbox.status == "pending")
+            if repository_ids is not None:
+                stale = stale.where(VectorSyncOutbox.repository_id.in_(repository_ids))
+                pending = pending.where(VectorSyncOutbox.repository_id.in_(repository_ids))
+            session.execute(stale.values(status="pending", updated_at=now))
+            jobs = list(session.scalars(pending.order_by(
+                VectorSyncOutbox.created_at, VectorSyncOutbox.id).limit(limit)
                 .with_for_update(skip_locked=True)))
             claimed = []
             for job in jobs:

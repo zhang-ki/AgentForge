@@ -5,7 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .context import validate_model_citations
-from .errors import ProviderError
+from .evidence_roles import role_coverage
+from .errors import CitationValidationError, ProviderError
 from .models import Answer, BuiltContext
 
 
@@ -24,6 +25,7 @@ class ContractEvidence:
     excerpt: str
     channels: tuple[str, ...]
     resolution_status: str
+    evidence_roles: tuple[str, ...] = ()
 
     @property
     def citation(self) -> str:
@@ -64,8 +66,34 @@ def _contract_evidence(context: BuiltContext, candidate_by_citation=None) -> tup
             source.source_id, source.result.relative_path,
             source.result.start_line, source.result.end_line,
             source.result.text, channels, resolution,
+            tuple(source.result.evidence_roles),
         ))
     return tuple(values)
+
+
+def _validate_required_role_coverage(question, evidence, citations) -> dict:
+    by_citation = {item.citation: item for item in evidence}
+    available = {role for item in evidence for role in item.evidence_roles}
+    cited = {role for citation in citations
+             for role in getattr(by_citation.get(citation), "evidence_roles", ())}
+    coverage = role_coverage(question, available, cited)
+    if coverage["missing_available_roles"]:
+        code = "required_evidence_role_unavailable"
+        message = "The request lacks a source excerpt for a required evidence role."
+    elif coverage["missing_cited_roles"]:
+        code = "required_evidence_role_not_cited"
+        message = "The generated answer did not cite all evidence roles required by the question."
+    else:
+        return coverage
+    raise CitationValidationError(message, code=code, diagnostic={
+        "rule_id": code,
+        "required_roles": coverage["required_roles"],
+        "available_roles": coverage["available_roles"],
+        "cited_roles": coverage["cited_roles"],
+        "missing_roles": (coverage["missing_available_roles"]
+                          or coverage["missing_cited_roles"]),
+        "validation_result": "rejected",
+    })
 
 
 def validate_answer_contract(contract: VerifiedAnswerContract, context: BuiltContext) -> None:
@@ -82,7 +110,8 @@ def validate_answer_contract(contract: VerifiedAnswerContract, context: BuiltCon
         if (evidence.excerpt not in source.result.text
                 or evidence.excerpt != source.result.text
                 or not evidence.channels
-                or evidence.resolution_status not in _RESOLUTION):
+                or evidence.resolution_status not in _RESOLUTION
+                or evidence.evidence_roles != source.result.evidence_roles):
             raise ProviderError("Answer evidence text or provenance is invalid.")
         if evidence.citation in seen:
             raise ProviderError("Answer evidence contains a duplicate citation.")
@@ -104,6 +133,9 @@ def validate_answer_contract(contract: VerifiedAnswerContract, context: BuiltCon
                 claim.text in item.excerpt
                 for item in contract.evidence if item.citation in claim.citations):
             raise ProviderError("A confirmed claim must be an exact excerpt from cited evidence.")
+        if claim.kind in {"confirmed", "inference"}:
+            _validate_required_role_coverage(context.question, contract.evidence,
+                                             claim.citations)
     if contract.status == "answered" and not any(
             claim.kind == "confirmed" for claim in contract.claims):
         raise ProviderError("An answered contract requires a confirmed cited claim.")
@@ -114,10 +146,11 @@ def validate_answer_contract(contract: VerifiedAnswerContract, context: BuiltCon
 
 def build_offline_contract(answer: Answer, context: BuiltContext, *, route: str,
                            route_confidence: str, candidate_by_citation=None,
-                           uncertainty: str | None = None) -> VerifiedAnswerContract:
+                           uncertainty: str | None = None,
+                           force_refusal_reason: str | None = None) -> VerifiedAnswerContract:
     evidence = _contract_evidence(context, candidate_by_citation)
-    if not evidence or (route_confidence == "low" and uncertainty):
-        reason = uncertainty or "No request-local evidence supports an answer."
+    if not evidence or (route_confidence == "low" and uncertainty) or force_refusal_reason:
+        reason = force_refusal_reason or uncertainty or "No request-local evidence supports an answer."
         contract = VerifiedAnswerContract(
             ANSWER_CONTRACT_VERSION, "refused", answer.text, reason,
             (AnswerClaim("当前证据不足，无法确认代码结论。", "unknown", ()),),
@@ -149,6 +182,7 @@ def verify_generated_answer(answer: Answer, context: BuiltContext, *, route: str
             evidence, route, route_confidence,
         )
     else:
+        _validate_required_role_coverage(context.question, evidence, citations)
         # Citation membership proves provenance, not semantic entailment. Keep
         # generated content limited until a separate entailment check exists.
         kind = "inference"

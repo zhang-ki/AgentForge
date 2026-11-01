@@ -2,9 +2,9 @@ from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
 import sqlite3
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-from agentforge.cli import create_provider, main
+from agentforge.cli import create_provider, main, parser, _provider_failure_diagnostic
 from agentforge.errors import ProviderError
 from agentforge.providers.llama_server import LlamaServerProvider
 from agentforge.providers.offline import OfflineProvider
@@ -23,6 +23,88 @@ def invoke(arguments):
 
 
 class CliTests(LocalTestCase):
+    def test_provider_failure_diagnostic_is_bounded_to_codes_and_request_counts(self):
+        provider = Mock()
+        provider.request_stats.return_value = {
+            "attempted": 1, "sent": 1, "succeeded": 1, "failed": 0, "retries": 0,
+            "last_application_failure_phase": "citation_validation",
+            "last_application_error_code": "required_evidence_role_not_cited",
+            "last_citation_diagnostic": {
+                "rule_id": "required_evidence_role_not_cited",
+                "required_roles": ("callsite", "target_definition"),
+                "available_roles": ("callsite", "target_definition"),
+                "cited_roles": ("callsite",),
+                "missing_roles": ("target_definition",),
+                "validation_result": "rejected",
+                "snippet": "private source text must not be emitted",
+            },
+            "last_response_diagnostic": {"content_chars": 123, "finish_reason": "stop",
+                                          "content": "private model output"},
+            "api_key": "never-copy-this",
+        }
+        diagnostic = _provider_failure_diagnostic(provider)
+        encoded = json.dumps(diagnostic)
+        self.assertEqual(1, diagnostic["attempted"])
+        self.assertEqual("required_evidence_role_not_cited",
+                         diagnostic["citation"]["rule_id"])
+        self.assertNotIn("private source text", encoded)
+        self.assertNotIn("private model output", encoded)
+        self.assertNotIn("never-copy-this", encoded)
+
+    def test_conversation_budget_failure_is_not_mislabeled_as_configuration_error(self):
+        source = result(text="PRIVATE_SYNTHETIC_SOURCE_" + "x" * 5000)
+        candidate = ProductCandidate(
+            source.repository, source.relative_path, source.start_line, source.end_line,
+            source.text, source.content_hash, source.score, ("symbols",),
+            (("symbols", source.score),), symbol_ids=("symbol-1",),
+            resolution_status="resolved", evidence_roles=("definition",),
+        )
+        outcome = ProductRetrievalOutcome(
+            "Explain this symbol", "test-route", RouteDecision(
+                "exact_symbol", ("symbols",), "test", "test route", "high",
+            ), (candidate,), (), (), None,
+        )
+        store = Mock()
+        store.metadata.return_value = {"repository": str(self.root)}
+        store_scope = MagicMock()
+        store_scope.__enter__.return_value = store
+        store_scope.__exit__.return_value = False
+        conversation_store = Mock()
+        conversation_store.prepare_history.return_value = ((), None)
+        engine = Mock()
+        with (
+            patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
+            patch("agentforge.cli._open_current_index", return_value=store_scope),
+            patch("agentforge.cli.ProductRetriever", return_value=Mock()),
+            patch("agentforge.cli._conversation_engine", return_value=engine),
+            patch("agentforge.cli._load_conversation", return_value=(
+                conversation_store, "repo-id", (), {
+                    "conversation_id": "conversation-id", "repository_id": "repo-id",
+                    "history": (),
+                },
+            )),
+            patch("agentforge.cli._conversation_retrieval", return_value=(outcome, None)),
+            patch("agentforge.cli._context_candidates", return_value=(candidate,)),
+            patch("agentforge.cli.LlamaServerClient") as client_factory,
+        ):
+            code, output, errors = invoke([
+                "ask", "Explain this symbol", "--provider", "llama-server",
+                "--base-url", "http://127.0.0.1:32123", "--model", "synthetic",
+                "--conversation-id", "conversation-id",
+            ])
+        self.assertEqual(1, code)
+        self.assertEqual("", output)
+        self.assertIn("Context budget exceeded:", errors)
+        self.assertIn("AF_CONTEXT_BUDGET_DIAGNOSTIC=", errors)
+        self.assertNotIn("Invalid configuration:", errors)
+        self.assertNotIn("PRIVATE_SYNTHETIC_SOURCE", errors)
+        client_factory.return_value.chat.assert_not_called()
+        engine.dispose.assert_called_once()
+
+    def test_global_memory_scope_is_explicit_in_cli(self):
+        arguments = parser().parse_args(["memory", "approve", "memory-id", "--scope", "global"])
+        self.assertEqual("global", arguments.scope)
+
     def _mock_product_retriever(self):
         source = result()
         candidate = ProductCandidate(
@@ -75,7 +157,7 @@ class CliTests(LocalTestCase):
         product_retriever = self._mock_product_retriever()
         with (
             patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
-            patch("agentforge.cli.IndexStore", return_value=store_scope),
+            patch("agentforge.cli._open_current_index", return_value=store_scope),
             patch("agentforge.cli.ProductRetriever", return_value=product_retriever),
             patch("agentforge.cli.LlamaServerClient", return_value=fake_client) as client_factory,
         ):
@@ -135,7 +217,7 @@ class CliTests(LocalTestCase):
         ]
         for args, expected in cases:
             api_key = "" if "AGENTFORGE_LLAMA_API_KEY" in expected else "test-only-key"
-            with self.subTest(args=args), patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": api_key}), patch("agentforge.cli.IndexStore") as store_factory:
+            with self.subTest(args=args), patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": api_key}), patch("agentforge.cli._open_current_index") as store_factory:
                 code, output, errors = invoke(args)
                 self.assertEqual(code, 2)
                 self.assertEqual(output, "")
@@ -153,7 +235,7 @@ class CliTests(LocalTestCase):
         product_retriever = self._mock_product_retriever()
         with (
             patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
-            patch("agentforge.cli.IndexStore", return_value=store_scope),
+            patch("agentforge.cli._open_current_index", return_value=store_scope),
             patch("agentforge.cli.ProductRetriever", return_value=product_retriever),
             patch("agentforge.cli.LlamaServerClient", return_value=fake_client) as client_factory,
         ):
@@ -203,7 +285,7 @@ class CliTests(LocalTestCase):
         fake_client = Mock()
         with (
             patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
-            patch("agentforge.cli.IndexStore", return_value=store_scope),
+            patch("agentforge.cli._open_current_index", return_value=store_scope),
             patch("agentforge.cli.ProductRetriever", return_value=retriever),
             patch("agentforge.cli.LlamaServerClient", return_value=fake_client),
         ):
@@ -229,7 +311,7 @@ class CliTests(LocalTestCase):
         product_retriever = self._mock_product_retriever()
         with (
             patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
-            patch("agentforge.cli.IndexStore", return_value=store_scope),
+            patch("agentforge.cli._open_current_index", return_value=store_scope),
             patch("agentforge.cli.ProductRetriever", return_value=product_retriever),
             patch("agentforge.cli.LlamaServerClient", return_value=fake_client),
         ):
@@ -245,7 +327,7 @@ class CliTests(LocalTestCase):
 
     def test_empty_status_does_not_create_database(self):
         path = self.root / "missing.sqlite3"
-        with patch("agentforge.cli.DATABASE_PATH", path):
+        with patch("agentforge.cli.DATABASE_PATH", path), patch("agentforge.cli.REPOSITORY_CATALOG_PATH", self.root / "no-catalog.sqlite3"):
             code, output, errors = invoke(["status"])
         self.assertEqual(code, 0)
         self.assertFalse(json.loads(output)["exists"])
@@ -253,7 +335,7 @@ class CliTests(LocalTestCase):
         self.assertFalse(path.exists())
 
     def test_invalid_configuration_and_missing_repository(self):
-        with IndexStore(":memory:") as store, patch("agentforge.cli.IndexStore") as factory:
+        with IndexStore(":memory:") as store, patch("agentforge.cli._open_current_index") as factory:
             factory.return_value.__enter__.return_value = store
             for args, expected in [
                 (["index", "--repo", str(self.root), "--window-lines", "0"], 2),
@@ -266,7 +348,7 @@ class CliTests(LocalTestCase):
                 self.assertTrue(errors)
 
     def test_real_sqlite_error_is_reported_without_traceback(self):
-        with IndexStore(":memory:") as store, patch("agentforge.cli.IndexStore") as factory:
+        with IndexStore(":memory:") as store, patch("agentforge.cli._open_current_index") as factory:
             factory.return_value.__enter__.return_value = store
             store.connection.execute("DROP TABLE metadata")
             code, _, errors = invoke(["search", "example"])

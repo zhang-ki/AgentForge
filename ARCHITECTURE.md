@@ -1,4 +1,6 @@
-# AgentForge MVP 1.0 Architecture
+# AgentForge Architecture
+
+The `feature/1.1-core` branch adds development-only multi-repository indexing, bounded history summarization, and cross-file evidence improvements. Published MVP 1.0 remains frozen on `main`/`v1.0.0-mvp` until these changes are separately reviewed and released.
 
 ## Runtime components
 
@@ -22,9 +24,9 @@ The standard-library CLI and SQLite code-index path can run without a model. Per
 
 ## Retrieval and evidence
 
-`scanner.py` discovers allowed source/document files; `safeio.py` reopens and verifies file identity before reading. `chunker.py` creates line-addressable chunks. `indexer.py` coordinates scanning, parsing and a transactional SQLite snapshot. `store.py` keeps the code index at `.agentforge/data/index.sqlite3` and binds that snapshot to one repository at a time.
+`scanner.py` discovers allowed source/document files; `safeio.py` reopens and verifies file identity before reading. `chunker.py` creates line-addressable chunks. `indexer.py` coordinates scanning, parsing and a transactional SQLite snapshot. On the 1.1 branch, `store.py` opens one index at `.agentforge/data/repositories/<repository-id>.sqlite3`; the older `.agentforge/data/index.sqlite3` is retained as a compatibility index for its original owner.
 
-`product_retrieval.py` and `query_routing.py` choose a channel based on query intent. Exact symbols use structured symbol retrieval; import/call/public API questions may use PackageRelation; ordinary concepts and documents use lexical retrieval and optional Vector candidates. Candidate paths and content are checked against the current repository/index snapshot before they become context. The offline RRF and PackageRelation research paths do not replace the default retriever.
+`product_retrieval.py` and `query_routing.py` choose a channel based on query intent. Exact symbols use structured symbol retrieval; import/call/public API questions may use PackageRelation; ordinary concepts and documents use lexical retrieval and optional Vector candidates. Resolved static references can add caller/target evidence across files. Candidate paths and content are checked against the current repository/index snapshot before they become context. The offline RRF research path does not replace the default retriever.
 
 `context.py` assigns request-local evidence IDs and validates citations against those exact records. `answer_contract.py` distinguishes answered, limited and refused outcomes. A valid citation establishes source identity and location, not universal semantic entailment. The application therefore keeps semantic certainty limited where it has no independent proof.
 
@@ -32,7 +34,7 @@ The standard-library CLI and SQLite code-index path can run without a model. Per
 
 | Store | Authoritative data | Scope |
 |---|---|---|
-| SQLite | Indexed source snapshots, chunks, Python symbols and static references | One active repository snapshot |
+| SQLite | Indexed source snapshots, chunks, Python symbols and static references | One file per registered repository identity; a legacy index can remain attached to its original repository |
 | PostgreSQL | Repository identities, conversations, messages, history excerpts, memory candidates/approvals/sources/events and vector-sync outbox | Persistent, repository-scoped user data |
 | Chroma | Embeddings and searchable metadata for code and approved memories | Rebuildable local candidate index |
 
@@ -42,9 +44,11 @@ Database migrations are in `alembic/`; the CLI exposes session migration and man
 
 ## Conversations and context
 
-`conversation_store.py` implements conversation/message persistence and repository-scoped selection. `conversation_console.py` is the interactive entry point. Each turn loads the selected conversation, current repository identity, bounded recent history/history excerpt, relevant approved memory when enabled, current RAG evidence, and the current question.
+`repositories.py` maintains stable canonical-path identities, the active repository setting, and one isolated SQLite index location per repository. CLI and console support registration, listing, switching, indexing, rebuilding, and removal. Removing a repository refuses the active one and removes only the AgentForge index, registration, and repository-filtered Chroma vectors; source files and PostgreSQL conversation/memory history are retained.
 
-History is not unlimited. The current persisted history summary is a deterministic excerpt associated with source messages, not a semantic summary produced by Qwen. The prompt builder applies a bounded UTF-8-size estimate rather than a tokenizer-exact budget. A repository switch selects a different repository-bound conversation set; it does not create a second SQLite code index.
+`conversation_store.py` implements conversation/message persistence and repository-scoped selection. `conversation_console.py` is the interactive entry point. Each turn loads the selected conversation, current repository identity, bounded recent history/summary, relevant approved memory when Chroma is enabled, current RAG evidence, and the current question.
+
+History is not unlimited. When the user explicitly selects the local Qwen provider and the request passes the evidence gate, older complete turns can be summarized and persisted with the last covered source message ID. Each update gives the summarizer the prior untrusted summary plus newly covered complete turns, then stores a bounded replacement summary (up to 1,800 UTF-8 bytes) instead of nesting all prior versions. Oversized legacy summaries are compacted before reuse when semantic summarization is available; if compaction fails, the previous summary and original messages remain intact. Original messages remain in PostgreSQL. If semantic summarization is unavailable, a clearly labeled deterministic extract is used. The prompt builder uses a 3,500-byte UTF-8 proxy rather than a tokenizer-exact budget; this modest increase from 3,000 does not guarantee compatibility with every model/template. Repository switching selects the corresponding independent SQLite index and repository-bound conversations; it does not re-index a previously indexed repository.
 
 ## Local model boundary
 
@@ -54,9 +58,16 @@ The release does not include model weights or runtime binaries. Launchers use `A
 
 ## Deliberate MVP limits
 
-- One active SQLite repository snapshot; switching requires indexing the selected repository.
+- Repository identity is derived from the canonical local path; moving a repository changes its identity and requires registering/indexing it again.
+- Removing a repository keeps PostgreSQL conversations and Memory for audit/recovery; `repo remove` does not delete that history.
 - Python static analysis cannot prove dynamic imports or runtime behavior.
 - Chroma is optional and must be explicitly indexed/enabled.
 - RRF, reranking, and production similarity-threshold refusal are not enabled by default.
 - Citation validation checks evidence identity and source text but does not prove arbitrary semantic entailment.
 - The delivered host acceptance demonstrates specific local PostgreSQL/Qwen/Chroma scenarios, not general reliability for every repository or query.
+- 1.1 offline tests use temporary SQLite and synthetic/test-double Chroma; the new branch has not undergone a fresh real PostgreSQL/Chroma/Qwen acceptance run.
+
+
+## 1.1 conversation summary fact ledger (offline-verified)
+
+`conversation_summaries.fact_ledger` stores conservative source-linked statements extracted from completed user messages. Each record binds a stable fact ID and exact statement text to source message UUIDs, sequence numbers, and full-message SHA-256. These are records of user statements, not verified code facts or model ground truth. Summary writes merge prior ledger entries with newly covered messages and fail closed if any protected statement is absent, the 1,800-byte persisted summary cap is exceeded, or the write transaction fails. The summary cursor advances only with a successful summary save. Migration `af012ctx_003_summary_fact_ledger` is additive. Offline isolated-database tests passed; the formal PostgreSQL migration and a fresh real Qwen summary run remain unmeasured. Input, Prompt, model output, and persisted summary each have separate UTF-8 byte limits; none is an exact Tokenizer budget.

@@ -264,7 +264,7 @@ class StructuredIndexTests(LocalTestCase):
     def test_cli_symbols_references_help_and_invalid_filters(self):
         index_repository(SYMBOL_FIXTURE, self.store)
         scope = _StoreScope(self.store)
-        with patch("agentforge.cli.IndexStore", return_value=scope):
+        with patch("agentforge.cli._open_current_index", return_value=scope):
             code, output, errors = invoke([
                 "symbols", "--qualified-name", "pkg.helpers.Worker.run",
                 "--kind", "method", "--path", "pkg/helpers.py",
