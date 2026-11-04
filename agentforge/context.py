@@ -13,9 +13,17 @@ def build_context(
     *,
     max_candidates: int = 5,
     budget: int = 6000,
+    evidence_source_ids: dict[str, str] | None = None,
 ) -> BuiltContext:
     if not 1 <= max_candidates <= 100 or not 1 <= budget <= 1_000_000:
         raise ValueError("Context candidate count or estimated budget is out of range.")
+    if evidence_source_ids is not None:
+        if (not isinstance(evidence_source_ids, dict)
+                or any(not isinstance(key, str) or not isinstance(value, str)
+                       or re.fullmatch(r"E[1-9]\d*", value) is None
+                       for key, value in evidence_source_ids.items())
+                or len(set(evidence_source_ids.values())) != len(evidence_source_ids)):
+            raise ValueError("Invalid request-local evidence identity map.")
     evidence = []
     blocks = []
     seen = set()
@@ -29,7 +37,10 @@ def build_context(
         if result.content_hash in seen:
             continue
         seen.add(result.content_hash)
-        source = Evidence(f"E{len(evidence) + 1}", result)
+        source_id = (evidence_source_ids or {}).get(result.content_hash, f"E{len(evidence) + 1}")
+        if any(item.source_id == source_id for item in evidence):
+            raise ValueError("Duplicate request-local evidence identity.")
+        source = Evidence(source_id, result)
         block = f"[{source.source_id}] [[{source.citation}]]\n{result.text}\n"
         cost = len(block.encode("utf-8"))
         if used + cost > budget:

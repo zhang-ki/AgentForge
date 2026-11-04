@@ -6,6 +6,153 @@ import os
 import sys
 
 from . import cli, presentation
+from .errors import AgentForgeError
+
+
+_QWEN_ENDPOINT = "http://127.0.0.1:56572/v1/chat/completions"
+
+
+def _registry():
+    from .model_registry import ModelRegistry
+    return ModelRegistry()
+
+
+def _deepseek_client():
+    from .credential_store import CredentialStore
+    from .providers.deepseek import DeepSeekClient
+    key, source = CredentialStore().resolve()
+    if not key:
+        raise ValueError("DeepSeek 密钥未配置；先运行 /model auth set deepseek。")
+    client = DeepSeekClient(key)
+    client.set_credential_source(source)
+    return client, source
+
+
+def _model_name(provider_id, model_id):
+    if provider_id == "llama-server" and model_id in {"qwen-local", "qwen3.5-4b"}:
+        return "Qwen Local"
+    if provider_id == "offline":
+        return "Offline Evidence"
+    try:
+        return _registry().get(model_id).display_name
+    except ValueError:
+        return model_id or "未知"
+
+
+def _show_model_list(current):
+    from .credential_store import CredentialStore
+    from .model_registry import LOCAL_QWEN, OFFLINE_PROVIDER
+    from .model_registry import check_qwen_identity
+    from .errors import ProviderError
+
+    registry = _registry()
+    credentials = CredentialStore().status()
+    qwen_status = "NOT_CONFIGURED"
+    llama_key = os.environ.get("AGENTFORGE_LLAMA_API_KEY")
+    if llama_key:
+        try:
+            check_qwen_identity(_QWEN_ENDPOINT, llama_key, LOCAL_QWEN.model_id)
+            qwen_status = "CONNECTED"
+        except (ValueError, OSError, TimeoutError, ProviderError):
+            qwen_status = "UNAVAILABLE"
+    rows = [LOCAL_QWEN, OFFLINE_PROVIDER, *registry.all()[2:]]
+    print("================ Available Models ================")
+    for descriptor in rows:
+        if descriptor.provider_id == "llama-server":
+            status = qwen_status
+        elif descriptor.provider_id == "offline":
+            status = "CONFIGURED"
+        else:
+            status = "CONFIGURED" if credentials["configured"] else "NOT_CONFIGURED"
+            if registry.cache_status == "stale":
+                status += " (stale model list)"
+        current_match = bool(current and current.get("provider_id") == descriptor.provider_id
+                             and current.get("model_id") == descriptor.model_id)
+        default = descriptor.provider_id == "llama-server"
+        model_type = "Cloud" if descriptor.model_type == "cloud" else (
+            "Offline" if descriptor.model_type == "offline" else "Local")
+        print(f"\n{descriptor.display_name}\n  ID: {descriptor.key}\n  Provider: {descriptor.provider_id}"
+              f"\n  Model ID: {descriptor.model_id}\n  Type: {model_type}\n  Status: {status}"
+              f"\n  Context: {descriptor.context_window if descriptor.context_window is not None else 'unknown'}"
+              f"\n  Max output: {descriptor.max_output_tokens if descriptor.max_output_tokens is not None else 'unknown'}"
+              f"\n  Thinking: {descriptor.supports_thinking if descriptor.supports_thinking is not None else 'unknown'}"
+              f"\n  Tool calling: {descriptor.supports_tool_calling if descriptor.supports_tool_calling is not None else 'unknown'}"
+              f"\n  Current: {'YES' if current_match else 'NO'}\n  Default: {'YES' if default else 'NO'}")
+    print(f"\nDeepSeek model cache: {registry.cache_status}; age={registry.cache_age_seconds} seconds"
+          "\nUse /model refresh to explicitly contact the DeepSeek model-list endpoint."
+          "\n===================================================")
+    if current:
+        print("Current model: " + _model_name(current.get("provider_id"), current.get("model_id")))
+
+
+def _save_model_binding(current, descriptor, *, thinking=False, effort=None, cloud_consent=False):
+    args = ["session", "set-model", current["id"], descriptor.provider_id,
+            descriptor.model_id, "--thinking", "on" if thinking else "off"]
+    if effort:
+        args.extend(["--effort", effort])
+    if cloud_consent:
+        args.append("--cloud-consent")
+    return _call(*args)["result"]
+
+
+def _switch_model(model_key, current):
+    if not current:
+        raise ValueError("请先选择或新建会话。")
+    registry = _registry()
+    if model_key == "default":
+        model_key = "qwen-local"
+    if model_key in {"qwen-local", "qwen3.5-4b"}:
+        from .model_registry import LOCAL_QWEN, check_qwen_identity
+        api_key = os.environ.get("AGENTFORGE_LLAMA_API_KEY")
+        if not api_key:
+            raise ValueError("本地 Qwen 认证未配置；当前会话模型保持不变。")
+        check_qwen_identity(_QWEN_ENDPOINT, api_key, LOCAL_QWEN.model_id)
+        updated = _save_model_binding(current, LOCAL_QWEN)
+        print("已切换到 Qwen Local；会话历史、摘要和记忆已保留。")
+        return updated
+    if model_key == "offline":
+        updated = _save_model_binding(current, registry.get("offline"))
+        print("已切换到 Offline Evidence；没有模型网络请求。")
+        return updated
+
+    # A cloud model switch is an explicit user action and a separate consent.
+    print("切换到 DeepSeek 会把当前问题、相关源码证据以及必要的会话历史和获批记忆发送到云端。")
+    if input("确认允许本会话将上述内容发送给 DeepSeek？输入 YES 确认：").strip() != "YES":
+        print("已取消；原模型绑定保持不变。")
+        return current
+    client, _source = _deepseek_client()
+    refreshed = registry.refresh_deepseek(client)
+    descriptor = next((item for item in refreshed if item.model_id == model_key), None)
+    if descriptor is None:
+        raise ValueError("DeepSeek 当前模型列表中没有该 ID；原会话绑定保持不变。")
+    if descriptor.context_window is None or descriptor.max_output_tokens is None:
+        raise ValueError("该模型缺少可验证的上下文或输出限制；原会话绑定保持不变。")
+    if descriptor.supports_tool_calling is None:
+        # Unknown stays unknown; no tool schema is sent for this model.
+        pass
+    updated = _save_model_binding(current, descriptor, cloud_consent=True)
+    print("已切换到 " + descriptor.display_name + "；云端数据许可已记录于当前会话。")
+    return updated
+
+
+def _update_thinking(current, *, thinking=None, effort=None):
+    if not current:
+        raise ValueError("请先选择或新建会话。")
+    registry = _registry()
+    descriptor = registry.get(current.get("model_id", "qwen-local"))
+    if descriptor.provider_id != "deepseek":
+        raise ValueError("当前模型不支持 Thinking 设置。")
+    new_thinking = bool(current.get("thinking_enabled")) if thinking is None else thinking
+    new_effort = (None if thinking is False else current.get("reasoning_effort")) if effort is None else effort
+    if new_thinking and descriptor.supports_thinking is not True:
+        raise ValueError("当前模型没有已确认的 Thinking 能力。")
+    if new_effort is not None and new_effort not in descriptor.supported_efforts:
+        raise ValueError("该模型不支持此 reasoning effort。")
+    if new_effort is not None:
+        new_thinking = True
+    updated = _save_model_binding(current, descriptor, thinking=new_thinking, effort=new_effort)
+    print(f"Thinking: {'on' if new_thinking else 'off'}; effort: {new_effort or 'default'}")
+    return updated
 
 
 def _call(*args):
@@ -26,19 +173,24 @@ def main():
         current = config["result"]
         suggestions = []
         chroma_enabled = os.environ.get("AGENTFORGE_CHROMA_ENABLED") == "1"
+        stream_enabled = False
         repository = config["repository"]
         print("当前仓库：" + repository)
         print("命令：/new 标题、/list、/switch 编号、/rename 标题、/history、/delete、"
               "/repo list|register 路径|switch 编号或ID|index [ID或路径]|rebuild [ID或路径]|remove ID、"
               "/memory list|suggest|save|approve|update|revoke|sync|rebuild、/memory global list|approve ID|revoke ID、"
-              "/chroma status|index|rebuild|on|off、/exit")
+              "/chroma status|index|rebuild|on|off、/modellist、/model [ID|default|refresh]、"
+              "/model auth set deepseek|status|remove deepseek、/thinking on|off、/effort low|high|max、"
+              "/cloud-consent status|revoke、/stream on|off、/help、/exit")
         while True:
             config = _call("session", "current")
             if config["repository"] != repository:
                 repository = config["repository"]
                 print("索引仓库已切换：" + repository)
             current = config["result"]
-            print("\n当前会话：" + (current["title"] if current else "未选择"))
+            model_label = (_model_name(current.get("provider_id"), current.get("model_id"))
+                           if current else "Qwen Local（新会话默认）")
+            print("\n当前会话：" + (current["title"] if current else "未选择") + " | 模型：" + model_label)
             line = input("你：").strip()
             if not line:
                 continue
@@ -49,6 +201,84 @@ def main():
                     sessions = _call("session", "list")["result"]
                     for i, item in enumerate(sessions, 1):
                         print(f"{i}. {item['title']} ({item['id']})")
+                elif line == "/help":
+                    print("/modellist：列出本机模型与已缓存的云端模型")
+                    print("/model：查看当前模型；/model <ID> 切换；/model default 返回 Qwen；/model refresh 刷新 DeepSeek 模型列表")
+                    print("/model auth set deepseek、/model auth status、/model auth remove deepseek：安全管理密钥")
+                    print("/thinking on|off 与 /effort low|high|max：仅限模型已确认支持时使用")
+                    print("/cloud-consent status|revoke：查看或撤销当前会话的云端数据许可")
+                    print("/stream on|off：DeepSeek SSE 草稿流；最终回答仍需通过引用校验")
+                elif line == "/modellist":
+                    _show_model_list(current)
+                elif line == "/model":
+                    if not current:
+                        print("请先选择或新建会话。")
+                    else:
+                        print(f"当前模型：{_model_name(current.get('provider_id'), current.get('model_id'))} "
+                              f"({current.get('provider_id')} / {current.get('model_id')})")
+                        if current.get("provider_id") == "deepseek":
+                            print("Thinking: " + ("on" if current.get("thinking_enabled") else "off")
+                                  + "; effort: " + (current.get("reasoning_effort") or "default"))
+                elif line.startswith("/model auth "):
+                    parts = line.split()
+                    valid_status = parts == ["/model", "auth", "status"]
+                    valid_target_action = (len(parts) == 4 and parts[3] == "deepseek"
+                                           and parts[2] in {"set", "remove"})
+                    if not (valid_status or valid_target_action):
+                        raise ValueError("用法：/model auth set deepseek、/model auth status、/model auth remove deepseek")
+                    from .credential_store import CredentialStore
+                    credentials = CredentialStore()
+                    if parts[2] == "set":
+                        credentials.set_interactive()
+                        print("DeepSeek 密钥已通过当前 Windows 用户的 DPAPI 保护保存；不会显示密钥内容。")
+                    elif parts[2] == "status":
+                        state = credentials.status()
+                        print(f"DeepSeek 密钥：{'已配置' if state['configured'] else '未配置'}；来源：{state['source']}；"
+                              f"本机加密凭据：{'存在' if state['stored_credential_present'] else '不存在'}。")
+                    else:
+                        removed = credentials.remove()
+                        state = credentials.status()
+                        print(f"已移除本机 DPAPI 凭据：{'是' if removed else '否'}；当前有效来源：{state['source']}。")
+                elif line == "/model refresh":
+                    client, source = _deepseek_client()
+                    models = _registry().refresh_deepseek(client)
+                    print(f"已从 DeepSeek 刷新 {len(models)} 个模型；密钥来源：{source}。")
+                    for model in models:
+                        print(f"{model.model_id}: context={model.context_window or 'unknown'}, "
+                              f"max_output={model.max_output_tokens or 'unknown'}, "
+                              f"thinking={model.supports_thinking if model.supports_thinking is not None else 'unknown'}, "
+                              f"tools={model.supports_tool_calling if model.supports_tool_calling is not None else 'unknown'}")
+                elif line.startswith("/model "):
+                    current = _switch_model(line[len("/model "):].strip(), current)
+                elif line == "/thinking on" or line == "/thinking off":
+                    current = _update_thinking(current, thinking=line.endswith("on"))
+                elif line.startswith("/effort "):
+                    effort = line[len("/effort "):].strip()
+                    if effort not in {"low", "high", "max"}:
+                        raise ValueError("用法：/effort low|high|max")
+                    current = _update_thinking(current, effort=effort)
+                elif line == "/cloud-consent status":
+                    if not current:
+                        raise ValueError("请先选择或新建会话。")
+                    consent = current.get("cloud_consent_at")
+                    print("当前会话云端数据许可：" + ("已授权 " + str(consent) if consent else "未授权"))
+                elif line == "/cloud-consent revoke":
+                    if not current:
+                        raise ValueError("请先选择或新建会话。")
+                    result = _call("session", "revoke-cloud-consent", current["id"])["result"]
+                    current = result
+                    print("已撤销当前会话的云端数据许可；DeepSeek 请求将被阻止，模型绑定未自动切换。")
+                elif line == "/stream on":
+                    if not current or current.get("provider_id") != "deepseek":
+                        raise ValueError("当前会话模型不支持已确认的 DeepSeek 流式输出。")
+                    descriptor = _registry().get(current.get("model_id", ""))
+                    if descriptor.supports_streaming is not True:
+                        raise ValueError("当前 DeepSeek 模型的流式能力未知或不支持。")
+                    stream_enabled = True
+                    print("DeepSeek SSE 草稿显示已启用；草稿标为未验证，最终回答仍需通过引用校验。")
+                elif line == "/stream off":
+                    stream_enabled = False
+                    print("DeepSeek SSE 草稿显示已关闭。")
                 elif line == "/repo list":
                     repositories = _call("repo", "list")["repositories"]
                     for index, item in enumerate(repositories, 1):
@@ -191,12 +421,23 @@ def main():
                     print("请先输入 /new 标题 新建会话，或用 /list 和 /switch 编号切换会话。")
                 else:
                     args = ["ask", line, "--conversation-id", current["id"],
-                        "--provider", "llama-server", "--base-url", "http://127.0.0.1:56572/v1/chat/completions",
-                        "--model", "qwen3.5-4b", "--read-timeout", "120"]
+                        "--read-timeout", "120"]
+                    if current.get("provider_id") == "deepseek":
+                        args.extend(["--provider", "deepseek", "--model", current["model_id"],
+                                     "--thinking", "on" if current.get("thinking_enabled") else "off"])
+                        if current.get("reasoning_effort"):
+                            args.extend(["--effort", current["reasoning_effort"]])
+                        if stream_enabled:
+                            args.append("--stream")
+                    elif current.get("provider_id") == "llama-server":
+                        args.extend(["--provider", "llama-server", "--base-url", _QWEN_ENDPOINT,
+                                     "--model", current.get("model_id", "qwen3.5-4b")])
+                    else:
+                        args.extend(["--provider", "offline"])
                     if chroma_enabled:
                         args.append("--use-chroma")
                     presentation.main(args)
-            except (ValueError, KeyError) as exc:
+            except (ValueError, KeyError, AgentForgeError, OSError, RuntimeError) as exc:
                 print(f"操作失败：{exc}")
         return 0
     except (ValueError, EOFError, KeyboardInterrupt) as exc:

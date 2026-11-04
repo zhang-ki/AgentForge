@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "task": "AF-012 1.2 Multi-Model Support",
+  "created_at": "2026-11-04",
+  "status": "PARTIAL",
+  "branch": "feature/1.1-core",
+  "git_actions": {
+    "branch_switched": false,
+    "commit_created": false,
+    "push_performed": false,
+    "dirty_worktree_preserved": true
+  },
+  "implementation": {
+    "qwen_local_default": "implemented_offline",
+    "offline_provider": "retained",
+    "deepseek_model_registry_and_discovery": "implemented_offline_live_not_measured",
+    "deepseek_chat_provider": "implemented_offline_live_not_measured",
+    "reasoning_content_separation": "implemented_offline_tested_live_not_measured",
+    "streaming_and_usage_parsing": "implemented_offline_tested_live_not_measured",
+    "restricted_read_only_tool_planner": "implemented_offline_tested_live_not_measured",
+    "session_model_binding": "implemented_with_additive_migration",
+    "local_alembic_head": "af012mm_004",
+    "formal_database_migration": "not_measured",
+    "credential_storage": "implemented_dpapi_and_environment_override",
+    "live_credential_status": "not_measured",
+    "token_budget": "implemented_model_metadata_budget_with_estimated_fallback",
+    "exact_model_tokenizer": "not_measured"
+  },
+  "offline_tests": {
+    "python": "3.12.7",
+    "coverage_py": "7.17.0",
+    "full_suite": {
+      "command": ".agentforge\\af012-venv\\Scripts\\python.exe -X utf8 -B -m coverage run --data-file=coverage\\AF012_MULTIMODEL_FINAL_20261104.coverage --branch --source=agentforge -m unittest discover -s tests -v",
+      "tests_run": 520,
+      "passed": 514,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 6,
+      "skip_reasons": [
+        "Windows directory symlink creation privilege unavailable",
+        "Windows file symlink creation privilege unavailable",
+        "Windows hard-link access denied",
+        "Windows post-scan hard-link creation access denied",
+        "Windows post-scan symlink replacement privilege unavailable",
+        "Windows junction creation access denied"
+      ],
+      "exit_code": 0,
+      "log": "coverage/AF012_MULTIMODEL_FINAL_FULL_TESTS_20261104.log"
+    },
+    "core_forward_order": {
+      "tests_run": 80,
+      "passed": 80,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "log": "coverage/AF012_MULTIMODEL_CORE_FORWARD_20261104.log"
+    },
+    "core_reverse_order": {
+      "tests_run": 80,
+      "passed": 80,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "log": "coverage/AF012_MULTIMODEL_CORE_REVERSE_20261104.log"
+    },
+    "cli_help_exit_code": 0
+  },
+  "coverage": {
+    "scope": "all 65 files under agentforge",
+    "branch_measurement": true,
+    "new_exclusion_rules": false,
+    "statements": 9317,
+    "covered_statements": 8124,
+    "line_coverage_percent": 87.19544917892026,
+    "branches": 3622,
+    "covered_branches": 2879,
+    "branch_coverage_percent": 79.48647156267256,
+    "targets": {
+      "all_package_lines_percent": 90,
+      "all_package_branches_percent": 85,
+      "met": false
+    },
+    "modules": {
+      "agentforge/model_registry.py": {"line_percent": 100.0, "branch_percent": 100.0},
+      "agentforge/credential_store.py": {"line_percent": 100.0, "branch_percent": 100.0},
+      "agentforge/token_budget.py": {"line_percent": 100.0, "branch_percent": 100.0},
+      "agentforge/providers/deepseek.py": {"line_percent": 100.0, "branch_percent": 100.0},
+      "agentforge/providers/deepseek_agent.py": {"line_percent": 100.0, "branch_percent": 100.0},
+      "agentforge/providers/llama_server.py": {"line_percent": 95.71, "branch_percent": 80.85}
+    },
+    "machine_report": "coverage/AF012_MULTIMODEL_FINAL_RESULTS_20261104.json",
+    "text_report": "coverage/AF012_MULTIMODEL_FINAL_COVERAGE_REPORT_20261104.log"
+  },
+  "host_acceptance": {
+    "runner": "AF012_MULTIMODEL_HOST_ACCEPTANCE.ps1",
+    "result_file": "AF012_MULTIMODEL_HOST_RESULT_b20b34b0582247a3b6147074844444df.json",
+    "status": "BLOCKED",
+    "failure_stage": "environment",
+    "failure_code": "network_disabled_execution_environment",
+    "environment_policy": "CODEX_SANDBOX_NETWORK_DISABLED=1",
+    "discovery_requests": 0,
+    "chat_requests": {"attempted": 0, "sent": 0, "succeeded": 0, "failed": 0, "retries": 0},
+    "services_started_or_stopped": false,
+    "formal_data_modified": false,
+    "checks": {
+      "deepseek_live_discovery": "not_measured",
+      "deepseek_live_chat": "not_measured",
+      "qwen_live_acceptance_after_changes": "not_measured",
+      "postgresql_host_migration_and_restart": "not_measured",
+      "chroma_host_persistence": "not_measured",
+      "eleven_case_live_rag": "not_measured",
+      "thirty_turn_live_context": "not_measured",
+      "desktop_restart": "not_measured",
+      "real_api_usage_and_billing": "not_measured"
+    }
+  },
+  "formal_user_data_hash_audit": "not_measured",
+  "historical_acceptance_records_modified": false,
+  "limitations": [
+    "No live DeepSeek or changed-code Qwen requests were sent.",
+    "The formal PostgreSQL database has not been confirmed at migration af012mm_004.",
+    "Whole-package line and branch coverage targets remain unmet.",
+    "The ordinary-Windows host runner is a bounded smoke test and does not implement the full 1.2 acceptance matrix.",
+    "A model-specific tokenizer was not available; fallback token counts are estimates."
+  ]
+}

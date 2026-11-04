@@ -14,11 +14,12 @@ import sqlite3
 import time
 from typing import Any, Protocol
 
-from .answer_contract import VerifiedAnswerContract, build_offline_contract
+from .answer_contract import VerifiedAnswerContract, build_offline_contract, verify_generated_answer
 from .chunker import split_source_lines
-from .context import build_context
+from .context import build_context, validate_model_citations
 from .errors import AgentForgeError
 from .indexer import index_repository
+from .models import Answer
 from .providers.offline import OfflineProvider
 from .product_retrieval import ProductRetriever
 from .retriever import search
@@ -127,6 +128,10 @@ class ReadOnlyToolbox:
         self.limits = limits or ScanLimits()
         self.last_search_results = []
         self.last_retrieval_outcome = None
+        self._agent_search_candidates = []
+        self._agent_search_hashes = set()
+        self.last_evidence_source_ids = {}
+        self.last_candidate_by_citation = {}
         self.product_retriever = ProductRetriever(
             store, self.repository, limits=self.limits, scan_report=report,
         )
@@ -162,7 +167,23 @@ class ReadOnlyToolbox:
         top_k = _bounded_integer(arguments.get("top_k", 5), "top_k", 1, 100)
         outcome = self.product_retriever.search(query, top_k=top_k)
         self.last_retrieval_outcome = outcome
-        self.last_search_results = [item.as_search_result() for item in outcome.candidates]
+        for candidate in outcome.candidates:
+            if candidate.content_hash in self._agent_search_hashes:
+                continue
+            if len(self._agent_search_candidates) >= 20:
+                break
+            self._agent_search_hashes.add(candidate.content_hash)
+            self.last_evidence_source_ids[candidate.content_hash] = f"E{len(self._agent_search_candidates) + 1}"
+            self._agent_search_candidates.append(candidate)
+        cumulative = self._agent_search_candidates
+        context = build_context(query, [item.as_search_result() for item in cumulative],
+                                max_candidates=20, budget=6000,
+                                evidence_source_ids=self.last_evidence_source_ids)
+        by_hash = {item.content_hash: item for item in cumulative}
+        self.last_search_results = [source.result for source in context.evidence]
+        self.last_candidate_by_citation.update({
+            source.citation: by_hash[source.result.content_hash] for source in context.evidence
+        })
         return {
             "query": query,
             "route": outcome.decision.route,
@@ -171,7 +192,9 @@ class ReadOnlyToolbox:
             "route_confidence": outcome.decision.confidence,
             "unavailable_channels": list(outcome.unavailable_channels),
             "uncertainty": outcome.uncertainty,
-            "results": [asdict(item) for item in outcome.candidates],
+            "results": [{**asdict(by_hash[source.result.content_hash]),
+                         "source_id": source.source_id, "citation": source.citation}
+                        for source in context.evidence],
         }
 
     def _tool_read(self, raw: Any) -> dict:
@@ -348,6 +371,7 @@ class AgentLoop:
             run_timeout_seconds=self.run_timeout_seconds,
             allowed_tools=tuple(sorted(ALLOWED_AGENT_TOOLS)), audit=tuple(audit),
             answer=answer, citations=citations,
+            offline=getattr(self.planner, "final_answer", None) is None,
             retrieval=retrieval, answer_contract=contract,
         )
 
@@ -355,8 +379,11 @@ class AgentLoop:
         self, objective: str,
     ) -> tuple[str, tuple[str, ...], VerifiedAnswerContract, dict[str, Any]]:
         results = getattr(self.toolbox, "last_search_results", [])
-        context = build_context(objective, results, max_candidates=5, budget=6000)
-        answer = OfflineProvider().answer(context)
+        context = build_context(objective, results, max_candidates=20, budget=6000,
+                                evidence_source_ids=getattr(self.toolbox, "last_evidence_source_ids", None))
+        generated = getattr(self.planner, "final_answer", None)
+        answer = (Answer(generated, (), False) if isinstance(generated, str) and generated.strip()
+                  else OfflineProvider().answer(context))
         outcome = getattr(self.toolbox, "last_retrieval_outcome", None)
         if outcome is None:
             route = "uncertain"
@@ -380,8 +407,19 @@ class AgentLoop:
                 "uncertainty": uncertainty,
                 "unavailable_channels": list(outcome.unavailable_channels),
             }
-        contract = build_offline_contract(
-            answer, context, route=route, route_confidence=confidence,
-            candidate_by_citation=candidates, uncertainty=uncertainty,
-        )
+        candidates.update(getattr(self.toolbox, "last_candidate_by_citation", {}))
+        if generated and context.evidence:
+            citations = validate_model_citations(generated, context)
+            answer = Answer(generated, citations, False)
+            contract = verify_generated_answer(
+                answer, context, route=route, route_confidence=confidence,
+                candidate_by_citation=candidates, uncertainty=uncertainty,
+            )
+        else:
+            # No request-local evidence means the model text is never surfaced.
+            answer = OfflineProvider().answer(context)
+            contract = build_offline_contract(
+                answer, context, route=route, route_confidence=confidence,
+                candidate_by_citation=candidates, uncertainty=uncertainty,
+            )
         return answer.text, answer.citations, contract, retrieval

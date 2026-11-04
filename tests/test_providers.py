@@ -180,7 +180,9 @@ class LlamaClientTests(unittest.TestCase):
         response = Mock()
         response.status = status
         response.read.return_value = body if body is not None else json.dumps(
-            {"choices": [{"message": {"content": "mocked response"}}]}
+            {"id": "local-request-1", "choices": [{"message": {"content": "mocked response"}}],
+             "usage": {"prompt_tokens": 12, "completion_tokens": 4, "total_tokens": 16,
+                       "prompt_tokens_details": {"cached_tokens": 3}}}
         ).encode()
         connection.getresponse.return_value = response
         return connection
@@ -247,6 +249,9 @@ class LlamaClientTests(unittest.TestCase):
             {"enable_thinking": False}, request_body["chat_template_kwargs"]
         )
         self.assertEqual(client.request_stats()["succeeded"], 1)
+        self.assertEqual("local-request-1", client.request_stats()["last_request_id"])
+        self.assertEqual({"prompt_tokens": 12, "completion_tokens": 4, "total_tokens": 16,
+                          "prompt_cache_hit_tokens": 3}, client.request_stats()["last_usage"])
         self.assertEqual(client.request_stats()["sent"], 1)
         self.assertEqual(client.request_stats()["retries"], 0)
         connection.close.assert_called_once()

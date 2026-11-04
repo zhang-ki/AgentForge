@@ -162,3 +162,25 @@ class ReadOnlyAgentLoopTests(LocalTestCase):
         self.assertIn("--max-steps", output.getvalue())
         self.assertIn("--tool-timeout", output.getvalue())
         self.assertEqual(errors.getvalue(), "")
+
+    def test_search_tool_ids_match_final_agent_context_and_stay_stable_across_queries(self):
+        from agentforge.context import build_context, validate_model_citations
+        self.write("a.py", "def alpha():\n    return 'alpha_marker_unique'\n")
+        self.write("b.py", "def beta():\n    return 'beta_marker_unique'\n")
+        with IndexStore(":memory:") as store:
+            toolbox = ReadOnlyToolbox(self.root, store)
+            toolbox.execute(ToolCall("index", {"repository": str(self.root)}, "test"))
+            first = toolbox.execute(ToolCall("search", {"query": "alpha_marker_unique"}, "test"))
+            self.assertTrue(first["results"])
+            first_ids = {item["relative_path"]: item["source_id"] for item in first["results"]}
+            second = toolbox.execute(ToolCall("search", {"query": "beta_marker_unique"}, "test"))
+            self.assertTrue(second["results"])
+            second_ids = {item["relative_path"]: item["source_id"] for item in second["results"]}
+            self.assertEqual(first_ids["a.py"], second_ids["a.py"])
+            self.assertNotEqual(second_ids["a.py"], second_ids["b.py"])
+            context = build_context("find both", toolbox.last_search_results,
+                                    max_candidates=20, budget=6000,
+                                    evidence_source_ids=toolbox.last_evidence_source_ids)
+            self.assertEqual({"a.py", "b.py"}, {item.result.relative_path for item in context.evidence})
+            citations = validate_model_citations("alpha is here [E1] and beta is there [E2]", context)
+            self.assertEqual(2, len(citations))

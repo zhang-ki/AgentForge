@@ -20,7 +20,10 @@ class ConversationProviderTests(unittest.TestCase):
             {"attempted": 1, "sent": 1, "succeeded": 1, "failed": 0, "retries": 0,
              "last_http_status": 200, "last_finish_reason": "stop"},
         ]
-        callback = _semantic_summary_callback(SimpleNamespace(client=client, model="test-model"))
+        callback = _semantic_summary_callback(SimpleNamespace(
+            client=client, model="test-model",
+            summary_text=lambda messages, *, max_output_tokens: client.chat(
+                messages, model="test-model", max_output_tokens=max_output_tokens)))
         callback([{"id": "m1", "sequence": 8, "role": "summary", "content": "old summary"},
                   {"id": "m2", "sequence": 9, "role": "user", "content": "Correction: use new value."}])
         sent = client.chat.call_args.args[0]
@@ -46,7 +49,10 @@ class ConversationProviderTests(unittest.TestCase):
         from types import SimpleNamespace
         from agentforge.cli import _semantic_summary_callback
         client = Mock()
-        callback = _semantic_summary_callback(SimpleNamespace(client=client, model="test-model"))
+        callback = _semantic_summary_callback(SimpleNamespace(
+            client=client, model="test-model",
+            summary_text=lambda messages, *, max_output_tokens: client.chat(
+                messages, model="test-model", max_output_tokens=max_output_tokens)))
         with self.assertRaisesRegex(ValueError, "bounded prompt size"):
             callback([{"id": "m1", "sequence": 1, "role": "user", "content": "x" * 5000}])
         client.chat.assert_not_called()
@@ -59,7 +65,10 @@ class ConversationProviderTests(unittest.TestCase):
         client = Mock()
         client.chat.return_value = "An incomplete summary..."
         client.request_stats.return_value = {"last_finish_reason": "length"}
-        callback = _semantic_summary_callback(SimpleNamespace(client=client, model="test-model"))
+        callback = _semantic_summary_callback(SimpleNamespace(
+            client=client, model="test-model",
+            summary_text=lambda messages, *, max_output_tokens: client.chat(
+                messages, model="test-model", max_output_tokens=max_output_tokens)))
         with self.assertRaisesRegex(ValueError, "truncated"):
             callback([{"sequence": 1, "role": "user", "content": "important"}])
         self.assertEqual(1, client.chat.call_count)

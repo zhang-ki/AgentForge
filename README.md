@@ -1,8 +1,10 @@
 # AgentForge
 
-> `feature/1.1-core` development snapshot. The published MVP 1.0 remains frozen on `main` and tag `v1.0.0-mvp`; the changes described below are not yet released.
+> `main` and `v1.0.0-mvp` remain the frozen MVP 1.0 release. The current local development branch is `feature/1.1-core`; its 1.1/1.2 additions are not released.
 
-The latest 1.1 real-host attempt is preserved in `AF011_1_FULL_HOST_RESULT_d1adc4d20278413a808b465c3eeade4d.json`. It completed 19 of 30 answer turns; 19 answer-generation requests and 7 semantic-summary requests all returned HTTP 200, then turn 20 stopped before its answer request because the accumulated summary exceeded the conversation context budget. The offline code now stores a compact rolling replacement summary, compacts oversized legacy summaries when semantic summarization is available, and raises the bounded context budget from 3,000 to 3,500 UTF-8 bytes. Offline tests pass; this change still needs real-host verification. Earlier failed attempts remain preserved. The branch remains **PARTIAL** and is not a completed 1.1 release.
+The branch now contains the AF-012 multi-model implementation: Qwen Local remains the default, DeepSeek is an explicit cloud option with per-conversation binding and consent, credentials are protected with Windows DPAPI, and context budgets use model metadata with an explicitly labeled estimate when a tokenizer is unavailable. Offline tests cover the implementation. Current acceptance is **PARTIAL**: this environment blocks network access, so live DeepSeek discovery, live multi-model calls, and fresh PostgreSQL/Chroma/Qwen acceptance have not been performed. See [Multi-Model Acceptance](AF012_MULTIMODEL_ACCEPTANCE_REPORT_20261104.md) and [Model Management](MODEL_MANAGEMENT.md).
+
+The latest 1.1 real-host attempt is preserved in `AF011_1_FULL_HOST_RESULT_d1adc4d20278413a808b465c3eeade4d.json`. It completed 19 of 30 answer turns; 19 answer-generation requests and 7 semantic-summary requests all returned HTTP 200, then turn 20 stopped before its answer request because the accumulated summary exceeded the conversation context budget. The offline code now stores a compact rolling replacement summary and compacts oversized legacy summaries when semantic summarization is available. That historical 1.1 outcome is not evidence of a fresh 1.2 host pass; earlier failed attempts remain preserved.
 
 AgentForge is a local, read-only code assistant. It indexes one explicitly selected repository, retrieves source evidence, and can ask a locally hosted Qwen model to explain that evidence. It also provides persistent conversations and approval-based cross-session memory.
 
@@ -13,6 +15,8 @@ AgentForge is a local, read-only code assistant. It indexes one explicitly selec
 - **PostgreSQL** stores repository-scoped conversations, messages, history excerpts, approved memories, provenance, audit events, and vector-sync outbox records.
 - **Chroma** stores rebuildable code and approved-memory vectors. A vector candidate is checked against the authoritative SQLite or PostgreSQL record before use.
 - **Qwen through llama-server** provides local chat and embedding APIs. AgentForge sends requests only to explicitly configured loopback endpoints; the model files and runtime are not included.
+- **DeepSeek** is an optional, explicitly selected cloud chat provider. Model metadata is fetched only by `/model refresh`; switching a conversation to a cloud model requires a separate confirmation that its question, relevant code evidence, and necessary history or approved memory may be sent to the cloud.
+- **Model Registry and Token Budget Manager** keep model capability metadata separate from connection state and calculate input budgets from the selected model's context and output limits. Counts are labeled `estimated` unless an exact tokenizer is configured; UTF-8 bytes are not presented as token counts.
 
 Retrieval follows: repository snapshot → intent-aware lexical/symbol/relationship retrieval and optional Chroma candidates → source identity and content checks → bounded context → local Qwen → request-local citation validation and Answer Contract. Historical experiments did not establish that RRF improves retrieval, so RRF, reranking, and a production similarity-based refusal threshold are not enabled by default.
 
@@ -59,6 +63,26 @@ The launcher verifies the pinned embedding model/runtime assets before starting 
 5. For long-term memory, use `/memory suggest`, review the proposal, `/memory save 1`, then explicitly `/memory approve <id>` and `/memory sync`. A model proposal is not saved as active memory until approved. Revocation and expiry remove it from retrieval after synchronization/validity checks. If a removed repository is registered and indexed again, use `/memory rebuild` to explicitly requeue its approved repository-scoped memories for vector synchronization.
 
 `Start-AgentForge.cmd` starts the console without starting the models. `Start-Qwen.cmd` and `Start-Qwen-Embedding.cmd` can start the services individually. PostgreSQL is not started or stopped by AgentForge.
+
+## Model management (1.2 development branch)
+
+The default remains Qwen Local. In the interactive console:
+
+```text
+/modellist
+/model
+/model refresh
+/model auth status
+/model auth set deepseek
+/model <model-id shown by /modellist>
+/thinking on
+/effort high
+/model default
+```
+
+`/model refresh` explicitly contacts DeepSeek to retrieve public model metadata. `/model auth set deepseek` asks for the key without echoing it and stores it using DPAPI for the current Windows account. `DEEPSEEK_API_KEY` is supported as an environment override; `/model auth status` shows only the source, never the key. A cloud model switch displays the data-sharing notice and requires typing `YES`; declining leaves the session binding unchanged. Use `/model default` to return to Qwen Local. See [Model Management](MODEL_MANAGEMENT.md) for configuration, capability limits, token estimates, and failure handling.
+
+Do not reuse a key previously disclosed in chat. Configure a newly issued key locally. The current Codex environment cannot make live API requests; [the bounded host smoke runner](AF012_MULTIMODEL_HOST_ACCEPTANCE.ps1) asks for explicit permission before sending synthetic code and questions, and does not replace full 1.2 acceptance.
 
 ## Index and storage
 

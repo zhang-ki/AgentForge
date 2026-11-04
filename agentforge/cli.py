@@ -52,6 +52,29 @@ def _positive_timeout_argument(value: str) -> float:
     return _timeout_argument(value, "tool-timeout", 0, 120, inclusive_minimum=False)
 
 
+def _model_input_budget(provider, requested_output_tokens, requested_byte_cap=None,
+                        *, provider_id=None, model_id=None):
+    if isinstance(provider, OfflineProvider) or provider_id == "offline":
+        return {"input_budget": requested_byte_cap or 6000, "output_reserve": 0,
+                "safety_margin": 0, "context_window": None, "estimate_kind": "UTF-8 bytes; offline provider"}
+    from .model_registry import ModelRegistry
+    from .token_budget import TokenBudgetManager
+    descriptor = getattr(provider, "descriptor", None)
+    if descriptor is None:
+        registry = ModelRegistry()
+        if provider_id == "deepseek":
+            descriptor = registry.get(model_id)
+        else:
+            descriptor = registry.get("qwen-local")
+    budget = TokenBudgetManager().budget(descriptor, requested_output_tokens=requested_output_tokens)
+    input_budget = budget.input_budget if requested_byte_cap is None else min(budget.input_budget, requested_byte_cap)
+    if input_budget < 1:
+        raise ValueError("Requested byte cap leaves no input budget for the selected model.")
+    return {"input_budget": input_budget, "output_reserve": budget.output_reserve,
+            "safety_margin": budget.safety_margin, "context_window": budget.context_window,
+            "estimate_kind": budget.estimate_kind}
+
+
 def create_provider(
     provider_name: str = "offline",
     base_url: str | None = None,
@@ -59,17 +82,51 @@ def create_provider(
     api_key: str | None = None,
     connect_timeout: float = 2.0, read_timeout: float = 60.0,
     total_timeout: float = 180.0, max_output_tokens: int = 256,
+    deepseek_api_key: str | None = None, thinking: bool = False,
+    effort: str | None = None, stream: bool = False,
 ):
     """创建用户明确选择的 ask Provider；构造客户端本身不会发起请求。"""
     if provider_name == "offline":
         if (base_url is not None or model is not None or connect_timeout != 2.0
-                or read_timeout != 60.0 or total_timeout != 180.0 or max_output_tokens != 256):
+                or read_timeout != 60.0 or total_timeout != 180.0 or max_output_tokens != 256
+                or thinking or effort is not None or stream):
             raise ValueError(
-                "llama-server endpoint, model, timeout and output-limit options require --provider llama-server."
+                "Model, thinking, timeout and output options require an explicit model provider."
             )
         return OfflineProvider()
+    if provider_name == "deepseek":
+        if base_url is not None:
+            raise ValueError("DeepSeek uses its fixed official HTTPS endpoint; --base-url is not accepted.")
+        from .credential_store import CredentialStore
+        key, source = CredentialStore().resolve()
+        if deepseek_api_key is not None:
+            key, source = deepseek_api_key, "environment"
+        if not key:
+            raise ValueError("DeepSeek is not configured; use /model auth set deepseek first.")
+        if model is None:
+            raise ValueError("--model is required for --provider deepseek.")
+        from .model_registry import ModelRegistry
+        descriptor = ModelRegistry().get(model)
+        if descriptor.provider_id != "deepseek" or descriptor.model_id != model:
+            raise ValueError("The requested model is not a discovered DeepSeek model ID.")
+        if descriptor.context_window is None or descriptor.max_output_tokens is None:
+            raise ValueError("The discovered model lacks verified context-window metadata; refresh model information.")
+        if thinking and descriptor.supports_thinking is not True:
+            raise ValueError("Thinking capability is unknown or unsupported for this model.")
+        if stream and descriptor.supports_streaming is not True:
+            raise ValueError("Streaming capability is unknown or unsupported for this model.")
+        if effort is not None and effort not in descriptor.supported_efforts:
+            raise ValueError("The selected reasoning effort is not supported by this model.")
+        from .providers.deepseek import DeepSeekClient, DeepSeekProvider
+        client = DeepSeekClient(key, connect_timeout=connect_timeout,
+                                read_timeout=read_timeout, total_timeout=total_timeout)
+        client.set_credential_source(source)
+        return DeepSeekProvider(client, model, max_output_tokens=min(max_output_tokens, descriptor.max_output_tokens),
+                                thinking=thinking, effort=effort, stream=stream, descriptor=descriptor)
     if provider_name != "llama-server":
-        raise ValueError("Provider must be offline or llama-server.")
+        raise ValueError("Provider must be offline, llama-server or deepseek.")
+    if thinking or effort is not None or stream:
+        raise ValueError("Thinking, effort and streaming options are not configured for this local Qwen runtime.")
     if base_url is None or not base_url.strip():
         raise ValueError("--base-url is required for --provider llama-server; no endpoint is guessed.")
     if model is None or not model.strip():
@@ -86,7 +143,10 @@ def create_provider(
         if "timeout" in str(exc).lower():
             raise ValueError(str(exc)) from None
         raise ValueError(f"Invalid --base-url for llama-server: {exc}") from None
-    return LlamaServerProvider(client, model.strip())
+    provider = LlamaServerProvider(client, model.strip())
+    from .model_registry import ModelRegistry
+    provider.descriptor = ModelRegistry().get("qwen-local")
+    return provider
 
 
 def parser() -> argparse.ArgumentParser:
@@ -108,16 +168,25 @@ def parser() -> argparse.ArgumentParser:
             command.add_argument("--conversation-id", help="Persist and use this repository-scoped conversation UUID.")
             command.add_argument("--use-chroma", action="store_true",
                                  help="Use the persistent local Chroma code and approved-memory candidates.")
-            command.add_argument("--context-budget", type=int, default=6000, help="Conservative UTF-8-byte token proxy, not exact tokens.")
+            command.add_argument("--context-budget", type=int, default=None,
+                                 help="Optional UTF-8-byte evidence cap; default derives from the selected model's token window.")
             command.add_argument(
-                "--provider", choices=("offline", "llama-server"), default="offline",
-                help="offline (default, deterministic evidence summary) or llama-server (local model generation).",
+                "--provider", choices=("offline", "llama-server", "deepseek"), default=None,
+                help="offline (default), llama-server (local Qwen), or deepseek (explicit cloud API).",
             )
             command.add_argument(
                 "--base-url",
                 help="Explicit loopback HTTP URL for llama-server, for example http://<loopback-ip>:<port>/v1/chat/completions.",
             )
             command.add_argument("--model", help="Explicit llama-server model identifier; required for llama-server.")
+            command.add_argument("--thinking", choices=("on", "off"), default="off",
+                                 help="Explicit DeepSeek thinking mode; default: off.")
+            command.add_argument("--effort", choices=("low", "high", "max"),
+                                 help="DeepSeek thinking effort; requires --thinking on and model support.")
+            command.add_argument("--stream", action="store_true",
+                                 help="Receive DeepSeek response via SSE; final output is still shown only after evidence validation.")
+            command.add_argument("--allow-cloud-data", action="store_true",
+                                 help="Confirm this stateless request may send its question and retrieved evidence to DeepSeek.")
             command.add_argument(
                 "--connect-timeout", type=_connect_timeout_argument, default=2.0, metavar="SECONDS",
                 help="TCP connection timeout for llama-server (default: 2; greater than 0 and at most 120).",
@@ -129,7 +198,8 @@ def parser() -> argparse.ArgumentParser:
             _add_chat_limits(command)
             command.epilog = (
                 "For --provider llama-server, set AGENTFORGE_LLAMA_API_KEY in the process environment. "
-                "The key is never accepted as a command-line argument or saved by AgentForge."
+                "For DeepSeek, use the interactive /model auth set command or DEEPSEEK_API_KEY. "
+                "The key is never accepted as a command-line argument."
             )
     symbols = commands.add_parser("symbols", help="Query structured symbols from the current index.")
     symbols.add_argument("--name", help="Exact case-insensitive symbol name.")
@@ -152,6 +222,17 @@ def parser() -> argparse.ArgumentParser:
     agent.add_argument("query")
     agent.add_argument("--repo", required=True, help="Explicit repository root; no default scan path.")
     agent.add_argument("--top-k", type=int, default=5)
+    agent.add_argument("--provider", dest="agent_provider", choices=("offline", "deepseek"), default="offline",
+                       help="Use the deterministic offline planner or an explicitly authorized DeepSeek tool planner.")
+    agent.add_argument("--model", dest="agent_model", help="Previously discovered DeepSeek model ID.")
+    agent.add_argument("--thinking", choices=("on", "off"), default="off")
+    agent.add_argument("--effort", choices=("low", "high", "max"))
+    agent.add_argument("--stream", action="store_true", help="Use the bounded DeepSeek SSE protocol.")
+    agent.add_argument("--allow-cloud-data", action="store_true",
+                       help="Explicitly allow sending this objective and read-only tool results to DeepSeek.")
+    agent.add_argument("--connect-timeout", type=_connect_timeout_argument, default=2.0, metavar="SECONDS")
+    agent.add_argument("--read-timeout", type=_read_timeout_argument, default=60.0, metavar="SECONDS")
+    _add_chat_limits(agent)
     agent.add_argument("--max-steps", type=int, default=4, choices=range(1, 9), metavar="1..8")
     agent.add_argument(
         "--tool-timeout", type=_positive_timeout_argument, default=30.0, metavar="SECONDS",
@@ -204,7 +285,7 @@ def _provider_failure_diagnostic(provider):
     return diagnostic
 
 
-def main(argv=None) -> int:
+def main(argv=None, *, stream_callback=None) -> int:
     arguments = parser().parse_args(argv)
     engine = None
     provider = None
@@ -227,14 +308,29 @@ def main(argv=None) -> int:
         if arguments.command == "agent":
             from .repositories import open_index_for_repository
             with open_index_for_repository(arguments.repo, readonly=False) as store:
-                report = _run_offline_agent(arguments, store)
-                _print_json(asdict(report))
+                report, agent_provider = _run_selected_agent(arguments, store)
+                provider = agent_provider
+                payload = asdict(report)
+                if agent_provider is not None:
+                    payload["provider"] = agent_provider.provider_id
+                    payload["model_id"] = agent_provider.model
+                    payload["provider_request_stats"] = agent_provider.request_stats()
+                _print_json(payload)
                 return 0 if report.status == "completed" else 1
-        if arguments.command == "ask":
+        if arguments.command == "ask" and not arguments.conversation_id:
+            if arguments.provider is None and (
+                    arguments.base_url is not None or arguments.model is not None
+                    or arguments.read_timeout != 60.0 or arguments.connect_timeout != 2.0
+                    or arguments.total_timeout != 180.0 or arguments.thinking == "on"
+                    or arguments.effort is not None or arguments.stream):
+                raise ValueError("Model options require --provider llama-server or --provider deepseek.")
+            arguments.provider = arguments.provider or "offline"
             provider = create_provider(arguments.provider, arguments.base_url, arguments.model,
                 api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
                 connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
-                total_timeout=arguments.total_timeout, max_output_tokens=arguments.max_output_tokens)
+                total_timeout=arguments.total_timeout, max_output_tokens=arguments.max_output_tokens,
+                thinking=arguments.thinking == "on", effort=arguments.effort,
+                stream=arguments.stream)
         if arguments.command == "status" and not DATABASE_PATH.exists() and not REPOSITORY_CATALOG_PATH.exists():
             _print_json({"database": str(DATABASE_PATH), "exists": False, "files": 0, "chunks": 0, "indexed_at": None})
             return 0
@@ -256,8 +352,14 @@ def main(argv=None) -> int:
                     limit=arguments.limit,
                 )})
             elif arguments.command == "agent":
-                report = _run_offline_agent(arguments, store)
-                _print_json(asdict(report))
+                report, agent_provider = _run_selected_agent(arguments, store)
+                provider = agent_provider
+                payload = asdict(report)
+                if agent_provider is not None:
+                    payload["provider"] = agent_provider.provider_id
+                    payload["model_id"] = agent_provider.model
+                    payload["provider_request_stats"] = agent_provider.request_stats()
+                _print_json(payload)
                 return 0 if report.status == "completed" else 1
             elif arguments.command == "ask":
                 repository = store.metadata().get("repository")
@@ -267,6 +369,35 @@ def main(argv=None) -> int:
                 if arguments.conversation_id:
                     engine = _conversation_engine()
                     conversation_store, repo_id, rows, conversation = _load_conversation(engine, arguments.conversation_id, repository)
+                    bound_provider = conversation.get("provider_id")
+                    bound_model = conversation.get("model_id")
+                    if bound_provider is None:
+                        bound_provider = arguments.provider or "llama-server"
+                    if bound_model is None:
+                        bound_model = arguments.model or "qwen3.5-4b"
+                    if arguments.provider is None:
+                        arguments.provider, arguments.model = bound_provider, bound_model
+                    if arguments.provider == "deepseek" and not conversation.get("cloud_consent_at"):
+                        raise ValueError("This conversation has no cloud-data consent. Switch models and explicitly approve cloud sharing first.")
+                    if provider is None:
+                        arguments.provider, arguments.model = bound_provider, bound_model
+                        arguments.thinking = "on" if conversation.get("thinking_enabled") else "off"
+                        arguments.effort = conversation.get("reasoning_effort")
+                        if arguments.provider == "offline":
+                            provider = OfflineProvider()
+                    elif arguments.provider != bound_provider or (
+                            arguments.provider != "offline" and arguments.model != bound_model):
+                        raise ValueError("This session uses its persisted model. Switch it with /model before asking another provider.")
+                    if arguments.provider == "deepseek":
+                        if (conversation.get("provider_id") not in (None, "deepseek")
+                                or conversation.get("model_id") not in (None, arguments.model)):
+                            raise ValueError("The selected model differs from this session's saved binding; use /model to switch it first.")
+                        conversation["thinking_enabled"] = arguments.thinking == "on"
+                        conversation["reasoning_effort"] = arguments.effort
+                    elif conversation.get("provider_id") == "deepseek":
+                        raise ValueError("This session is bound to DeepSeek; use its saved model or switch the session back to Qwen.")
+                elif arguments.provider == "deepseek" and not arguments.allow_cloud_data:
+                    raise ValueError("Cloud use requires --allow-cloud-data for this stateless request.")
                 vector_retriever = None
                 chroma_client = None
                 if arguments.use_chroma:
@@ -292,13 +423,28 @@ def main(argv=None) -> int:
                 outcome, followup_symbol = _conversation_retrieval(outcome, retriever, conversation, arguments, store, rows if conversation else ())
                 selected = _context_candidates(outcome, conversation, store=store, retriever=retriever)
                 results = [item.as_search_result() for item in selected]
+                model_budget = _model_input_budget(
+                    provider, arguments.max_output_tokens, arguments.context_budget,
+                    provider_id=arguments.provider, model_id=arguments.model)
                 from .evidence_roles import required_evidence_roles, role_coverage
                 required_roles = required_evidence_roles(arguments.query)
                 context = build_context(
                     arguments.query, results,
                     max_candidates=max(arguments.top_k, len(required_roles)),
-                    budget=arguments.context_budget,
+                    budget=model_budget["input_budget"],
                 )
+                if results and not context.evidence:
+                    required_bytes = sum(len(item.text.encode("utf-8")) for item in results)
+                    raise ContextBudgetExceeded({
+                        "failure_code": "required_evidence_exceeds_model_input_budget",
+                        "required_bytes": required_bytes,
+                        "budget_bytes": model_budget["input_budget"],
+                        "components_bytes": {"question": len(arguments.query.encode("utf-8")),
+                                             "evidence": required_bytes,
+                                             "system": 0, "framing": 0},
+                        "content_saved": False,
+                        "estimate_kind": "UTF-8 bytes; model Tokenizer budget is separately marked",
+                    })
                 candidate_map = {item.citation: item for item in selected}
                 evidence_uncertainty = outcome.uncertainty or (
                     "The static configuration import is not proven as a runtime binding."
@@ -316,12 +462,23 @@ def main(argv=None) -> int:
                         + ". No model answer was requested."
                     )
                 evidence_gate_refusal = bool(
-                    role_gate_failure or (outcome.decision.confidence == "low" and evidence_uncertainty)
+                    not context.evidence or role_gate_failure
+                    or (outcome.decision.confidence == "low" and evidence_uncertainty)
                 )
+                # A request-local evidence refusal must not require a model
+                # endpoint or credentials: nothing is sent to a provider.
+                # Construct the selected provider only after the evidence gate.
+                if context.evidence and not evidence_gate_refusal and provider is None:
+                    provider = create_provider(arguments.provider, arguments.base_url, arguments.model,
+                        api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
+                        connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
+                        total_timeout=arguments.total_timeout, max_output_tokens=arguments.max_output_tokens,
+                        thinking=arguments.thinking == "on", effort=arguments.effort,
+                        stream=arguments.stream)
                 if conversation_store is not None and context.evidence and not evidence_gate_refusal:
                     summarizer = (_semantic_summary_callback(provider)
                                   if (context.evidence and not evidence_gate_refusal
-                                      and isinstance(provider, LlamaServerProvider)) else None)
+                                      and callable(getattr(provider, "summary_text", None))) else None)
                     rows, summary = conversation_store.prepare_history(
                         arguments.conversation_id, repo_id, summarizer=summarizer,
                         summary_model=provider.model if summarizer is not None else None,
@@ -349,9 +506,14 @@ def main(argv=None) -> int:
                     )
                     provider_mode = "evidence_gate_refusal"
                 else:
-                    answer = (provider.answer(context, conversation=conversation)
-                              if conversation is not None and isinstance(provider, LlamaServerProvider)
-                              else provider.answer(context))
+                    if isinstance(provider, OfflineProvider):
+                        answer = provider.answer(context)
+                    else:
+                        if stream_callback is None:
+                            answer = provider.answer(context, conversation=conversation, settings=conversation)
+                        else:
+                            answer = provider.answer(context, conversation=conversation, settings=conversation,
+                                                     on_content=stream_callback)
                     if answer.offline:
                         contract = build_offline_contract(
                             answer, context, route=outcome.decision.route,
@@ -375,14 +537,12 @@ def main(argv=None) -> int:
                                 getattr(exc, "diagnostic", None),
                             )
                             raise
-                        provider_mode = "llama-server"
+                        provider_mode = getattr(provider, "provider_id", "unknown")
                 validate_answer_contract(contract, context)
                 if conversation_store is not None:
-                    _persist_conversation(conversation_store, arguments, repo_id, answer, provider_mode)
-                request_stats = (
-                    provider.request_stats()
-                    if isinstance(provider, LlamaServerProvider) else None
-                )
+                    _persist_conversation(conversation_store, arguments, repo_id, answer, provider)
+                request_stats = (provider.request_stats()
+                                 if callable(getattr(provider, "request_stats", None)) else None)
                 injected_memories = _injected_memory_metadata(conversation)
                 cited_citations = tuple(citation for claim in contract.claims
                                         for citation in claim.citations)
@@ -412,14 +572,22 @@ def main(argv=None) -> int:
                         "estimated_units": context.estimated_tokens,
                         "limit": context.budget,
                         "estimate_kind": context.estimate_kind,
+                        "model_context_window": model_budget["context_window"],
+                        "reserved_output_tokens": model_budget["output_reserve"],
+                        "safety_margin_tokens": model_budget["safety_margin"],
+                        "token_estimate_kind": model_budget["estimate_kind"],
                     },
                     "evidence_role_coverage": role_audit,
                     "conversation_context": (
-                        conversation.get("context_diagnostics") if conversation else None
+                        ({**conversation.get("context_diagnostics", {}),
+                          "token_estimate": conversation.get("token_budget_diagnostics")}
+                         if conversation else None)
                     ),
                     "summary_diagnostics": (
-                        list(conversation_store.last_summary_diagnostics)
-                        if conversation_store is not None else []
+                        list(getattr(conversation_store, "last_summary_diagnostics", ()))
+                        if conversation_store is not None and isinstance(
+                            getattr(conversation_store, "last_summary_diagnostics", ()), (list, tuple)
+                        ) else []
                     ),
                     "persistent_chroma": {"enabled": bool(arguments.use_chroma),
                                           "memory_retrieved_count": memory_count,
@@ -442,7 +610,7 @@ def main(argv=None) -> int:
     except (AgentForgeError, OSError, sqlite3.Error) as exc:
         detail = str(exc) if isinstance(exc, AgentForgeError) else type(exc).__name__
         print(f"AgentForge error: {detail}", file=sys.stderr)
-        if arguments.command == "ask" and isinstance(provider, LlamaServerProvider):
+        if arguments.command == "ask" and callable(getattr(provider, "request_stats", None)):
             diagnostic = _provider_failure_diagnostic(provider)
             print("AF_PROVIDER_DIAGNOSTIC=" + json.dumps(
                 diagnostic, ensure_ascii=True, sort_keys=True,
@@ -496,6 +664,17 @@ def _add_session_commands(commands):
     rename = actions.add_parser("rename")
     rename.add_argument("conversation_id")
     rename.add_argument("title")
+    model = actions.add_parser("model", help="Show the selected model settings for a session.")
+    model.add_argument("conversation_id")
+    set_model = actions.add_parser("set-model", help="Persist the selected provider and settings for a session.")
+    set_model.add_argument("conversation_id")
+    set_model.add_argument("provider_id", choices=("llama-server", "deepseek", "offline"))
+    set_model.add_argument("model_id")
+    set_model.add_argument("--thinking", choices=("on", "off"), default="off")
+    set_model.add_argument("--effort", choices=("low", "high", "max"))
+    set_model.add_argument("--cloud-consent", action="store_true")
+    revoke = actions.add_parser("revoke-cloud-consent")
+    revoke.add_argument("conversation_id")
 
 
 def _add_repository_commands(commands):
@@ -726,6 +905,39 @@ def _run_offline_agent(arguments, store):
     return AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
         tool_timeout_seconds=arguments.tool_timeout,
         run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps))).run(arguments.query)
+
+
+def _run_selected_agent(arguments, store):
+    if arguments.agent_provider == "offline":
+        if arguments.agent_model or arguments.thinking == "on" or arguments.effort or arguments.stream:
+            raise ValueError("Model-specific Agent options require --provider deepseek.")
+        return _run_offline_agent(arguments, store), None
+    if not arguments.allow_cloud_data:
+        raise ValueError("DeepSeek Agent requires --allow-cloud-data; no cloud request was sent.")
+    if not arguments.agent_model:
+        raise ValueError("DeepSeek Agent requires a model ID from /model refresh.")
+    provider = create_provider(
+        "deepseek", model=arguments.agent_model,
+        connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
+        total_timeout=min(arguments.total_timeout, 120.0),
+        max_output_tokens=arguments.max_output_tokens,
+        thinking=arguments.thinking == "on", effort=arguments.effort,
+        stream=arguments.stream,
+    )
+    if provider.descriptor.supports_tool_calling is not True:
+        raise ValueError("DeepSeek model metadata does not confirm tool-calling support; no request was sent.")
+    from .providers.deepseek_agent import DeepSeekAgentPlanner
+    toolbox = ReadOnlyToolbox(arguments.repo, store)
+    planner = DeepSeekAgentPlanner(
+        provider.client, provider.model, provider.descriptor,
+        max_output_tokens=provider.max_output_tokens,
+        thinking=provider.thinking_request, effort=provider.effort, stream=provider.stream,
+        run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps)),
+    )
+    report = AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
+        tool_timeout_seconds=arguments.tool_timeout,
+        run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps))).run(arguments.query)
+    return report, provider
 
 
 def _conversation_retrieval(outcome, retriever, conversation, arguments, store, rows):
@@ -989,7 +1201,7 @@ def _load_conversation(engine, conversation_id, repository):
     store = ConversationStore(engine)
     repo_id = _repository_id(repository)
     try:
-        store.get_conversation(conversation_id, repo_id)
+        binding = store.get_conversation(conversation_id, repo_id)
         rows = store.get_messages(conversation_id, repo_id)
         summary = store.latest_summary(conversation_id, repo_id)
     except SQLAlchemyError:
@@ -999,7 +1211,11 @@ def _load_conversation(engine, conversation_id, repository):
         "history": tuple(ConversationTurn(conversation_id, repo_id, row["sequence"], row["role"],
                                           row["content"], row["status"])
                          for row in rows if row["sequence"] > covered),
-        "summary": summary["content"] if summary else None}
+        "summary": summary["content"] if summary else None,
+        "provider_id": binding["provider_id"], "model_id": binding["model_id"],
+        "thinking_enabled": binding["thinking_enabled"],
+        "reasoning_effort": binding["reasoning_effort"],
+        "cloud_consent_at": binding["cloud_consent_at"]}
     return store, repo_id, rows, conversation
 
 
@@ -1059,10 +1275,7 @@ def _semantic_summary_callback(provider):
                 before_stats = provider.client.request_stats()
             except Exception:
                 before_stats = None
-            text = provider.client.chat(
-                messages, model=provider.model,
-                max_output_tokens=summary_output_tokens,
-            )
+            text = provider.summary_text(messages, max_output_tokens=summary_output_tokens)
             diagnostic["output_bytes"] = len(text.encode("utf-8")) if isinstance(text, str) else None
             after_stats = provider.client.request_stats()
             if isinstance(after_stats, dict) and after_stats.get("last_finish_reason") == "length":
@@ -1096,11 +1309,20 @@ def _semantic_summary_callback(provider):
     return summarize
 
 
-def _persist_conversation(store, arguments, repo_id, answer, provider_mode):
+def _persist_conversation(store, arguments, repo_id, answer, provider):
     from sqlalchemy.exc import SQLAlchemyError
     try:
+        generated = not answer.offline and provider is not None
+        stats = provider.request_stats() if generated and callable(getattr(provider, "request_stats", None)) else {}
+        usage = stats.get("last_usage") if isinstance(stats, dict) else None
+        elapsed = stats.get("last_elapsed_seconds") if isinstance(stats, dict) else None
+        latency_ms = round(elapsed * 1000) if isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) else None
+        model_id = getattr(provider, "model", None) if generated else None
+        provider_id = getattr(provider, "provider_id", None) if generated else None
         store.append_turn(arguments.conversation_id, repo_id, arguments.query, answer.text,
-                          model_name=arguments.model if provider_mode == "llama-server" else None)
+                          model_name=model_id, provider_id=provider_id, model_id=model_id,
+                          usage=usage, latency_ms=latency_ms,
+                          request_id=stats.get("last_request_id") if isinstance(stats, dict) else None)
     except SQLAlchemyError:
         raise ValueError("Could not persist the completed turn; no successful response was committed.") from None
 
@@ -1215,6 +1437,22 @@ def _session_command(arguments):
         elif action == "show":
             value = {"conversation": store.get_conversation(arguments.conversation_id, repo_id),
                      "messages": store.get_messages(arguments.conversation_id, repo_id)}
+        elif action == "model":
+            value = store.get_conversation(arguments.conversation_id, repo_id)
+        elif action == "set-model":
+            existing_binding = store.get_conversation(arguments.conversation_id, repo_id)
+            _validate_persisted_model_selection(arguments, existing=existing_binding)
+            from datetime import datetime, timezone
+            consent_at = datetime.now(timezone.utc) if arguments.cloud_consent else None
+            value = store.update_model_binding(
+                arguments.conversation_id, repo_id,
+                provider_id=arguments.provider_id, model_id=arguments.model_id,
+                thinking_enabled=arguments.thinking == "on",
+                reasoning_effort=arguments.effort,
+                cloud_consent_at=consent_at,
+            )
+        elif action == "revoke-cloud-consent":
+            value = store.revoke_cloud_consent(arguments.conversation_id, repo_id)
         elif action == "rename":
             value = store.rename_conversation(arguments.conversation_id, repo_id, arguments.title)
         else:
@@ -1225,6 +1463,41 @@ def _session_command(arguments):
         raise ValueError("PostgreSQL conversation storage is unavailable or not migrated.") from None
     finally:
         engine.dispose()
+
+
+def _validate_persisted_model_selection(arguments, *, existing=None):
+    """Validate registry metadata and session settings before committing a binding."""
+    from .model_registry import ModelRegistry
+    registry = ModelRegistry()
+    descriptor = registry.get(arguments.model_id)
+    if descriptor.provider_id != arguments.provider_id:
+        raise ValueError("Model ID does not belong to the selected provider.")
+    if arguments.provider_id == "llama-server" and arguments.model_id != "qwen3.5-4b":
+        raise ValueError("Only the configured Qwen Local model can be bound in this version.")
+    if arguments.provider_id == "offline" and arguments.model_id != "offline":
+        raise ValueError("Offline provider model ID must be 'offline'.")
+    if arguments.provider_id == "deepseek":
+        from .credential_store import CredentialStore
+        if not CredentialStore().status().get("configured"):
+            raise ValueError("DeepSeek is not configured; set its key before selecting a cloud model.")
+        if descriptor.context_window is None or descriptor.max_output_tokens is None:
+            raise ValueError("The selected model has no verified context/output metadata.")
+        same_consented_binding = bool(
+            existing and existing.get("provider_id") == "deepseek"
+            and existing.get("model_id") == arguments.model_id
+            and existing.get("cloud_consent_at") is not None
+        )
+        if not arguments.cloud_consent and not same_consented_binding:
+            # Existing consent for the same model may be retained by the store,
+            # but the UI must use the dedicated settings update path for that.
+            # A direct model-binding command is intentionally explicit.
+            raise ValueError("Cloud model selection requires --cloud-consent.")
+        if arguments.thinking == "on" and descriptor.supports_thinking is not True:
+            raise ValueError("Thinking support is not confirmed for this model.")
+        if arguments.effort is not None and arguments.effort not in descriptor.supported_efforts:
+            raise ValueError("The selected reasoning effort is not supported by this model.")
+    elif arguments.thinking == "on" or arguments.effort is not None:
+        raise ValueError("Thinking settings are only available on a model that confirms support.")
 
 
 def _chroma_command(arguments):

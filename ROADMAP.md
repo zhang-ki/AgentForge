@@ -1,5 +1,11 @@
 # AgentForge Roadmap
 
+## AF-012 1.2 Multi-Model Support (`feature/1.1-core`, 2026-11-04)
+
+Offline implementation is present for a Qwen-default model registry, explicit DeepSeek discovery and chat, per-conversation provider/model/Thinking/effort settings, cloud consent, protected credential storage, and model-aware input/output budgeting. No silent model fallback is enabled. See `MODEL_MANAGEMENT.md` and `AF012_MULTIMODEL_ACCEPTANCE_REPORT_20261104.md`.
+
+The current state is **PARTIAL**: the full offline suite passed 520 tests with 6 Windows filesystem-permission skips, but whole-package coverage is 87.20% lines and 79.49% branches (targets: 90%/85%). Real DeepSeek discovery/chat, fresh Qwen acceptance, formal PostgreSQL migration, desktop restart, 11-case live RAG, and 30-turn live context remain unmeasured because the current execution environment blocks network access. The provided ordinary-Windows runner is a bounded synthetic DeepSeek smoke test, not full 1.2 acceptance. Keep MVP 1.0 frozen; do not push or change its release tag as part of this development work.
+
 ## 1.1 core development branch: `feature/1.1-core`
 
 Current work implements three user-facing areas without changing the frozen 1.0 release:

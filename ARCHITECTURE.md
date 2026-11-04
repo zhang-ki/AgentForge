@@ -17,10 +17,13 @@ Windows launcher / CLI
         │
         ├── Local PostgreSQL: conversation and approved-memory authority
         ├── Local Chroma: rebuildable code/memory vector candidates
-        └── Local llama-server: Qwen chat and embedding endpoints
+        ├── Local llama-server: Qwen chat and embedding endpoints
+        └── Explicit DeepSeek HTTPS provider: optional cloud chat, no automatic fallback
 ```
 
-The standard-library CLI and SQLite code-index path can run without a model. Persistent conversations and memory require the optional persistence dependencies and a local PostgreSQL service. Semantic retrieval requires Chroma, the configured local embedding model, and an available embedding service. Chat generation requires an explicitly selected local chat provider.
+The standard-library CLI and SQLite code-index path can run without a model. Persistent conversations and memory require the optional persistence dependencies and a local PostgreSQL service. Semantic retrieval requires Chroma, the configured local embedding model, and an available embedding service. Chat generation requires an explicitly selected provider.
+
+On the `feature/1.1-core` development branch, `model_registry.py` holds the local model default and explicitly refreshed DeepSeek capability metadata. Registry entries describe model capabilities; health checks describe connectivity. Session records persist provider, model, Thinking/effort settings, and cloud-data consent. Qwen Local remains the default for new sessions. A conversation only uses DeepSeek after the user selects a discovered model and confirms the cloud data notice. There is no silent fallback or automatic cloud routing.
 
 ## Retrieval and evidence
 
@@ -40,7 +43,7 @@ The standard-library CLI and SQLite code-index path can run without a model. Per
 
 PostgreSQL is the source of truth for conversation and memory state. Chroma does not share a transaction with PostgreSQL; an outbox records vector work. Retrieved memories are rechecked against PostgreSQL for repository scope, approval, revocation, expiry, source, and content identity. Code vectors are checked against the SQLite snapshot. Chroma is not the sole source of either code or memory facts.
 
-Database migrations are in `alembic/`; the CLI exposes session migration and management commands. Runtime credentials are supplied through process environment by the Windows launcher; secrets and local stores are excluded from the repository.
+Database migrations are in `alembic/`; the CLI exposes session migration and management commands. Runtime credentials are supplied through process environment by the Windows launcher; secrets and local stores are excluded from the repository. The additive model-binding revision is `af012mm_004`, with Qwen-compatible defaults for existing conversations. `CredentialStore` keeps the optional DeepSeek key in a Windows-user-bound DPAPI file or reads `DEEPSEEK_API_KEY` as an override; keys are not stored in PostgreSQL or ordinary project configuration. The model-list cache is local metadata, not a connection-status record.
 
 ## Conversations and context
 
@@ -48,13 +51,15 @@ Database migrations are in `alembic/`; the CLI exposes session migration and man
 
 `conversation_store.py` implements conversation/message persistence and repository-scoped selection. `conversation_console.py` is the interactive entry point. Each turn loads the selected conversation, current repository identity, bounded recent history/summary, relevant approved memory when Chroma is enabled, current RAG evidence, and the current question.
 
-History is not unlimited. When the user explicitly selects the local Qwen provider and the request passes the evidence gate, older complete turns can be summarized and persisted with the last covered source message ID. Each update gives the summarizer the prior untrusted summary plus newly covered complete turns, then stores a bounded replacement summary (up to 1,800 UTF-8 bytes) instead of nesting all prior versions. Oversized legacy summaries are compacted before reuse when semantic summarization is available; if compaction fails, the previous summary and original messages remain intact. Original messages remain in PostgreSQL. If semantic summarization is unavailable, a clearly labeled deterministic extract is used. The prompt builder uses a 3,500-byte UTF-8 proxy rather than a tokenizer-exact budget; this modest increase from 3,000 does not guarantee compatibility with every model/template. Repository switching selects the corresponding independent SQLite index and repository-bound conversations; it does not re-index a previously indexed repository.
+History is not unlimited. When the user explicitly selects the local Qwen provider and the request passes the evidence gate, older complete turns can be summarized and persisted with the last covered source message ID. Each update gives the summarizer the prior untrusted summary plus newly covered complete turns, then stores a bounded replacement summary (up to 1,800 UTF-8 bytes) instead of nesting all prior versions. Oversized legacy summaries are compacted before reuse when semantic summarization is available; if compaction fails, the previous summary and original messages remain intact. Original messages remain in PostgreSQL. If semantic summarization is unavailable, a clearly labeled deterministic extract is used. The 3,500-byte conversation planning guard is distinct from model token budgets. For explicitly selected model requests, `TokenBudgetManager` calculates `context_window - output_reserve - safety_margin` and accounts for message framing, nested protocol fields, and tool schemas before sending. Exact tokenizer counts require a configured model tokenizer; this checkout labels fallback counts `estimated`. API usage is recorded for the response and is not treated as remaining context capacity. Repository switching selects the corresponding independent SQLite index and repository-bound conversations; it does not re-index a previously indexed repository.
 
 ## Local model boundary
 
 The chat and embedding providers use the explicitly configured loopback llama-server endpoints. The Windows launcher verifies health and model identity before starting the console. Model processes are separate from the AgentForge product process; AgentForge does not provide shell execution, arbitrary repository writes, network tools, or model management through its read-only Agent loop.
 
 The release does not include model weights or runtime binaries. Launchers use `AGENTFORGE_MODEL_ROOT` or a `models` directory next to the project directory. They bind services to loopback and do not download assets.
+
+The DeepSeek provider sends requests only to the fixed official HTTPS host. It separates `reasoning_content` from user-visible `content`, validates request-local evidence IDs, enforces connection/read/total timeouts, and does not retry. Its optional Agent planner exposes only existing read-only search and symbol-list tools; it does not expose shell, arbitrary Python, writes, or network tools. Tool schemas and tool-call protocol history are included in the request budget.
 
 ## Deliberate MVP limits
 
@@ -66,6 +71,7 @@ The release does not include model weights or runtime binaries. Launchers use `A
 - Citation validation checks evidence identity and source text but does not prove arbitrary semantic entailment.
 - The delivered host acceptance demonstrates specific local PostgreSQL/Qwen/Chroma scenarios, not general reliability for every repository or query.
 - 1.1 offline tests use temporary SQLite and synthetic/test-double Chroma; the new branch has not undergone a fresh real PostgreSQL/Chroma/Qwen acceptance run.
+- DeepSeek discovery and cloud inference have not been performed from the current network-disabled environment. Offline protocol tests do not demonstrate live availability, account access, billing, or model answer quality.
 
 
 ## 1.1 conversation summary fact ledger (offline-verified)

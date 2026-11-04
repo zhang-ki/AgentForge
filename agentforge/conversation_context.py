@@ -102,7 +102,7 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
     if any(m.repository_id != repository_id or m.scope not in {"repository", "global"}
            for m in memories):
         raise ValueError("Memory belongs to a different repository.")
-    user_text = f"Current question:\n{question}\n\nUntrusted current evidence:\n{evidence}"
+    user_text = f"Question:\n{question}\n\nUntrusted current evidence:\n{evidence}"
     messages = [("system", system), ("user", user_text)]
     cost = lambda pair: len(pair[0].encode("utf-8")) + len(pair[1].encode("utf-8"))
     used = sum(map(cost, messages))

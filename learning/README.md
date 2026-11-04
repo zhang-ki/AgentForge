@@ -1,5 +1,15 @@
 # AgentForge：28 篇逐日源码讲解
 
+## 1.2 多模型补充专题
+
+当前开发分支新增多模型说明，建议在 Week 4 之后阅读：
+
+- [多模型注册、会话切换与 Provider 协议](MULTI_MODEL_PROVIDERS.md)：说明 Qwen/DeepSeek 的身份、能力、凭据、云端确认、推理字段、流式协议及会话绑定。
+- [模型上下文窗口与 Token Budget](TOKEN_BUDGET.md)：解释动态输入预算、输出预留、安全余量、Tokenizer 估算和工具协议开销。
+- [模型管理操作手册](../MODEL_MANAGEMENT.md)：实际使用 `/modellist`、`/model`、Thinking 和凭据命令。
+
+这两个补充专题是 1.2 开发说明；当前工作区的离线协议测试不代表真实 DeepSeek 网络或真实 Qwen/数据库联合验收通过。
+
 制定日期：2026-10-29。面向：希望有人带着逐步读懂 AgentForge，而不是自己从目录和代码中摸索的学习者。
 
 ## 学习目标与节奏

@@ -54,9 +54,17 @@ def _id(value):
 
 
 def _conversation(row):
+    cloud_consent_at = row.cloud_consent_at
+    if cloud_consent_at is not None and cloud_consent_at.tzinfo is None:
+        cloud_consent_at = cloud_consent_at.replace(tzinfo=timezone.utc)
     return {"id": str(row.id), "repository_id": row.repository_id, "title": row.title,
             "status": row.status, "created_at": row.created_at, "updated_at": row.updated_at,
-            "last_message_at": row.last_message_at}
+            "last_message_at": row.last_message_at,
+            "provider_id": row.provider_id or "llama-server",
+            "model_id": row.model_id or "qwen3.5-4b",
+            "thinking_enabled": bool(row.thinking_enabled),
+            "reasoning_effort": row.reasoning_effort,
+            "cloud_consent_at": cloud_consent_at}
 
 
 def _message(row):
@@ -88,8 +96,50 @@ class ConversationStore:
     def create_conversation(self, repository_id, title):
         with self.sessions.begin() as session:
             row = Conversation(id=uuid4(), repository_id=_text(repository_id, "repository ID", 256),
-                               title=_text(title, "title", 512), status="active")
+                               title=_text(title, "title", 512), status="active",
+                               provider_id="llama-server", model_id="qwen3.5-4b",
+                               thinking_enabled=False)
             session.add(row)
+            session.flush()
+            return _conversation(row)
+
+    def update_model_binding(self, conversation_id, repository_id, *, provider_id, model_id,
+                             thinking_enabled=False, reasoning_effort=None, cloud_consent_at=None):
+        provider_id = _text(provider_id, "provider ID", 32)
+        model_id = _text(model_id, "model ID", 512)
+        if provider_id not in {"llama-server", "deepseek", "offline"}:
+            raise ValueError("Unsupported conversation provider.")
+        if not isinstance(thinking_enabled, bool):
+            raise ValueError("Thinking setting must be boolean.")
+        if reasoning_effort is not None and reasoning_effort not in {"low", "high", "max"}:
+            raise ValueError("Reasoning effort is invalid.")
+        if reasoning_effort is not None and not thinking_enabled:
+            raise ValueError("Reasoning effort requires thinking mode.")
+        if provider_id != "deepseek" and (thinking_enabled or reasoning_effort is not None):
+            raise ValueError("Thinking settings are available only for a supported cloud model.")
+        with self.sessions.begin() as session:
+            row = self._get(session, conversation_id, repository_id, lock=True)
+            if (provider_id == "deepseek" and cloud_consent_at is None
+                    and row.provider_id == provider_id and row.model_id == model_id
+                    and row.cloud_consent_at is not None):
+                # Changing thinking/effort on the same cloud binding retains
+                # the user's existing consent; selecting a different cloud
+                # model still requires a fresh explicit confirmation.
+                cloud_consent_at = row.cloud_consent_at
+            if provider_id == "deepseek" and cloud_consent_at is None:
+                raise ValueError("Cloud model selection requires explicit user consent.")
+            row.provider_id, row.model_id = provider_id, model_id
+            row.thinking_enabled, row.reasoning_effort = thinking_enabled, reasoning_effort
+            row.cloud_consent_at = cloud_consent_at
+            row.updated_at = datetime.now(timezone.utc)
+            session.flush()
+            return _conversation(row)
+
+    def revoke_cloud_consent(self, conversation_id, repository_id):
+        with self.sessions.begin() as session:
+            row = self._get(session, conversation_id, repository_id, lock=True)
+            row.cloud_consent_at = None
+            row.updated_at = datetime.now(timezone.utc)
             session.flush()
             return _conversation(row)
 
@@ -135,11 +185,30 @@ class ConversationStore:
             row = self._get(session, conversation_id, repository_id, lock=True)
             session.delete(row)
 
-    def append_turn(self, conversation_id, repository_id, question, answer, *, model_name=None):
+    def append_turn(self, conversation_id, repository_id, question, answer, *, model_name=None,
+                    provider_id=None, model_id=None, usage=None, latency_ms=None, request_id=None):
         question = _text(question, "question", 100_000)
         answer = _text(answer, "answer", 100_000)
         if model_name is not None:
             model_name = _text(model_name, "model", 512)
+        if provider_id is not None:
+            provider_id = _text(provider_id, "provider ID", 32)
+        if model_id is not None:
+            model_id = _text(model_id, "model ID", 512)
+        safe_usage = {}
+        if usage is not None:
+            if not isinstance(usage, dict):
+                raise ValueError("Model usage metadata must be an object.")
+            for key in ("prompt_tokens", "completion_tokens", "total_tokens",
+                        "prompt_cache_hit_tokens", "prompt_cache_miss_tokens", "reasoning_tokens"):
+                value = usage.get(key)
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                    safe_usage[key] = value
+        if latency_ms is not None and (isinstance(latency_ms, bool) or not isinstance(latency_ms, int) or latency_ms < 0):
+            raise ValueError("Model latency metadata is invalid.")
+        if request_id is not None and (not isinstance(request_id, str) or len(request_id) > 256
+                                        or any(ord(ch) < 32 for ch in request_id)):
+            raise ValueError("Model request ID is invalid.")
         with self.sessions.begin() as session:
             row = self._get(session, conversation_id, repository_id, lock=True)
             if row.status != "active":
@@ -152,7 +221,10 @@ class ConversationStore:
                                     sequence_number=highest + offset, role=role,
                                     content=content, request_status="completed",
                                     model_name=model_name if role == "assistant" else None,
-                                    message_metadata={}))
+                                    message_metadata=({"provider_id": provider_id,
+                                        "model_id": model_id or model_name, "usage": safe_usage,
+                                        "latency_ms": latency_ms, "request_id": request_id}
+                                        if role == "assistant" and provider_id else {})))
             row.last_message_at = row.updated_at = datetime.now(timezone.utc)
             session.flush()
             return str(turn_id)

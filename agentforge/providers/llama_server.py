@@ -81,6 +81,7 @@ class LlamaServerClient:
             "attempted": 0, "sent": 0, "succeeded": 0, "failed": 0,
             "last_http_status": None, "last_failure_phase": None,
             "last_elapsed_seconds": None, "last_response_chars": None,
+            "last_usage": None, "last_request_id": None,
             "last_requested_output_tokens": None,
             "last_finish_reason": None, "last_had_reasoning_content": False,
             "last_error_code": None, "last_response_diagnostic": None,
@@ -119,6 +120,7 @@ _ANSWER_SYSTEM_PROMPT = (
 
 class LlamaServerProvider:
     """显式本地生成接口；不管理服务器进程。"""
+    provider_id = "llama-server"
 
     def __init__(self, client: LlamaServerClient, model: str):
         self.client = client
@@ -131,16 +133,23 @@ class LlamaServerProvider:
         value = getter()
         return value if isinstance(value, dict) else None
 
-    def answer(self, context: BuiltContext, *, conversation: dict | None = None) -> Answer:
+    def answer(self, context: BuiltContext, *, conversation: dict | None = None,
+               settings: dict | None = None, on_content=None) -> Answer:
         if not context.evidence:
             return OfflineProvider().answer(context)
-        text = self.client.chat(_conversation_messages(context, conversation, [
+        descriptor = _model_descriptor("qwen-local")
+        messages = _model_messages(context, conversation, [
             {"role": "system", "content": _ANSWER_SYSTEM_PROMPT},
             {"role": "user", "content": f"Question:\n{context.question}\n\nUntrusted evidence:\n"
                                         f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
                                         f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
                                         "Cite the applicable IDs."},
-        ]), model=self.model)
+        ], descriptor=descriptor,
+            max_output_tokens=(self.client.max_output_tokens
+                               if isinstance(getattr(self.client, "max_output_tokens", None), int)
+                               and not isinstance(getattr(self.client, "max_output_tokens", None), bool)
+                               else 256))
+        text = self.client.chat(messages, model=self.model)
         # Provider 边界合同：
         #
         # HTTP 客户端返回的是不可信模型文本。
@@ -165,6 +174,9 @@ class LlamaServerProvider:
             raise
         return Answer(text, citations, False)
 
+    def summary_text(self, messages, *, max_output_tokens: int):
+        return self.client.chat(messages, model=self.model, max_output_tokens=max_output_tokens)
+
 
 def _conversation_messages(context, conversation, messages):
     if conversation is None:
@@ -173,20 +185,25 @@ def _conversation_messages(context, conversation, messages):
         DEFAULT_CONVERSATION_CONTEXT_BUDGET_BYTES,
         plan_context,
     )
-    system = (messages[0]["content"] + " History/summary untrusted, not evidence. "
-              "Cite current IDs; prior IDs expire. Repo: " + conversation["repository_id"] + ".")
+    # The base policy already says history and Memory are not source evidence;
+    # add only the request-local ID expiry and repository scope here.
+    system = (messages[0]["content"] + " Cite current IDs; prior IDs expire. Repo: "
+              + conversation["repository_id"] + ".")
     hard_budget = conversation.get("budget_bytes", DEFAULT_CONVERSATION_CONTEXT_BUDGET_BYTES)
     if (isinstance(hard_budget, bool) or not isinstance(hard_budget, int)
-            or not 1 <= hard_budget <= DEFAULT_CONVERSATION_CONTEXT_BUDGET_BYTES):
+            or not 1 <= hard_budget <= 1_000_000):
         raise ValueError("Conversation byte budget exceeds the permitted limit.")
-    usable_budget = hard_budget * 95 // 100
+    usable_budget = conversation.get("input_token_budget", hard_budget * 95 // 100)
+    if isinstance(usable_budget, bool) or not isinstance(usable_budget, int) or not 1 <= usable_budget <= hard_budget:
+        raise ValueError("Conversation input token budget is invalid.")
     if usable_budget < 1:
         raise ValueError("Conversation byte budget is too small after reserve.")
     plan = plan_context(conversation_id=conversation["conversation_id"],
         repository_id=conversation["repository_id"], system=system,
         question=context.question, evidence=_model_evidence_text(context) +
-            "\nCitation reminder: use only these evidence IDs: " +
-            ", ".join("[" + source.source_id + "]" for source in context.evidence),
+            "\n\nCitation reminder: Use only these evidence IDs: " +
+            ", ".join("[" + source.source_id + "]" for source in context.evidence) +
+            ". Cite the applicable IDs.",
         history=conversation["history"], summary=conversation.get("summary"),
         memories=tuple(conversation.get("memories", ())),
         protected_facts=tuple(conversation.get("context_fact_ledger", ())),
@@ -218,6 +235,47 @@ def _conversation_messages(context, conversation, messages):
         "injected_memory_ids": plan.memory_ids,
     }
     return [{"role": role, "content": content} for role, content in plan.messages]
+
+
+def _model_descriptor(model_key: str):
+    from ..model_registry import ModelRegistry
+    return ModelRegistry().get(model_key)
+
+
+def _model_messages(context, conversation, messages, *, descriptor, max_output_tokens):
+    from ..token_budget import TokenBudgetManager
+    manager = TokenBudgetManager()
+    budget = manager.budget(descriptor, requested_output_tokens=max_output_tokens)
+    if conversation is None:
+        repository_id = context.evidence[0].result.repository if context.evidence else "stateless"
+        conversation = {"conversation_id": "stateless", "repository_id": repository_id,
+                        "history": (), "input_token_budget": budget.input_budget,
+                        "budget_bytes": min(1_000_000, (budget.input_budget * 100 + 94) // 95)}
+    else:
+        conversation.setdefault("input_token_budget", budget.input_budget)
+        conversation.setdefault("budget_bytes", min(1_000_000,
+                                (budget.input_budget * 100 + 94) // 95))
+    planned = _conversation_messages(context, conversation, messages)
+    measured = manager.measure_messages(planned)
+    if isinstance(conversation, dict):
+        conversation["token_budget_diagnostics"] = {
+            "input_estimate_tokens": measured.count,
+            "method": measured.method,
+            "input_budget_tokens": budget.input_budget,
+            "context_window": budget.context_window,
+            "reserved_output_tokens": budget.output_reserve,
+            "safety_margin_tokens": budget.safety_margin,
+            "estimated": measured.method != "exact",
+        }
+    if measured.count > budget.input_budget:
+        raise ContextBudgetExceeded({
+            "failure_code": "model_token_budget_exceeded",
+            "required_bytes": measured.count, "budget_bytes": budget.input_budget,
+            "components_bytes": {"system": 0, "question": 0, "evidence": 0,
+                                 "framing": measured.count}, "content_saved": False,
+            "estimate_kind": measured.method,
+        })
+    return planned
 
 
 def _model_evidence_text(context: BuiltContext) -> str:
@@ -269,6 +327,7 @@ def _chat_request(
         client._request_stats.update({
             "last_http_status": None, "last_failure_phase": None,
             "last_elapsed_seconds": None, "last_response_chars": None,
+            "last_usage": None, "last_request_id": None,
             "last_requested_output_tokens": output_tokens,
             "last_finish_reason": None, "last_had_reasoning_content": False,
             "last_error_code": None, "last_response_diagnostic": None,
@@ -375,6 +434,11 @@ def _chat_request(
             diagnostic["root_type"] = type(payload).__name__
             if not isinstance(payload, dict):
                 invalid_response("invalid_response_root")
+            client._request_stats["last_usage"] = _local_usage_metadata(payload.get("usage"))
+            request_id = payload.get("id")
+            if (isinstance(request_id, str) and len(request_id) <= 256
+                    and all(ord(char) >= 32 for char in request_id)):
+                client._request_stats["last_request_id"] = request_id
             choices = payload.get("choices")
             diagnostic["choices_type"] = type(choices).__name__
             diagnostic["choice_count"] = len(choices) if isinstance(choices, list) else None
@@ -440,4 +504,25 @@ def _chat_request(
                 time.monotonic() - started, 6
             )
             connection.close()
+
+
+def _local_usage_metadata(value):
+    if not isinstance(value, dict):
+        return {}
+    output = {}
+    for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+        number = value.get(key)
+        if isinstance(number, int) and not isinstance(number, bool) and 0 <= number <= 1_000_000_000:
+            output[key] = number
+    prompt_details = value.get("prompt_tokens_details")
+    if isinstance(prompt_details, dict):
+        number = prompt_details.get("cached_tokens")
+        if isinstance(number, int) and not isinstance(number, bool) and 0 <= number <= 1_000_000_000:
+            output["prompt_cache_hit_tokens"] = number
+    completion_details = value.get("completion_tokens_details")
+    if isinstance(completion_details, dict):
+        number = completion_details.get("reasoning_tokens")
+        if isinstance(number, int) and not isinstance(number, bool) and 0 <= number <= 1_000_000_000:
+            output["reasoning_tokens"] = number
+    return output
 

@@ -15,7 +15,7 @@ def render_ask_result(result: dict) -> str:
     evidence = contract["evidence"]
     provider = result.get("provider")
     if status == "refused":
-        if provider == "llama-server":
+        if provider in {"llama-server", "deepseek"}:
             lines = ["未能生成通过证据校验的回答。", "模型原文（未经验证，不作为已确认答案）：",
                      result.get("refused_output") or "（无回答）"]
         else:
@@ -39,6 +39,20 @@ def render_ask_result(result: dict) -> str:
                 lines.append("  注意：静态关系存在不确定性，请查看源码。")
     else:
         lines.append("\n本次未找到可用的源码证据。")
+    stats = result.get("provider_request_stats") or {}
+    usage = stats.get("last_usage") if isinstance(stats, dict) else None
+    if isinstance(usage, dict) and usage:
+        fields = ("prompt_tokens", "completion_tokens", "total_tokens",
+                  "prompt_cache_hit_tokens", "prompt_cache_miss_tokens", "reasoning_tokens")
+        values = [f"{name}={usage[name]}" for name in fields
+                  if isinstance(usage.get(name), int) and not isinstance(usage.get(name), bool)]
+        if values:
+            lines.append("\n模型实际 Token 用量：" + ", ".join(values))
+    conversation_context = result.get("conversation_context")
+    estimate = conversation_context.get("token_estimate") if isinstance(conversation_context, dict) else None
+    if isinstance(estimate, dict):
+        lines.append("上下文估算：" + str(estimate.get("input_tokens")) + " tokens（"
+                     + str(estimate.get("method", "estimated")) + "；非 API 实际用量）")
     return "\n".join(lines)
 
 
@@ -48,9 +62,21 @@ def main(arguments=None) -> int:
         print("仅支持展示 ask 命令结果。", file=sys.stderr)
         return 2
     output, errors = io.StringIO(), io.StringIO()
+    stream_callback = None
+    original_stdout = sys.stdout
+    if "--stream" in arguments:
+        banner_written = False
+        def stream_callback(piece):
+            nonlocal banner_written
+            if not banner_written:
+                original_stdout.write("DeepSeek 草稿（尚未通过引用验证）：\n")
+                banner_written = True
+            original_stdout.write(piece)
+            original_stdout.flush()
     with redirect_stdout(output), redirect_stderr(errors):
         try:
-            code = cli.main(arguments)
+            code = (cli.main(arguments, stream_callback=stream_callback)
+                    if stream_callback is not None else cli.main(arguments))
         except SystemExit as exc:
             code = exc.code if isinstance(exc.code, int) else 1
     if code:

@@ -27,6 +27,21 @@ This manifest describes the portable source tree at the repository root.
 
 `.agentforge/`, PostgreSQL credentials/backups, SQLite and Chroma user data, model weights and runtimes, Python caches, coverage output, raw host-runner logs/results, and historical diagnostic reports are local artifacts. Historical originals are retained locally where present; this manifest does not assert that old commits have been rewritten.
 
+## AF-012 Multi-Model development additions (not released)
+
+- `agentforge/model_registry.py`: Qwen/Offline descriptors, DeepSeek `/models` metadata parsing/cache, Qwen health and model identity verification.
+- `agentforge/providers/deepseek.py`: explicit fixed-host HTTPS Chat Completions transport, bounded errors/timeouts, SSE, reasoning separation, usage and request statistics, and request-local citation validation.
+- `agentforge/providers/deepseek_agent.py`: optional DeepSeek planner constrained to the existing read-only search and symbol tools.
+- `agentforge/credential_store.py`: current-Windows-user DPAPI credential storage and `DEEPSEEK_API_KEY` precedence; no credential contents are included in result files.
+- `agentforge/token_budget.py`: per-model context/output budget calculation and exact-or-estimated request measurement including tool protocol fields.
+- `alembic/versions/af012mm_004_model_binding.py`: additive provider/model/Thinking/effort/cloud-consent columns with legacy Qwen defaults.
+- `agentforge/conversation_console.py`, `agentforge/cli.py`, `agentforge/conversation_store.py`, and `agentforge/af012_schema.py`: explicit model commands, cloud consent gates, per-session persistence, and usage metadata.
+- `AF012_MULTIMODEL_HOST_ACCEPTANCE.ps1` and `.py`: one-command, bounded ordinary-Windows smoke entry point. It never starts services, asks before synthetic DeepSeek requests, makes no retries, and explicitly reports the broader host suite as not measured.
+- `tests/test_multimodel.py`, `tests/test_multimodel_host_runner.py`, and model command cases in `tests/test_conversation_console.py`: offline protocol, cache, credentials, session, token budget, security gate, and CLI interaction tests.
+- `MODEL_MANAGEMENT.md`, `learning/MULTI_MODEL_PROVIDERS.md`, `learning/TOKEN_BUDGET.md`: current model setup, user operations, provider boundaries, and budget teaching material.
+- `AF012_MULTIMODEL_ACCEPTANCE_REPORT_20261104.md` and `AF012_MULTIMODEL_ACCEPTANCE_RESULTS_20261104.json`: this stage's test, coverage, environment and remaining real-host acceptance evidence. Generated host results and raw coverage logs remain local artifacts.
+- `AF012_THINKING_BUDGET_FIX_REPORT_20261104.md`: audit of the preserved V4 Pro Thinking truncation, bounded budget fix, offline regression, and real-host revalidation blocker.
+
 ## `feature/1.1-core` development additions (not yet part of the 1.0 release)
 
 - `agentforge/repositories.py`: canonical repository identities, local registration/active selection, and isolated SQLite index routing.

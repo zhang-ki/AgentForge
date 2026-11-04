@@ -1,7 +1,7 @@
 """AF-012 PostgreSQL 模型定义；数据库结构由迁移管理。"""
 from uuid import uuid4
 
-from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, Index, Integer, JSON,
+from sqlalchemy import (Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer, JSON,
                         String, Text, UniqueConstraint, Uuid, func)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -16,6 +16,11 @@ class Conversation(Base):
     repository_id: Mapped[str] = mapped_column(String(256), nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(512), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
+    provider_id: Mapped[str] = mapped_column(String(32), nullable=False, default="llama-server")
+    model_id: Mapped[str] = mapped_column(String(512), nullable=False, default="qwen3.5-4b")
+    thinking_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    reasoning_effort = mapped_column(String(16))
+    cloud_consent_at = mapped_column(DateTime(timezone=True))
     created_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     last_message_at = mapped_column(DateTime(timezone=True))
