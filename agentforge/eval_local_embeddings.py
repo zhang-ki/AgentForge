@@ -1,4 +1,4 @@
-"""Run the fixed synthetic retrieval benchmark against an explicit local embed server."""
+"""使用明确指定的本地 Embedding 服务运行固定合成检索基准。"""
 
 import argparse
 import json
@@ -135,9 +135,9 @@ def main(argv=None) -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
     except (OSError, ValueError) as exc:
-        # Provider errors are deliberately sanitized (status/type, never response
-        # bodies or credentials), so preserve their actionable detail for local
-        # diagnostics instead of reducing every failure to its class name.
+        # Provider 错误会有意脱敏（保留状态/类型，不保留响应
+        # 正文或凭证），因此应在本地诊断中保留有助于处理问题的细节，
+        # 不要把所有错误都简化成异常类型名称。
         print(f"Local embedding evaluation failed ({type(exc).__name__}): {exc}", file=sys.stderr)
         return 1
 

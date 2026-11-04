@@ -30,7 +30,7 @@ class LocalTestCase(unittest.TestCase):
         except FileNotFoundError:
             pass
         except OSError:
-            # Another test-owned directory may still be alive.
+            # 另一个由测试创建的目录可能仍在使用。
             pass
 
     def write(self, relative, content="example\n"):
@@ -59,7 +59,7 @@ def snapshot(root):
 
 
 def make_junction(link: Path, target: Path):
-    """Create a test-owned NTFS junction using Windows APIs, without a shell."""
+    """使用 Windows API 创建一个由测试管理的 NTFS 联接点，不调用命令行 Shell。"""
     if os.name != "nt":
         raise OSError("Windows junctions are unavailable on this platform.")
     import ctypes

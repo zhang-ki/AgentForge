@@ -179,7 +179,7 @@ class EmbeddingTests(LocalTestCase):
 
     def test_symbols_are_associated_and_stale_symbol_vectors_are_removed(self):
         first = self.retriever.index_current_index(include_symbols=True)
-        self.assertEqual(first["vectors"], 4)  # two file chunks and two module symbols
+        self.assertEqual(first["vectors"], 4)  # 两个文件分块和两个模块符号
         symbol = self.store.search_symbols(qualified_name="src.apple")[0]
         results = self.retriever.search("apple", top_k=10)
         self.assertTrue(any(

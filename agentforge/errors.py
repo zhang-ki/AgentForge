@@ -1,28 +1,28 @@
-"""Expected, user-facing AgentForge errors."""
+"""预期且可向用户展示的 AgentForge 错误。"""
 
 
 class AgentForgeError(Exception):
-    """Base class for errors that can be reported without a traceback."""
+    """可在不显示堆栈信息的情况下报告的错误基类。"""
 
 
 class ScanError(AgentForgeError):
-    """The requested repository cannot be scanned safely."""
+    """无法安全扫描指定的仓库。"""
 
 
 class StoreError(AgentForgeError):
-    """The local index could not be opened or updated."""
+    """无法打开或更新本地索引。"""
 
 
 class IndexConflictError(StoreError):
-    """The fixed local index is already bound to a different repository."""
+    """固定本地索引已绑定到另一个仓库。"""
 
 
 class ProviderError(AgentForgeError):
-    """A provider failed or returned an invalid response."""
+    """Provider 执行失败或返回了无效响应。"""
 
 
 class CitationValidationError(ProviderError):
-    """A model citation violated the request-local evidence protocol."""
+    """模型引用违反了本次请求的证据协议。"""
 
     def __init__(self, message: str, *, code: str, diagnostic: dict):
         super().__init__(message)

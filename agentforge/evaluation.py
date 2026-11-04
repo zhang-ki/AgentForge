@@ -1,4 +1,4 @@
-"""Deterministic, offline retrieval benchmark helpers."""
+"""确定性的离线检索基准评测辅助工具。"""
 
 from collections import defaultdict
 from time import perf_counter
@@ -128,7 +128,7 @@ def _validate_dataset(dataset: dict) -> list[dict]:
 
 
 def validate_split_plan(dataset: dict, plan: dict) -> dict:
-    """Validate a proposed group-isolated split without treating pending labels as approved."""
+    """验证按组隔离的拆分计划，不把待复核标签视为已批准标签。"""
     queries = _validate_dataset(dataset)
     if dataset["dataset_version"] != REVIEW_POOL_DATASET_VERSION:
         raise ValueError("Split plans require the v2 review candidate pool.")
@@ -252,7 +252,7 @@ def _signal_summary(values: list[float]) -> dict:
 
 
 def evaluate_abstention(query_results: list[dict], thresholds=ABSTENTION_THRESHOLDS) -> dict:
-    """Describe score-only abstention candidates without selecting a production threshold."""
+    """描述仅按分数计算的拒答候选规则，不选择生产阈值。"""
     rows = [row for row in query_results if row.get("top_score") is not None]
     positives = [row for row in rows if not row.get("no_evidence", False)]
     negatives = [row for row in rows if row.get("no_evidence", False)]
@@ -333,7 +333,7 @@ def _metrics(rows: list[tuple[list[str], set[str]]]) -> dict:
 
 def evaluate_benchmark(store, dataset: dict, *, vector_search=None, rrf_search=None,
                        include_timings: bool = False) -> dict:
-    """Evaluate lexical, exact-symbol, and optional vector candidates against labelled evidence."""
+    """使用已标注证据评估词法、精确符号和可选向量候选。"""
     if not isinstance(include_timings, bool):
         raise ValueError("include_timings must be boolean.")
     queries = _validate_dataset(dataset)

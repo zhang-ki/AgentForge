@@ -1,2 +1,2 @@
-"""Offline answers and an optional, explicitly configured loopback client."""
+"""离线回答和可显式配置的回环客户端。"""
 

@@ -1,4 +1,4 @@
-"""Safety-boundary regressions driven by branch coverage, without networking."""
+"""通过分支覆盖率驱动的安全边界回归测试，不进行联网。"""
 
 from dataclasses import replace
 import json

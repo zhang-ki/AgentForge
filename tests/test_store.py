@@ -23,6 +23,18 @@ class StoreTests(LocalTestCase):
         self.assertEqual([tuple(row) for row in rows],
                          [tuple(row) for row in self.store.connection.execute("SELECT * FROM chunks")])
 
+    def test_get_chunk_loads_one_exact_current_source(self):
+        self.write("src/a.py", "def useful_identifier():\n    return 1\n")
+        index_repository(self.root, self.store)
+        row = next(self.store.iter_chunks())
+        found = self.store.get_chunk(row["relative_path"], row["start_line"], row["end_line"])
+        self.assertEqual(dict(row), found)
+        self.assertIsNone(self.store.get_chunk("src/a.py", 50, 60))
+        for path, start, end in (("../outside.py", 1, 1), ("src\\a.py", 1, 1),
+                                 ("src/a.py", True, 1), ("src/a.py", 2, 1)):
+            with self.subTest(path=path, start=start, end=end), self.assertRaises(ValueError):
+                self.store.get_chunk(path, start, end)
+
     def test_changed_deleted_empty_and_bad_encoding_invalidate(self):
         self.write("a.py", "old_symbol = 1\n")
         self.write("delete.py", "delete_symbol = 2\n")

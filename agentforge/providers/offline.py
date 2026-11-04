@@ -1,4 +1,4 @@
-"""Deterministic evidence excerpts, explicitly not language-model inference."""
+"""确定性证据摘录，明确不是语言模型推理结果。"""
 
 from ..context import validate_citations
 from ..models import Answer, BuiltContext

@@ -1,7 +1,7 @@
-"""Static Python package import/export relation research prototype.
+"""Python 包导入/导出关系的静态研究原型。
 
-The graph is deliberately separate from the production SQLite schema and default
-retriever.  It consumes only files approved and read by the repository scanner.
+关系图与生产 SQLite 结构及默认检索器分离。
+它只处理仓库扫描器批准并读取的文件。
 """
 
 from __future__ import annotations
@@ -119,7 +119,7 @@ PACKAGE_RELATION_CACHE_VERSION = 1
 
 
 class PackageSnapshotReadError(ValueError):
-    """The graph snapshot is incomplete and must not replace a prior snapshot."""
+    """关系图快照不完整，不能替换已有快照。"""
 
     def __init__(self, relative_path: str, reason: str):
         self.relative_path = relative_path
@@ -128,7 +128,7 @@ class PackageSnapshotReadError(ValueError):
 
 
 def _snapshot_repository(root, limits: ScanLimits | None = None):
-    """Return a complete Python-file content snapshot and scanner candidates."""
+    """返回完整的 Python 文件内容快照及扫描器候选项。"""
     report = scan_repository(root, limits=limits)
     if not report.complete:
         raise ValueError("Repository scan was incomplete; package graph was not built.")
@@ -151,7 +151,7 @@ def _snapshot_repository(root, limits: ScanLimits | None = None):
 
 
 def _parse_snapshot(report, manifest, candidates, previous_cache=None):
-    """Reuse unchanged ASTs and parse changed Python files only."""
+    """复用未变化的 AST，只解析内容已变化的 Python 文件。"""
     previous_cache = previous_cache or {}
     cache = {}
     modules = {}
@@ -189,7 +189,7 @@ def _parse_snapshot(report, manifest, candidates, previous_cache=None):
 
 
 def _cache_entry_matches_manifest(path, entry, manifest):
-    """Reject incomplete or malformed in-memory parse cache entries."""
+    """拒绝不完整或格式错误的内存解析缓存项。"""
     if not isinstance(entry, tuple) or len(entry) != 3:
         return False
     digest, module, failure = entry
@@ -201,11 +201,11 @@ def _cache_entry_matches_manifest(path, entry, manifest):
 
 
 def _snapshot_and_parse(root, limits=None, previous_cache=None, previous_root=None):
-    """Discover, read, hash, and parse each approved Python file at most once.
+    """每个获准的 Python 文件最多发现、读取、哈希和解析一次。
 
-    Hashing remains mandatory on each refresh: size and timestamps are useful
-    scanner metadata but are not proof that file contents stayed unchanged.
-    The returned AST cache may be reused only when its content digest matches.
+    每次刷新都必须计算哈希：文件大小和时间戳虽有参考价值，
+    但它们只是扫描器元数据，不能证明文件内容始终未变。
+    仅当 AST 缓存内容摘要匹配时，才允许复用缓存。
     """
     previous_cache = previous_cache or {}
     discovery_started = perf_counter()
@@ -350,7 +350,7 @@ def _parse_module(path: str, text: str) -> _Module:
                     "alias": alias.asname is not None, "line": node.lineno,
                     "end": getattr(node, "end_lineno", node.lineno) or node.lineno,
                 })
-        # Dynamic imports are evidence of uncertainty, never guessed targets.
+        # 动态导入表示存在不确定性，不能猜测其目标。
         for child in ast.walk(node):
             if not isinstance(child, ast.Call):
                 continue
@@ -377,7 +377,7 @@ def _parse_module(path: str, text: str) -> _Module:
 
 
 def build_package_relation_graph(root, *, scan_limits: ScanLimits | None = None) -> PackageRelationGraph:
-    """Build a bounded static graph from scanner-approved Python files only."""
+    """仅使用扫描器批准的 Python 文件构建有界静态关系图。"""
     snapshot = _snapshot_and_parse(root, limits=scan_limits)
     return _build_package_relation_graph(
         snapshot["report"].root, snapshot["modules"], snapshot["failures"]
@@ -386,7 +386,7 @@ def build_package_relation_graph(root, *, scan_limits: ScanLimits | None = None)
 
 def _build_package_relation_graph(repository, modules, failures,
                                   source_paths: set[str] | None = None) -> PackageRelationGraph:
-    """Resolve all module bindings but materialize relations for selected sources."""
+    """解析所有模块绑定关系，但只为选定的来源生成关系记录。"""
     def include(source: _Module) -> bool:
         return source_paths is None or source.path in source_paths
 
@@ -488,9 +488,9 @@ def _build_package_relation_graph(repository, modules, failures,
         unique = list(dict.fromkeys(results))
         return unique, cycle
 
-    # Materialise import-binding resolution separately from the raw import
-    # relation.  This lets a consumer alias resolve through one or more package
-    # reexports while preserving ambiguous/cyclic outcomes rather than guessing.
+    # 将导入绑定解析结果与原始 import 关系分开实体化。
+    # 这样，使用方别名可以经过一个或多个包级
+    # 重新导出项解析，同时保留歧义或循环结果，不作猜测。
     for source in sorted(modules.values(), key=lambda item: item.path.casefold()):
         if not include(source):
             continue
@@ -582,7 +582,7 @@ def _build_package_relation_graph(repository, modules, failures,
 
 
 class PackageRelationRetriever:
-    """Explicit research retriever over a frozen in-memory package graph."""
+    """基于冻结内存 PackageRelation 图的显式研究型检索器。"""
 
     def __init__(self, graph: PackageRelationGraph):
         self.graph = graph
@@ -723,7 +723,7 @@ def _graph_from_modules(repository, modules, failures, source_paths=None):
 
 def _update_relation_graph_delta(repository, previous_graph, old_modules, modules,
                                  failures, changed_paths):
-    """Build a graph update, using a conservative full-graph fallback as needed."""
+    """构建关系图更新；必要时保守回退为全图重建。"""
     changed_names = {_module_for_path(path)[0] for path in changed_paths}
     if failures or previous_graph.parse_failures:
         affected_names = None
@@ -788,15 +788,15 @@ def _update_relation_graph_delta(repository, previous_graph, old_modules, module
 
 
 class IncrementalPackageRelationIndex:
-    """Atomic in-memory relation index with dependency-aware source updates.
+    """具备依赖感知源码更新能力的原子内存关系索引。
 
-    Every Python file is content-hashed to detect changes. Unchanged ASTs are
-    reused. For statically knowable import graphs, only changed module sources
-    and their transitive reverse dependents have relations rematerialized; all
-    cached modules remain available to resolution. Dynamic imports, dynamic
-    ``__all__``, star imports, parse failures and other incomplete dependency
-    maps conservatively trigger a complete relation rebuild. There is no
-    persistent schema or filesystem write.
+    每个 Python 文件都会按内容计算哈希以检测变化。未变化文件的 AST
+    被复用。对于静态可知的导入图，只重新处理发生变化的模块
+    及其传递反向依赖项的关系；所有
+    缓存模块仍可参与解析。动态导入、动态
+    ``__all__``、星号导入、解析失败及其他不完整的依赖
+    映射都会保守地触发关系图全量重建。此过程不会
+    写入持久化数据库结构或文件系统。
     """
 
     def __init__(self, *, builder=build_package_relation_graph,

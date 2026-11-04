@@ -1,4 +1,4 @@
-"""SQLite index; disk storage is restricted to this project's fixed data path."""
+"""SQLite 索引；磁盘存储仅限于本项目指定的数据目录。"""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def _ordinary(path: Path, directory: bool) -> None:
 
 
 class IndexStore:
-    """One repository per index. ':memory:' is available for isolated unit tests."""
+    """每个索引只绑定一个仓库。隔离单元测试可使用 ':memory:'。"""
 
     def __init__(self, database=DATABASE_PATH, *, readonly: bool = False):
         self.database = str(database)
@@ -231,7 +231,7 @@ class IndexStore:
             return
         if version == 1:
             if self.readonly:
-                # Legacy lexical search stays available without mutating the database.
+                # 保留旧版词法搜索能力，不修改数据库结构。
                 self.schema_version = version
                 return
             self._migrate_v1_to_v2()
@@ -241,7 +241,7 @@ class IndexStore:
             raise StoreError("Unsupported index version; automatic migration is not implemented.")
 
     def _migrate_v1_to_v2(self) -> None:
-        """Add empty structured-index tables while preserving all v1 lexical rows."""
+        """新增空的结构化索引表，同时保留 v1 的全部词法记录。"""
         with self.connection:
             self._create_structured_schema()
             self.connection.execute(
@@ -251,7 +251,7 @@ class IndexStore:
         self.schema_version = STRUCTURED_INDEX_VERSION
 
     def _migrate_v2_to_v3(self) -> None:
-        """Add an empty vector table while preserving lexical and symbol rows."""
+        """新增空的向量表，同时保留词法和符号索引记录。"""
         with self.connection:
             self._create_vector_schema()
             self.connection.execute(
@@ -264,7 +264,7 @@ class IndexStore:
         return dict(self.connection.execute("SELECT key, value FROM metadata").fetchall())
 
     def indexed_file_hash(self, relative_path: str) -> str | None:
-        """Return the full content hash for one indexed repository-relative file."""
+        """返回一个已索引仓库相对文件的完整内容哈希。"""
         if (not isinstance(relative_path, str) or not relative_path
                 or relative_path.startswith(("/", "\\")) or ":" in relative_path
                 or ".." in relative_path.replace("\\", "/").split("/")):
@@ -353,7 +353,7 @@ class IndexStore:
         return {"added": added, "changed": changed, "unchanged": unchanged, "removed": removed}
 
     def _sync_structured(self, documents: list[dict]) -> None:
-        """Rebuild bounded structured rows transactionally from the current scan."""
+        """依据当前扫描结果，在事务中重建有界结构化记录。"""
         self.connection.execute("DELETE FROM symbol_references")
         self.connection.execute("DELETE FROM symbols")
         self.connection.execute("DELETE FROM parse_status")
@@ -481,10 +481,10 @@ class IndexStore:
         return [dict(row) for row in self.connection.execute(query, values)]
 
     def search_symbols_by_ids(self, symbol_ids: list[str] | tuple[str, ...], *, limit: int = 100) -> list[dict]:
-        """Fetch exact indexed definitions by parser-issued symbol identity.
+        """根据解析器签发的符号身份获取精确索引定义。
 
-        This is used to attach a definition excerpt to a uniquely resolved
-        relationship. It deliberately does not fall back to name matching.
+        此函数用于为唯一解析出的关系附加定义摘录，
+        且不会回退到名称匹配。
         """
         if self.schema_version is None or self.schema_version < STRUCTURED_INDEX_VERSION:
             raise StoreError("Structured symbols are not available in this legacy index; run index --repo PATH to migrate it.")
@@ -569,6 +569,25 @@ class IndexStore:
             "FROM chunks JOIN files ON files.id = chunks.file_id "
             "ORDER BY files.relative_path, chunks.start_line, chunks.end_line"
         )
+
+    def get_chunk(self, relative_path: str, start_line: int, end_line: int) -> dict | None:
+        """按仓库内路径和行范围读取单个当前代码块。"""
+        if (not isinstance(relative_path, str) or not relative_path
+                or relative_path.startswith("/") or "\\" in relative_path
+                or any(part in ("", ".", "..") for part in relative_path.split("/"))):
+            raise ValueError("Chunk path must be a normalized repository-relative path.")
+        if (isinstance(start_line, bool) or not isinstance(start_line, int) or start_line < 1
+                or isinstance(end_line, bool) or not isinstance(end_line, int)
+                or end_line < start_line):
+            raise ValueError("Chunk line range is invalid.")
+        row = self.connection.execute(
+            "SELECT files.relative_path, chunks.start_line, chunks.end_line, "
+            "chunks.text, chunks.content_hash "
+            "FROM chunks JOIN files ON files.id = chunks.file_id "
+            "WHERE files.relative_path = ? AND chunks.start_line = ? AND chunks.end_line = ?",
+            (relative_path, start_line, end_line),
+        ).fetchone()
+        return dict(row) if row is not None else None
 
     def iter_symbols(self):
         if self.schema_version is None or self.schema_version < STRUCTURED_INDEX_VERSION:

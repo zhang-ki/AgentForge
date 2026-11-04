@@ -38,6 +38,7 @@ class ChromaAdapterTests(unittest.TestCase):
         store = ChromaCandidateStore(collection, dimension=2)
         source = self.source()
         store.upsert(source, [1, 0])
+        self.assertEqual([""], collection.upsert.call_args.kwargs["documents"])
         identity = collection.upsert.call_args.kwargs["ids"][0]
         collection.query.return_value = {"ids": [[identity]],
             "metadatas": [[source.__dict__]], "distances": [[0.1]]}
@@ -45,6 +46,21 @@ class ChromaAdapterTests(unittest.TestCase):
                                       verify_source=lambda _: False), [])
         self.assertEqual(len(store.search([1, 0], repository_id="repo1", model_id="model1",
                                           verify_source=lambda _: True)), 1)
+
+    def test_search_can_omit_document_payload(self):
+        collection = Mock()
+        store = ChromaCandidateStore(collection, dimension=2)
+        source = self.source()
+        from agentforge.embeddings.chroma_store import _identity
+        collection.query.return_value = {
+            "ids": [[_identity(source)]], "metadatas": [[source.__dict__]], "distances": [[0.1]],
+        }
+
+        result = store.search_with_documents([1, 0], repository_id="repo1", model_id="model1",
+            verify_source=lambda _source: True, include_documents=False)
+
+        self.assertEqual([(source, 0.1, None)], result)
+        self.assertEqual(["metadatas", "distances"], collection.query.call_args.kwargs["include"])
 
     def test_identity_and_metadata_validation(self):
         for dimension in (True, 0, 4097, "2"):
@@ -80,7 +96,7 @@ class ChromaAdapterTests(unittest.TestCase):
 
     @unittest.skipUnless(importlib.util.find_spec("chromadb"), "isolated chromadb not installed")
     def test_real_persistent_chroma_round_trip_in_separate_processes(self):
-        # Process isolation releases Windows SQLite/HNSW handles before cleanup.
+        # 进程隔离确保清理前释放 Windows 上的 SQLite/HNSW 句柄。
         root = Path(__file__).resolve().parent / ".tmp"
         root.mkdir(exist_ok=True)
         script = r'''
@@ -96,6 +112,8 @@ a=ChromaSource("repo1","code","a","src/a.py","a"*64,"m1")
 b=ChromaSource("repo2","code","b","src/b.py","b"*64,"m1")
 if mode=="write":
  s.upsert(a,[1,0]);s.upsert(a,[1,0]);s.upsert(b,[0,1]);assert x.count()==2
+ s.upsert(a,[1,0],document="legacy source text");s.upsert(a,[1,0])
+ assert x.get(include=["documents"])['documents']==["",""]
 else:
  assert x.count()==2
  assert len(s.search([1,0],repository_id="repo1",model_id="m1",verify_source=lambda v:v.content_hash=="a"*64))==1
@@ -120,7 +138,7 @@ from dataclasses import asdict
 from chromadb.config import Settings
 import chromadb
 from agentforge.af012_runtime import collection_for_model
-from agentforge.embeddings.chroma_index import ChromaCodeIndex
+from agentforge.embeddings.chroma_index import ChromaCodeIndex, repository_identity
 from agentforge.indexer import index_repository
 from agentforge.store import IndexStore
 class P:
@@ -137,8 +155,18 @@ with IndexStore(":memory:") as store:
  svc=ChromaCodeIndex(store,collection,P())
  if mode in ("write","update"):
   stats=asdict(svc.sync())
-  print(json.dumps({"stats":stats,"count":collection.count()}))
+  existing=collection.get(where={"repository_id":svc.repository_id},include=["embeddings"])
+  ids=existing["ids"]
+  collection.update(ids=ids,embeddings=existing["embeddings"],
+                    documents=["legacy source text"]*len(ids))
+  legacy_migration=asdict(svc.sync())
+  documents=collection.get(where={"repository_id":svc.repository_id},include=["documents"])["documents"]
+  print(json.dumps({"stats":stats,"legacy_migration":legacy_migration,
+                    "count":collection.count(),"documents":documents}))
  else:
+  repo_id=repository_identity(repo)
+  documents=collection.get(where={"repository_id":repo_id},include=["documents"])["documents"]
+  assert documents==["",""]
   results=[asdict(x) for x in svc.search("locate refresh state",top_k=20)]
   print(json.dumps({"results":results,"count":collection.count()}))
 '''
@@ -158,6 +186,9 @@ with IndexStore(":memory:") as store:
             first = run("write")
             self.assertEqual(2, first["stats"]["sources"])
             self.assertEqual(2, first["stats"]["embedded"])
+            self.assertEqual(0, first["legacy_migration"]["embedded"])
+            self.assertEqual(2, first["legacy_migration"]["unchanged"])
+            self.assertEqual(["", ""], first["documents"])
             reopened = run("search")
             self.assertEqual(2, reopened["count"])
             self.assertEqual({"a.py", "b.py"}, {item["relative_path"] for item in reopened["results"]})

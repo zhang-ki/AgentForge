@@ -1,4 +1,4 @@
-"""Exploratory abstention calibration over explicitly separated evaluation rows."""
+"""在明确隔离的评测样本上进行探索性拒答校准。"""
 
 import math
 
@@ -43,7 +43,7 @@ def _validate_threshold(value, name: str) -> float:
 
 
 def evaluate_fixed_rule(rows: list[dict], rule: dict) -> dict:
-    """Evaluate one already-fixed rule; this function never selects or changes it."""
+    """评估一条已固定的规则；本函数不会选择或更改规则。"""
     checked = _validated_rows(rows)
     if not isinstance(rule, dict) or rule.get("family") not in RULE_FAMILIES:
         raise ValueError("Rule family must be top_score, top_2_margin or combined.")
@@ -93,7 +93,7 @@ def evaluate_fixed_rule(rows: list[dict], rule: dict) -> dict:
 
 
 def calibrate_abstention(rows: list[dict], thresholds=THRESHOLD_GRID) -> dict:
-    """Choose one exploratory zero-false-accept rule using Calibration only."""
+    """仅使用 Calibration 选择一个探索性零误接受规则。"""
     checked = _validated_rows(rows)
     grid = tuple(_validate_threshold(value, "threshold") for value in thresholds)
     if not grid:

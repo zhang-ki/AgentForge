@@ -1,4 +1,4 @@
-"""AF-010-PRE independent synthetic evaluation and decision analysis."""
+"""AF-010-PRE 独立合成评测与决策分析。"""
 
 from pathlib import Path
 
@@ -28,7 +28,7 @@ def validate_preproduct_fixture(
         dataset_path: Path = DEFAULT_DATASET,
         split_plan_path: Path = DEFAULT_SPLIT_PLAN,
         corpus_path: Path = DEFAULT_CORPUS) -> dict:
-    """Validate authored labels, evidence, split isolation and declared provenance."""
+    """验证人工编写的标签、证据、数据集隔离和声明的来源。"""
     dataset = load_generalization_dataset(
         dataset_path, expected_version=PREPRODUCT_DATASET_VERSION
     )
@@ -99,7 +99,7 @@ def _mean_top10_jaccard(left: dict, right: dict, query_ids: list[str]) -> float:
 
 
 def retrieval_complementarity(dataset: dict, report: dict) -> dict:
-    """Explain channel overlap and unique relevant top-one hits without relabelling."""
+    """解释通道间重叠和唯一相关首位命中，不重新标注数据。"""
     output = {}
     for split_name in ("calibration", "validation"):
         split_report = report[split_name]

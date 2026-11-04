@@ -1,4 +1,4 @@
-"""Small, replaceable embedding provider contract and output validation."""
+"""可替换的轻量 Embedding Provider 合同与输出校验。"""
 
 from math import fsum, isfinite, sqrt
 from numbers import Real
@@ -8,30 +8,30 @@ from ..config import MAX_VECTOR_DIMENSION
 
 
 class EmbeddingError(ValueError):
-    """An embedding provider returned invalid metadata or vector data."""
+    """Embedding Provider 返回了无效元数据或向量数据。"""
 
 
 class EmbeddingProvider(Protocol):
-    """Maps text to a numeric vector; providers must not execute returned data."""
+    """将文本映射为数值向量；Provider 不得执行返回数据。"""
 
     model_id: str
     dimension: int
 
     def embed(self, text: str) -> Sequence[float]:
-        """Return one finite vector for text, or raise a clear provider error."""
+        """为文本返回一个有限值向量；否则抛出明确的 Provider 错误。"""
 
 
 class RoleAwareEmbeddingProvider(Protocol):
-    """Optional contract for models with different query/document preprocessing."""
+    """供查询与文档预处理方式不同的模型实现的可选接口。"""
 
     model_id: str
     dimension: int
 
     def embed_query(self, text: str) -> Sequence[float]:
-        """Embed a search query using the model's query-side preprocessing."""
+        """使用模型的查询侧预处理为搜索问题生成向量。"""
 
     def embed_document(self, text: str) -> Sequence[float]:
-        """Embed indexed content using the model's document-side preprocessing."""
+        """使用模型的文档侧预处理为已索引内容生成向量。"""
 
 
 def provider_identity(provider: EmbeddingProvider) -> tuple[str, int]:
@@ -102,9 +102,9 @@ def embed_text(
         method = getattr(provider, method_name, None) if method_name else None
         output = method(text) if callable(method) else provider.embed(text)
     except EmbeddingError as exc:
-        # Project EmbeddingError messages are bounded and sanitized by each
-        # provider; retain useful local HTTP status/timeout details while
-        # continuing to suppress arbitrary exceptions from provider code.
+            # 项目级 EmbeddingError 消息由各个 Provider 控制长度并脱敏；
+            # 同时保留本地 HTTP 状态或超时等有用细节，
+            # 并继续屏蔽 Provider 代码抛出的任意异常内容。
         raise EmbeddingError(f"Embedding provider failed: {exc}") from None
     except Exception as exc:
         raise EmbeddingError(f"Embedding provider failed ({type(exc).__name__}).") from None

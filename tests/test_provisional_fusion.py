@@ -77,7 +77,7 @@ class ProvisionalDatasetTests(unittest.TestCase):
         with IndexStore(":memory:") as store:
             index_repository(CORPUS, store)
             self.assertTrue(search(store, "rotate session", top_k=3))
-            # RRF remains an explicit research object; ordinary search is unchanged.
+            # RRF 仍是显式研究功能；普通搜索行为保持不变。
             before = search(store, "rotate session", top_k=3)
             RrfRetriever(store, vector_retriever=None).search("rotate session", top_k=3)
             self.assertEqual(before, search(store, "rotate session", top_k=3))

@@ -1,4 +1,4 @@
-"""Human-readable presentation for the existing structured ask command."""
+"""为现有结构化 ask 命令提供便于阅读的展示格式。"""
 
 from contextlib import redirect_stderr, redirect_stdout
 import io
@@ -9,7 +9,7 @@ from . import cli
 
 
 def render_ask_result(result: dict) -> str:
-    """Display contract status and request evidence without changing the decision."""
+    """展示合同状态和请求证据，但不改变已有判定。"""
     contract = result["answer_contract"]
     status = contract["status"]
     evidence = contract["evidence"]

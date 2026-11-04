@@ -1,4 +1,4 @@
-"""Offline safety and evidence checks for the real-host acceptance harness."""
+"""真实宿主验收工具的离线安全与证据检查。"""
 from contextlib import redirect_stdout
 import io
 import json

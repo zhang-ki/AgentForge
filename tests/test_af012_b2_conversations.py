@@ -1,4 +1,4 @@
-"""Offline SQLite checks only: they are not PostgreSQL integration evidence."""
+"""仅为离线 SQLite 检查，不构成 PostgreSQL 集成验收证据。"""
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -310,8 +310,8 @@ class ConversationStoreTests(unittest.TestCase):
         item = self.store.create_conversation("repo-a", "Failed legacy compaction")
         self.store.append_turn(item["id"], "repo-a", "question", "answer")
         assistant = self.store.get_messages(item["id"], "repo-a")[-1]
-        # Emulate a row written by a pre-budget release. Current writes reject
-        # oversized summaries; legacy data remains readable for safe compaction.
+        # 模拟预算限制引入前的历史记录。当前写入会拒绝
+        # 超长摘要；旧数据仍可读取，以便安全压缩。
         from sqlalchemy import update
         from agentforge.af012_schema import ConversationSummary
         from uuid import UUID
@@ -356,7 +356,7 @@ class ConversationStoreTests(unittest.TestCase):
             self.store.append_turn(item["id"], "repo-a",
                                    facts.get(index, f"ordinary progress update {index}"),
                                    f"acknowledged progress {index}")
-            # Deliberately omit earlier facts as a lossy model summary would.
+            # 故意遗漏早期事实，模拟有损的模型摘要。
             _, latest = self.store.prepare_history(
                 item["id"], "repo-a",
                 summarizer=lambda _rows, i=index: f"Recent update {i}; no earlier details.",

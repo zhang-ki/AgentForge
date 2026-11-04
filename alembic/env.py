@@ -1,4 +1,4 @@
-"""Migrations receive an already authenticated connection, never a URL or key."""
+"""迁移使用已通过认证的数据库连接，不接收 URL 或密钥。"""
 from alembic import context
 
 connection = context.config.attributes.get("connection")

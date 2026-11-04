@@ -150,7 +150,7 @@ class AF011ChatAcceptanceTests(LocalTestCase):
     def test_failed_cli_response_retains_real_request_counts_and_failure_stage(self):
         shutil.copytree(runner.SOURCE_FIXTURE, self.root, dirs_exist_ok=True)
         failed_client = Mock()
-        # Use the project's real error type; no network call is made.
+        # 使用项目真实的错误类型；本测试不会发起网络请求。
         from agentforge.errors import ProviderError
         failed_client.chat.side_effect = ProviderError(
             "Local server returned an invalid chat response (empty_final_content_with_reasoning)."

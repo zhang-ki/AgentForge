@@ -1,2 +1,2 @@
-"""AgentForge's offline tests; all fixtures and temporary paths stay in this project."""
+"""AgentForge 的离线测试；所有夹具和临时路径都保留在本项目中。"""
 

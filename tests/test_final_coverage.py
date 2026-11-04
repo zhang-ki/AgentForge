@@ -1,4 +1,4 @@
-"""Targeted offline regressions for failures and data integrity."""
+"""针对失败处理和数据完整性的离线回归测试。"""
 
 import copy
 import io

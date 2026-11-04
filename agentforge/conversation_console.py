@@ -1,4 +1,4 @@
-"""Explicit interactive multi-session entry point; no model service management."""
+"""显式的多会话交互入口；不管理模型服务进程。"""
 from contextlib import redirect_stderr, redirect_stdout
 import io
 import json

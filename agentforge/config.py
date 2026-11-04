@@ -1,4 +1,4 @@
-"""Fixed storage locations and conservative MVP resource limits."""
+"""固定存储位置和保守的 MVP 资源上限。"""
 
 from pathlib import Path
 

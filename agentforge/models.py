@@ -1,4 +1,4 @@
-"""Small data objects shared by retrieval, context, and providers."""
+"""检索、上下文与 Provider 之间共享的小型数据对象。"""
 
 from dataclasses import dataclass
 

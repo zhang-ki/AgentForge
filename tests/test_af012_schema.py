@@ -1,4 +1,4 @@
-"""SQLAlchemy model contract checks; these are not PostgreSQL integration tests."""
+"""SQLAlchemy 模型合同检查；这些不是 PostgreSQL 集成测试。"""
 import importlib.util
 import unittest
 

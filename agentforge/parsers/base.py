@@ -1,4 +1,4 @@
-"""Parser-neutral data contracts for structured source indexing."""
+"""与解析器无关的结构化源码索引数据合同。"""
 
 from dataclasses import dataclass
 from typing import Protocol
@@ -53,9 +53,9 @@ class ParsedFile:
 
 
 class Parser(Protocol):
-    """A parser consumes already-approved text and never opens source paths."""
+    """解析器只处理已经获准读取的文本，绝不会自行打开源码路径。"""
 
     parser_name: str
 
     def parse(self, relative_path: str, source_text: str) -> ParsedFile:
-        """Return symbols/references for one repository-relative text file."""
+        """返回一个仓库相对文本文件中的符号和引用。"""

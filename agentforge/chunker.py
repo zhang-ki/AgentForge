@@ -1,4 +1,4 @@
-"""Stable line-window chunking with original, one-based line references."""
+"""稳定的按行窗口切块，并保留从 1 开始的原始行号。"""
 
 from dataclasses import dataclass
 import hashlib
@@ -17,10 +17,10 @@ class Chunk:
 
 
 def split_source_lines(text: str) -> list[str]:
-    """Split on CRLF, LF, or CR only; other Unicode/control separators stay in-line.
+    """只按 CRLF、LF 或 CR 换行；其他 Unicode/控制分隔符仍视为行内字符。
 
-    A final line terminator ends the preceding line and does not invent another
-    source line. A non-empty file containing only a terminator has one blank line.
+    末尾的换行符只结束前一行，不会凭空增加另一行源码行。
+    非空文件若只包含一个行终止符，就有一行空白行。
     """
     if not isinstance(text, str):
         raise TypeError("text must be a string")

@@ -1,4 +1,4 @@
-"""Scope and bound conversation history; UTF-8 bytes are not model tokens."""
+"""为对话历史设置作用域和上限；UTF-8 字节数不等于模型 Token 数。"""
 from dataclasses import dataclass
 import re
 
@@ -6,7 +6,7 @@ DEFAULT_CONVERSATION_CONTEXT_BUDGET_BYTES = 3_500
 
 
 class ContextBudgetExceeded(ValueError):
-    """Required prompt content cannot fit without dropping evidence."""
+    """如果不丢弃证据就无法放入必要的提示内容。"""
 
     def __init__(self, diagnostics: dict[str, object]):
         self.diagnostics = dict(diagnostics)
@@ -64,7 +64,7 @@ class ContextPlan:
 
 
 def _relevant_facts_for_self_contained_code_query(ledger, question, evidence):
-    """Conservatively omit unrelated facts only for explicit static-code questions."""
+    """仅对明确的静态代码问题保守省略无关事实。"""
     if not re.search(r"\b(?:caller|callee|calls|implementation|function|method)\b|调用|函数|方法", question, re.I):
         return ledger
     if re.search(r"\b(?:previous|earlier)\b|之前|刚才|上面", question, re.I):
@@ -85,7 +85,7 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
                  question: str, evidence: str, history: tuple[ConversationTurn, ...] = (),
                  memories: tuple[MemoryCandidate, ...] = (), budget_bytes: int = 12000,
                  summary: str | None = None, protected_facts=()) -> ContextPlan:
-    """Plan scoped messages without persisting or elevating historical instructions."""
+    """规划具有明确作用域的消息，不持久化或提升历史指令的权限。"""
     if not all(isinstance(x, str) and x.strip() for x in (conversation_id, repository_id, system, question, evidence)):
         raise ValueError("Conversation, repository, system, question and evidence are required.")
     if isinstance(budget_bytes, bool) or not isinstance(budget_bytes, int) or not 1 <= budget_bytes <= 1_000_000:
@@ -168,9 +168,9 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
     if summary is not None and protected_facts:
         if not isinstance(summary, str) or not summary.strip():
             raise ValueError("Invalid conversation summary.")
-        # Fact entries are passed separately with structured provenance. Keep
-        # the semantic narrative optional so recent source facts cannot be
-        # crowded out by a duplicate fact section.
+# 事实条目会单独传递，并带有结构化来源信息。
+# 语义叙述应设为可选内容，避免近期源码事实被
+        # 重复的事实段落挤出上下文。
         summary_text = summary.split(
             "Source-linked protected statements (untrusted user conversation context; not code evidence):",
             1,
@@ -178,9 +178,9 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
         if not summary_text:
             summary_text = None
     summary_included = False
-    # Legacy summaries without a fact ledger retain the old fail-closed,
-    # required-summary behavior. With a ledger, facts and recent turns have
-    # priority; summary prose is added later only if the byte budget permits.
+# 没有事实账本的旧摘要仍沿用原有的失败关闭策略。
+# 存在事实账本时，事实和近期轮次优先；
+# 只有字节预算允许时，才添加摘要文本。
     if summary_text is not None and not protected_facts:
         if not isinstance(summary, str) or not summary.strip():
             raise ValueError("Invalid conversation summary.")
@@ -191,7 +191,7 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
         retained_summary.append(candidate)
         used += extra
         summary_included = True
-    # Optional memories remain explicitly untrusted user data, never system instructions.
+    # 可选记忆始终明确视为不可信用户数据，绝不作为系统指令。
     injected_memory_ids = []
     retained_memories = []
     for memory in memories:
@@ -212,7 +212,7 @@ def plan_context(*, conversation_id: str, repository_id: str, system: str,
                 retained_memories.append(candidate)
                 used += extra
                 injected_memory_ids.append(memory.memory_id)
-    # Retain complete recent turns only after approved memory has had room.
+    # 只有在已为获批记忆预留空间后，才保留完整的近期对话轮次。
     eligible = []
     eligible_sequences = []
     pos = len(history) - 1

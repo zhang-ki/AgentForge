@@ -1,4 +1,4 @@
-"""Local repository search and evidence-first code question answering."""
+"""本地仓库搜索与证据优先的代码问答。"""
 
 __version__ = "1.0.0"
 

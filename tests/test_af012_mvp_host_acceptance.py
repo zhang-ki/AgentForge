@@ -1,4 +1,4 @@
-"""Offline contract tests for the explicit AF-012 MVP host acceptance runner."""
+"""针对 AF-012 MVP 宿主验收 Runner 合同的离线测试。"""
 import json
 import hashlib
 import tempfile

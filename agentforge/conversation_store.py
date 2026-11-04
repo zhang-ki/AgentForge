@@ -1,7 +1,7 @@
-"""Transactional conversation storage; independent of the read-only RAG index.
+"""通过事务保存对话；与只读 RAG 索引相互独立。
 
-The caller supplies a configured SQLAlchemy engine. PostgreSQL is the supported
-deployment target. SQLite is useful for isolated tests, not PostgreSQL evidence.
+调用方提供已配置的 SQLAlchemy 引擎。生产部署使用 PostgreSQL；
+SQLite 仅适用于隔离测试，不能作为 PostgreSQL 的验收证据。
 """
 from datetime import datetime, timezone
 import hashlib
@@ -22,7 +22,7 @@ _SUMMARY_MAX_BYTES = 1_800
 
 
 def _merge_semantic_summary(previous, update, *, previous_through, current_from, current_through):
-    """Store a bounded replacement summary instead of nesting every prior version."""
+    """保存有界的替换摘要，而不是层层嵌套所有旧版本。"""
     if previous is not None and (not isinstance(previous, str) or not previous.strip()):
         raise ValueError("Existing semantic summary is invalid; previous summary was retained.")
     if not isinstance(update, str) or not update.strip():
@@ -69,7 +69,7 @@ def _message(row):
 
 
 class ConversationStore:
-    """Scope reads and writes to one indexed repository, with atomic turns."""
+    """将读写限定到一个已索引仓库，并以事务原子地保存完整对话轮次。"""
     def __init__(self, engine):
         self.sessions = sessionmaker(bind=engine, expire_on_commit=False)
         self.last_summary_diagnostics = []
@@ -130,7 +130,7 @@ class ConversationStore:
             return _conversation(row)
 
     def delete_conversation(self, conversation_id, repository_id):
-        """Delete only the explicitly identified conversation and its messages."""
+        """只删除明确指定的会话及其消息。"""
         with self.sessions.begin() as session:
             row = self._get(session, conversation_id, repository_id, lock=True)
             session.delete(row)
@@ -242,11 +242,11 @@ class ConversationStore:
                     "model_name": summary.model_name}
 
     def prepare_history(self, conversation_id, repository_id, *, summarizer=None, summary_model=None):
-        """Compress older complete turns while retaining all original messages.
+        """压缩较早的完整对话轮次，同时保留所有原始消息。
 
-        A supplied summarizer receives only the older complete turns selected for
-        compression. Its output remains untrusted conversation context, never code
-        evidence. Without one, an explicitly labelled deterministic extract is used.
+        传入的摘要器只会收到选定用于压缩的较早完整对话轮次。
+        压缩后的内容仍是不可信的对话上下文，绝不能作为代码证据。
+        如果没有摘要生成器，则使用明确标记的确定性摘录。
         """
         if summarizer is not None and not callable(summarizer):
             raise ValueError("History summarizer must be callable.")
@@ -255,8 +255,8 @@ class ConversationStore:
         summary = self.latest_summary(conversation_id, repository_id)
         covered = summary["covered_through"] if summary else 0
         remaining = [row for row in rows if row["sequence"] > covered]
-        # Backfill source-linked statements for summaries created before the
-        # ledger migration. Original messages remain authoritative.
+        # 为升级前生成的摘要补回带有来源关联的陈述，适配此前的
+        # 账本迁移。原始消息仍然是权威来源。
         if summary is not None:
             source_rows = [row for row in rows if row["sequence"] <= covered]
             ledger = merge_fact_ledgers(summary.get("fact_ledger", []),
@@ -268,20 +268,20 @@ class ConversationStore:
                 if len(hydrated.encode("utf-8")) > _SUMMARY_MAX_BYTES:
                     if summarizer is None:
                         raise ValueError("Protected conversation facts exceed the summary byte budget; existing summary was retained.")
-                    # Keep the hydrated version in memory for a bounded model
-                    # compaction. Do not persist it unless the smaller candidate
-                    # passes fact coverage and size checks.
+        # 补齐后的版本先保留在内存中，再交给受限模型压缩。
+        # 只有较小的候选摘要通过事实覆盖和大小检查后，
+        # 才允许持久化。
                     summary = {**summary, "content": hydrated, "fact_ledger": ledger}
                 else:
                     self.save_summary(conversation_id, repository_id, summary["covered_message_id"],
                                       hydrated, model_name=summary["model_name"],
                                       fact_ledger=ledger)
                     summary = self.latest_summary(conversation_id, repository_id)
-        # Summaries written by earlier versions could fit the storage cap but
-        # exceed the current prompt budget. Compact those legacy summaries on
-        # the next explicitly enabled semantic-summary path before planning a
-        # user answer. The old row remains intact if generation or validation
-        # fails because save_summary is reached only after a valid replacement.
+        # 旧版本写入的摘要可能未超过存储上限，
+        # 却仍超出当前提示预算。下次明确启用语义摘要时，
+        # 应先压缩这些旧摘要，再规划用户回答。
+        # 若生成或验证失败，旧记录仍会保留；
+        # 只有替代摘要通过校验后才会调用 save_summary。
         if (summary is not None and summarizer is not None
                 and len(summary["content"].encode("utf-8")) > _SUMMARY_MAX_BYTES):
             source = [{"id": summary["covered_message_id"],
@@ -310,9 +310,9 @@ class ConversationStore:
             old = remaining[:-6]
             if all(row["role"] == ("user" if i % 2 == 0 else "assistant")
                    and row["status"] == "completed" for i, row in enumerate(old)):
-                # Rebuild the summary incrementally: include the previous
-                # untrusted summary plus only messages not covered by it. This
-                # prevents each update from resending the whole transcript.
+        # 增量更新摘要时，输入应包含已有的
+        # 不可信摘要，以及所有尚未被摘要覆盖的消息。这样
+                # 可避免每次更新都重新发送完整对话记录。
                 if summarizer is not None:
                     target_sequence = old[-1]["sequence"]
                     pending_rows = [row for row in rows
@@ -320,8 +320,8 @@ class ConversationStore:
                     base_source = ([{"id": summary["covered_message_id"],
                         "sequence": summary["covered_through"], "role": "summary",
                         "content": summary["content"]}] if summary is not None else [])
-                    # Detect an individually uncompressible turn before making
-                    # any model request or persisting an intermediate summary.
+        # 先检测单个对话轮次是否无法压缩，
+        # 再发起模型请求或持久化中间摘要。
                     for offset in range(0, len(pending_rows), 2):
                         pair = pending_rows[offset:offset + 2]
                         candidate = base_source + [
@@ -481,9 +481,9 @@ class ConversationStore:
                                     if "exceeds its safe limit" in str(exc) else type(exc).__name__),
                             })
                             raise
-                        # The model's compact prose is fallible. The persisted
-                        # summary is composed with exact user-source statements
-                        # so omissions are visible and never silently erase facts.
+        # 模型生成的摘要可能有误。持久化摘要由
+        # 用户原文中的精确陈述组成，
+                        # 因此遗漏会显现出来，不会悄悄抹去事实。
                         model_missing = missing_fact_ids(model_content, ledger)
                         content = render_fact_section(model_content, ledger)
                         missing = missing_fact_ids(content, ledger)

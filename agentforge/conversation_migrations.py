@@ -1,4 +1,4 @@
-"""Explicit migrations; caller must authenticate and supply the engine."""
+"""显式迁移；调用方必须先完成身份验证并提供数据库引擎。"""
 from pathlib import Path
 from alembic import command
 from alembic.config import Config

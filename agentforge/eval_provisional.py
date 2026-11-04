@@ -1,4 +1,4 @@
-"""Run AF-009F/AF-010A once against an explicit local embedding endpoint."""
+"""针对明确指定的本地 Embedding 服务运行一次 AF-009F/AF-010A。"""
 
 import argparse
 import json

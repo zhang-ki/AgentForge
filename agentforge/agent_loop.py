@@ -1,7 +1,7 @@
-"""Bounded, auditable, read-only agent tools with a deterministic offline planner.
+"""有界、可审计的只读 Agent 工具，以及确定性离线 Planner。
 
-The loop never executes repository code.  Its only write is the existing AgentForge
-SQLite index when the explicit ``index`` tool runs; source repositories stay read-only.
+循环绝不执行仓库代码。唯一的写入操作是显式运行 ``index`` 工具，
+用于更新 AgentForge 管理的 SQLite 索引；仓库源码始终保持只读。
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ class AgentPlanner(Protocol):
     def next_call(
         self, objective: str, audit: tuple[ToolAuditRecord, ...]
     ) -> ToolCall | None:
-        """Return the next structured call or None when planning is complete."""
+        """返回下一条结构化调用；规划完成时返回 None。"""
 
 
 def _strict_arguments(
@@ -116,7 +116,7 @@ def _normalized_relative_path(value: Any) -> str:
 
 
 class ReadOnlyToolbox:
-    """Execute the four allowed tools against one explicitly authorized repository."""
+    """只对一个明确获准的仓库执行四种允许的工具。"""
 
     def __init__(self, repository: str | os.PathLike[str], store, *, limits: ScanLimits | None = None):
         report = scan_repository(repository, limits)
@@ -223,7 +223,7 @@ class ReadOnlyToolbox:
 
 
 class OfflineAgentPlanner:
-    """Deterministic test and local fallback planner; it is not model reasoning."""
+    """用于测试和本地回退的确定性 Planner；它不代表模型推理。"""
 
     def __init__(self, repository: Path, *, top_k: int = 5, replace_repository: bool = False):
         self.repository = repository
@@ -256,10 +256,10 @@ class OfflineAgentPlanner:
 
 
 class AgentLoop:
-    """Run planner calls with strict budgets and a complete in-memory audit trail.
+    """在严格预算下执行 Planner 调用，并保留完整的内存审计记录。
 
-    Timeout enforcement is cooperative: bounded repository operations run synchronously,
-    and a call that exceeds its wall-clock allowance fails the run without retry.
+    超时控制采用协作式机制：有界仓库操作会同步执行，
+    调用一旦超过允许的总耗时，本次运行就会失败，不会重试。
     """
 
     def __init__(
@@ -327,10 +327,10 @@ class AgentLoop:
                 status = "failed"
                 break
         else:
-            # Reaching the loop bound is not itself a failure: a plan may use
-            # exactly the permitted number of tools.  Peek at the planner once
-            # more (without executing another tool) to distinguish a completed
-            # plan from one that still requires work.
+            # 达到循环上限本身不代表失败：计划可能刚好
+            # 用完允许的工具调用次数。此时只查看一次计划器
+            # （不执行其他工具），以判断计划是否已经完成
+            # 还是仍有工作待处理。
             status = (
                 "completed"
                 if self.planner.next_call(objective, tuple(audit)) is None

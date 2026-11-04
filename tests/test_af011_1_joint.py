@@ -1,4 +1,4 @@
-"""Two-repository integration with real local Chroma and isolated SQLite only."""
+"""双仓库集成测试；使用真实本地 Chroma 和隔离的 SQLite。"""
 import importlib.util
 import os
 from pathlib import Path
@@ -130,8 +130,8 @@ if mode=='write':
  delete_repository_vectors(client,aid)
  assert {m.content for m in retriever.search('preference',repository_id=bid)}=={'Global concise preference.'}
  assert {m.content for m in retriever.search('preference',repository_id=aid)}=={'Global concise preference.'}
- # A deleted repository can be re-indexed; its retained approved memories need
- # an explicit vector rebuild without disturbing other repository/global data.
+ # 删除后的仓库可以重新索引；保留的已批准记忆需要
+ # 显式重建向量，且不能影响其他仓库或全局数据。
  with IndexStore(':memory:') as index:
   index_repository(a,index)
   @contextmanager

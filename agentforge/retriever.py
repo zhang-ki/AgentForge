@@ -1,4 +1,4 @@
-"""Explainable lexical scoring; no embeddings or external services."""
+"""可解释的词法评分；不使用 Embedding 或外部服务。"""
 
 from collections import Counter
 import re
@@ -36,8 +36,8 @@ def search(store, query: str, top_k: int = 5) -> list[SearchResult]:
     for row in store.iter_chunks():
         content_terms = Counter(terms(row["text"]))
         path_terms = set(terms(row["relative_path"]))
-        # Each term: capped frequency + path membership. Full query atoms
-        # receive a separate exact identifier bonus.
+        # 每个词项按有限词频与路径命中计分；完整查询词项另有
+        # 会额外获得精确标识符匹配加分。
         score = sum(min(content_terms[term], 5) + (3 if term in path_terms else 0)
                     for term in query_terms)
         score += sum(4 for term in raw_terms if re.search(
@@ -47,7 +47,7 @@ def search(store, query: str, top_k: int = 5) -> list[SearchResult]:
             r"(?m)^\s*(?:async\s+)?(?:def|class|function)\s+" + re.escape(term) + r"\b",
             row["text"], re.IGNORECASE,
         ))
-        # Chinese keyword substrings work without claiming linguistic segmentation.
+        # 支持中文关键词子串匹配，但不声称完成了中文分词。
         score += sum(2 * min(row["text"].casefold().count(term), 5)
                      for term in query_terms if re.search(r"[\u3400-\u9fff]", term))
         if query.strip().casefold() in row["relative_path"].casefold():

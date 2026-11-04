@@ -1,11 +1,11 @@
-"""Bounded local PostgreSQL engine using runtime-only caller credentials."""
+"""使用调用方运行时凭证的有界本地 PostgreSQL 引擎。"""
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import SQLAlchemyError
 
 
 def create_local_engine(password: str):
-    """Create a bounded engine for the dedicated role/database, without connecting."""
+    """为专用角色和数据库创建有界引擎，但不立即连接。"""
     if not isinstance(password, str) or not password or "\x00" in password:
         raise ValueError("A non-empty database credential is required.")
     url = URL.create(drivername="postgresql+psycopg", username="agentforge_app",
@@ -16,7 +16,7 @@ def create_local_engine(password: str):
 
 
 def check_database_health(engine):
-    """Perform a single bounded health query without exposing driver messages."""
+    """执行一次有界健康查询，不暴露数据库驱动的原始错误信息。"""
     try:
         with engine.connect() as connection:
             return connection.scalar(text("SELECT 1")) == 1

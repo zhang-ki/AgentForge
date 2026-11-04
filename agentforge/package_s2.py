@@ -1,4 +1,4 @@
-"""AF-010-S2 isolated multi-repository evaluation and scale research."""
+"""AF-010-S2 隔离多仓库评测与规模研究。"""
 
 from __future__ import annotations
 
@@ -336,7 +336,7 @@ def evaluate_s2(*, base_url: str | None = None, model_id: str | None = None,
                 "confusion_matrix": matrix, "decisions": routes,
             },
         }
-    # Compare path-level complementarity on the frozen Validation only.
+    # 只在冻结的 Validation 集上比较路径级互补性。
     validation_rows = details["validation"]
     maps = {name: {row["query_id"]: row for row in rows} for name, rows in validation_rows.items()}
     positives = [item for item in dataset["queries"] if item["split"] == "validation" and not item["no_evidence"]]
@@ -414,7 +414,7 @@ def _write_scale_repository(root: Path, count: int) -> None:
 
 
 def run_scale_benchmarks(temp_parent: Path) -> dict:
-    """Measure Python allocations; 5000 also demonstrates the scanner file cap."""
+    """测量 Python 内存分配；5000 也用于展示扫描器的文件数上限。"""
     results = []
     for count in (100, 1000, 5000):
         directory = Path(tempfile.mkdtemp(prefix=f"s2-scale-{count}-", dir=temp_parent))

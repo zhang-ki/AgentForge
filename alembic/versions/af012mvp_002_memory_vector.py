@@ -1,6 +1,6 @@
-"""Add repository registry, auditable memories and vector outbox.
+"""新增仓库目录、可审计记忆和向量同步 Outbox。
 
-This migration is additive: it does not alter or copy the SQLite RAG index.
+此迁移采用追加式设计，不修改或复制 SQLite RAG 索引。
 """
 from alembic import op
 import sqlalchemy as sa

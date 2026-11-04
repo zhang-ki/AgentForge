@@ -24,9 +24,9 @@ class AF011AcceptanceTests(unittest.TestCase):
                 pass
 
     def test_task_dataset_is_valid_and_split_groups_are_disjoint(self):
-        # AF-011 is a frozen source snapshot; this checkout has changed source
-        # line positions. Validate its immutable manifest without re-evaluating
-        # old anchors against new code.
+        # AF-011 使用冻结的源码快照；当前工作区中的源码行号已经变化，
+        # 因此只验证其不可变清单，不再依据当前代码重新评估
+        # 旧版锚点。
         data = json.loads(DATASET.read_text(encoding="utf-8"))
         self.assertEqual(data["dataset_version"], "af011-agentforge-source-tasks-v4")
         self.assertEqual(data["label_source"], "ai_evidence_review")
@@ -57,10 +57,10 @@ class AF011AcceptanceTests(unittest.TestCase):
             changed_checkout = Path(temp)
             source = changed_checkout / "agentforge" / "agent_loop.py"
             source.parent.mkdir(parents=True)
-            # The frozen first anchor is expected on line 258. Keep the path
-            # and line range valid while changing only the anchored definition;
-            # this tests anchor rejection without depending on whole-checkout
-            # scan size or unrelated files.
+            # 冻结快照的第一个锚点预期位于第 258 行。修改锚定定义时，
+            # 只改动该定义，并确保路径和行号范围仍然有效；
+            # 这样可以测试锚点失效判断，而不依赖整个工作区的
+            # 扫描规模或无关文件。
             source.write_text("\n" * 257 + "class ChangedAgentLoop:\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "Task evidence anchor or rationale is invalid"):
                 load_and_validate_tasks(DATASET, changed_checkout)

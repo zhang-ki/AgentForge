@@ -1,4 +1,4 @@
-"""HTTP-only loopback client. No DNS hostnames, proxies, redirects or processes."""
+"""仅通过 HTTP 访问回环地址的客户端。不使用 DNS 主机名、代理或重定向，也不管理进程。"""
 
 import http.client
 import ipaddress
@@ -89,7 +89,7 @@ class LlamaServerClient:
         }
 
     def request_stats(self) -> dict:
-        """Return non-sensitive counters for execution audit."""
+        """返回用于执行审计的非敏感计数。"""
         return dict(self._request_stats)
 
     def record_application_failure(
@@ -118,7 +118,7 @@ _ANSWER_SYSTEM_PROMPT = (
 
 
 class LlamaServerProvider:
-    """Explicit local-generation interface; it does not manage the server process."""
+    """显式本地生成接口；不管理服务器进程。"""
 
     def __init__(self, client: LlamaServerClient, model: str):
         self.client = client
@@ -141,21 +141,21 @@ class LlamaServerProvider:
                                         f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
                                         "Cite the applicable IDs."},
         ]), model=self.model)
-        # Provider boundary contract:
+        # Provider 边界合同：
         #
-        # The HTTP client returns untrusted model text.
-        # It does not turn that text into trusted evidence.
-        # It does not infer permission from generated content.
-        # It does not execute tools named by the model.
-        # Citation validation is request-local.
-        # Every marker must map to this BuiltContext.
-        # Paths, lines and excerpts are resolved from the request context, not
-        # generated text. Mixed valid and invalid IDs fail together.
-        # The independent answer-contract layer then checks provenance/status;
-        # a syntactically valid ID alone does not prove semantic entailment.
-        # Failures remain observable at the provider and product boundaries,
-        # with no fallback. This is the only conversion from model text to an
-        # online Answer, and citation validation must complete before it.
+        # HTTP 客户端返回的是不可信模型文本。
+        # 它不会将该文本升级为可信证据。
+        # 它不会从生成内容中推断权限。
+        # 它不会执行模型提到的工具。
+        # 引用校验仅对当前请求有效。
+        # 每个标记都必须映射到当前 BuiltContext。
+        # 路径、行号和摘录均从本次请求上下文中解析，而不是从
+        # 生成文本。有效 ID 与无效 ID 混杂时，整个结果都会失败。
+        # 随后由独立的回答合同层检查来源与状态；
+        # 仅有格式正确的 ID，并不能证明语义蕴含关系成立。
+        # 在 Provider 和产品边界保留失败信息，不进行回退。
+        # 这是将模型文本转换为在线 Answer 的唯一入口；
+        # 必须先完成引用校验。
         try:
             citations = validate_model_citations(text, context)
         except CitationValidationError as exc:
@@ -190,9 +190,9 @@ def _conversation_messages(context, conversation, messages):
         history=conversation["history"], summary=conversation.get("summary"),
         memories=tuple(conversation.get("memories", ())),
         protected_facts=tuple(conversation.get("context_fact_ledger", ())),
-        # Byte-count proxy, not a tokenizer. The bounded 3500-byte default
-        # modestly increases history room while reserving nominal headroom for
-        # chat-template overhead and generation on 4096-token local deployments.
+        # 该预算按字节估算，不是精确 Token 数。默认 3500 字节上限在
+        # 4096 Token 本地部署中为历史消息留出适度空间，同时为
+        # 聊天模板开销和生成过程预留余量。
         budget_bytes=usable_budget)
     conversation["injected_memory_ids"] = plan.memory_ids
     conversation["context_diagnostics"] = {
@@ -221,7 +221,7 @@ def _conversation_messages(context, conversation, messages):
 
 
 def _model_evidence_text(context: BuiltContext) -> str:
-    """Render untrusted excerpts without exposing app-owned path/line citations."""
+    """呈现不可信的源码摘录，但不暴露由应用生成的路径/行号引用。"""
     role_labels = {
         "callsite": "actual callsite",
         "caller_definition": "caller definition containing the call",
@@ -286,8 +286,8 @@ def _chat_request(
                 raise ProviderError("Local generation total timeout exceeded.")
             return min(limit, remaining)
 
-        # http.client connects directly and never consults environment proxies.
-        # It does not implement redirect following.
+        # http.client 直接建立连接，绝不会读取环境代理设置。
+        # 它不支持跟随重定向。
         connection = http.client.HTTPConnection(
             client.host, client.port, timeout=remaining_timeout(client.connect_timeout)
         )
@@ -297,8 +297,8 @@ def _chat_request(
             connection.connect()
             if connection.sock is None:
                 raise ProviderError("Local connection did not provide a socket.")
-            # Reset before every blocking phase so both the phase limit and the
-            # whole-generation deadline are enforced.
+            # 每个阻塞阶段开始前都重置超时，以同时执行阶段时限和
+            # 整次生成请求的总时限。
             connection.sock.settimeout(remaining_timeout(client.read_timeout))
             timeout_phase = "request write"
             connection.request(
@@ -315,8 +315,8 @@ def _chat_request(
             response = connection.getresponse()
             client._request_stats["last_http_status"] = response.status
             def set_response_timeout():
-                # HTTPConnection may detach its socket on Connection: close;
-                # HTTPResponse still owns the file/socket used for the body.
+                # 收到 Connection: close 后，HTTPConnection 可能会解除其 socket 关联；
+                # 但 HTTPResponse 仍持有读取响应正文所需的文件或 socket。
                 sock = connection.sock
                 if sock is None:
                     sock = getattr(getattr(getattr(response, "fp", None), "raw", None), "_sock", None)
@@ -326,8 +326,8 @@ def _chat_request(
             if 300 <= response.status < 400:
                 raise ProviderError("HTTP redirect rejected.")
             if response.status != 200:
-                # Retain only structural and allowlisted diagnostics.  Server
-                # errors can echo prompts or credentials, so never store text.
+                # 只保留结构化且经过白名单筛选的诊断信息。服务器
+                # 错误可能回显提示词或凭证，因此绝不保存错误正文。
                 diagnostic = {"http_status": response.status}
                 try:
                     set_response_timeout()

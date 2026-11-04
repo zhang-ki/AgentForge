@@ -1,4 +1,4 @@
-"""Pluggable, non-executing source parsers."""
+"""可插拔且不会执行源码的解析器。"""
 
 from .base import ParsedFile, ParsedReference, ParsedSymbol, Parser
 from .python_ast import PythonAstParser

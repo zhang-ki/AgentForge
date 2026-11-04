@@ -1,4 +1,4 @@
-"""Conservative repository-local import and call resolution."""
+"""保守地解析仓库内的导入与调用关系。"""
 
 from collections import defaultdict
 from dataclasses import replace
@@ -95,7 +95,7 @@ def _scope_chain(symbol_by_id, symbol_id: str):
     while current is not None:
         yield current
         parent = symbol_by_id.get(current.parent_symbol_id)
-        # A method's bare name lookup does not search its containing class namespace.
+        # 仅凭方法名查找时，不会自动搜索其所属类的命名空间。
         if current.kind == "method" and parent is not None and parent.kind == "class":
             current = symbol_by_id.get(parent.parent_symbol_id)
         else:
@@ -118,8 +118,8 @@ def _resolve_call(
                 symbols_by_qname, (scope.qualified_name + "." + first,), reference
             )
             if local_prefix.resolution_status != "unresolved":
-                # A local function/class binding is not an imported module alias;
-                # attribute resolution is outside this conservative resolver.
+                # 本地函数或类的绑定不是导入的模块别名；
+                # 属性解析不在这个保守解析器的处理范围内。
                 return replace(reference, resolution_status="unresolved")
             targets = imports_by_scope.get(scope.symbol_id, {}).get(first)
             if targets:
@@ -157,7 +157,7 @@ def _resolve_call(
 
 
 def resolve_references(parsed_files: list[ParsedFile]) -> list[ParsedFile]:
-    """Resolve only unique local candidates; preserve unresolved/ambiguous evidence."""
+    """只解析唯一的本地候选项；保留未解析或存在歧义的证据。"""
     successful = [item for item in parsed_files if item.status == "parsed"]
     symbols_by_qname = defaultdict(list)
     symbols_by_id = {}

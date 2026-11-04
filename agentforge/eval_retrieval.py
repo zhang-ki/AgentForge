@@ -1,4 +1,4 @@
-"""Run a versioned synthetic retrieval benchmark fully offline."""
+"""完全离线运行有版本标记的合成检索基准。"""
 
 import argparse
 import json

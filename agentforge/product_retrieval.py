@@ -1,8 +1,8 @@
-"""Intent-driven, evidence-preserving retrieval for the bounded product agent.
+"""面向有界产品 Agent 的意图驱动、保留证据来源的检索。
 
-This module deliberately does not use RRF and does not make Vector mandatory.  A
-route selects ordered evidence channels; unavailable optional channels are exposed
-instead of silently being treated as successful.
+本模块有意不使用 RRF，也不强制要求 Vector。
+路由会按顺序选择证据通道；不可用的可选通道会明确报告，
+不会被悄悄当作成功通道。
 """
 
 from __future__ import annotations
@@ -80,7 +80,7 @@ class ProductRetrievalOutcome:
 
 
 class ProductIntentRouter:
-    """Small product wrapper that leaves the frozen research router unchanged."""
+    """轻量产品封装；不修改冻结的研究路由器。"""
 
     version = PRODUCT_ROUTE_VERSION
 
@@ -103,7 +103,7 @@ def _content_hash(path: str, start: int, end: int, text: str) -> str:
 
 
 class ProductRetriever:
-    """Use deterministic intent routing while retaining per-channel provenance."""
+    """使用确定性的意图路由，同时保留各通道的来源信息。"""
 
     def __init__(self, store, repository, *, vector_retriever=None,
                  limits: ScanLimits | None = None, scan_report: ScanReport | None = None):
@@ -236,9 +236,9 @@ class ProductRetriever:
                 name=None if qualified_name else name,
                 limit=min(500, top_k * 4),
             )
-            # Comparison questions need both definitions, including a plain
-            # identifier without an underscore. Only exact indexed names are
-            # accepted; unrelated words produce no candidates.
+            # 对比查询需要同时提供两个定义，包括
+            # 不带下划线的普通标识符。只接受索引中的精确名称；
+            # 无关词语不会产生候选项。
             if re.search(r"(?:与|和|\bversus\b|\bvs\.?\b)", query, re.IGNORECASE):
                 seen = {row["symbol_id"] for row in rows}
                 for other in re.findall(r"[A-Za-z_]\w*", query):
@@ -299,8 +299,8 @@ class ProductRetriever:
         definition_evidence = []
         for item in raw:
             relation = by_id[item.relation_id]
-            # A relation is evidenced at its source statement.  A resolves_to target
-            # path cannot reuse the source import line number.
+            # 关系证据应指向它的源语句；resolves_to 的
+            # 目标路径不能沿用来源导入语句的行号。
             text = self._excerpt(
                 relation.source_path, relation.start_line, relation.end_line,
             )
@@ -309,9 +309,9 @@ class ProductRetriever:
                 relation.start_line, relation.end_line, text,
                 _content_hash(relation.source_path, relation.start_line, relation.end_line, text),
                 item.score, ("package_relations",), (("package_relations", item.score),),
-                # PackageRelation currently assigns graph-local symbol IDs;
-                # retain its own relation ID, but do not expose those IDs as
-                # identities from the SQLite symbol table.
+                # PackageRelation 当前分配图内局部符号 ID；
+                # 保留自身的关系 ID，但不要把这些 ID 暴露为
+                # SQLite 符号表中的身份标识。
                 symbol_ids=(),
                 relation_ids=(relation.relation_id,),
                 resolution_status=relation.resolution_status,
@@ -324,9 +324,9 @@ class ProductRetriever:
                     "resolves_to": ("static_resolution",),
                 }.get(relation.relation_type, ("static_relation",))),
             ))
-            # Add the actual definition only when the static graph resolved a
-            # unique import/re-export target. A relation's import line is never
-            # reused as the target definition's line range.
+            # 仅当静态关系图解析出唯一的导入或重新导出目标时，
+            # 才添加目标定义；关系中的导入行绝不能复用为
+            # 目标定义的行号范围。
             if (relation.relation_type in {"resolves_to", "reexports_symbol"}
                     and relation.resolution_status == "resolved"
                     and relation.target_symbol_id and relation.target_path):
@@ -346,9 +346,9 @@ class ProductRetriever:
                            and row["end_line"] == relation.target_definition_end_line
                            and relation.target_definition_start_line is not None
                            and row["start_line"] <= relation.target_definition_start_line]
-                # The graph and symbol table have independent identity formulas.
-                # Join only when path, name and source range identify one exact
-                # indexed definition; otherwise omit the supplemental excerpt.
+                # 关系图与符号表采用不同的身份计算方式。
+                # 只有路径、名称和源码范围能唯一确定同一个
+                # 已索引定义；否则省略补充摘录。
                 definition = matches[0] if len(matches) == 1 else None
                 if definition is not None and self._indexed_file_is_current(definition["relative_path"]):
                     definition_text = self._excerpt(
@@ -367,9 +367,9 @@ class ProductRetriever:
                         evidence_roles=("target_definition", "definition"),
                     )
                     (definition_evidence if call_query else results).append(definition_candidate)
-        # The relation graph describes import and re-export statements.  Actual
-        # callsites live in the AST reference index and must be retrieved by the
-        # code-shaped target, never by the last prose word in the question.
+        # 关系图描述导入和重新导出语句。实际的
+        # 调用位置存放在 AST 引用索引中，必须依据
+        # 代码形式的目标检索，不能依据问题中最后一个普通词语。
         if relation_target is not None and call_query:
             try:
                 references = self.store.search_references(
@@ -411,9 +411,9 @@ class ProductRetriever:
                             resolution_status="resolved",
                             evidence_roles=("caller_definition", "definition"),
                         ))
-                    # Preserve the exact call expression as a separate source
-                    # range.  An import or re-export on the same file is not a
-                    # substitute for the caller's executed syntax.
+                    # 将精确调用表达式保留为单独的源码范围。
+                    # 同一文件中的导入或重新导出语句不能
+                    # 替代调用方实际执行的语法位置。
                     call_text = self._excerpt(row["relative_path"], row["line"], row["line"])
                     callsite_evidence.append(ProductCandidate(
                         str(self.repository), row["relative_path"], row["line"], row["line"],
@@ -443,9 +443,9 @@ class ProductRetriever:
         results.sort(key=lambda item: (-item.score, item.relative_path.casefold(),
                                        item.start_line, item.end_line, item.relation_ids))
         if call_query:
-            # A call answer needs the caller and callee first; static import
-            # edges follow as supporting route evidence.  Keep all ranges so
-            # same-file imports cannot hide the actual call statement.
+            # 回答调用关系时，必须先提供调用方和被调用方；静态导入只是辅助线索。
+            # 关系边随后作为辅助路由证据。保留所有行号范围，避免
+            # 同文件导入语句遮蔽真正的调用语句。
             return [*caller_evidence, *callsite_evidence, *definition_evidence, *results]
         return results
 
@@ -558,9 +558,9 @@ class ProductRetriever:
                     -item.score, item.relative_path.casefold(), item.start_line,
                 ))
             for item in values:
-                # Merge duplicate channel hits for the same source range.  A
-                # different line range in the same file is complementary
-                # evidence (for example an import and a real callsite).
+        # 合并多个通道中相同源码范围的重复命中；
+        # 同一文件中不同代码行范围的证据可以互为补充，
+                # 例如导入语句和实际调用位置。
                 key = (item.relative_path.casefold(), item.start_line, item.end_line)
                 if key in positions:
                     index = positions[key]
@@ -613,7 +613,7 @@ _RELATION_WORDS = _CALL_WORDS | {
 
 
 def _mentioned_code_symbol(query: str) -> str | None:
-    """Recognize one code-shaped identifier embedded in multilingual prose."""
+    """从多语言自然语言中识别一个符合代码标识符形式的名称。"""
     if not isinstance(query, str):
         return None
     names = []

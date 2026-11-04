@@ -1,4 +1,4 @@
-"""Deterministic AF-011 acceptance over scanner-approved AgentForge source."""
+"""基于扫描器批准的 AgentForge 源码执行确定性 AF-011 验收。"""
 
 from __future__ import annotations
 

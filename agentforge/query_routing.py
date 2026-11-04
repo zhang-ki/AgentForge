@@ -1,4 +1,4 @@
-"""Explainable offline query routing research prototype."""
+"""可解释的离线路由研究原型。"""
 
 from dataclasses import dataclass
 import re
@@ -23,7 +23,7 @@ class RouteDecision:
 
 
 class ExplainableQueryRouter:
-    """Frozen rules use query text only; retrieval output never selects a route."""
+    """冻结规则只使用查询文本；检索结果不会反过来选择路由。"""
 
     version = "package-router-calibration-v1"
 

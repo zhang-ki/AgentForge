@@ -1,8 +1,8 @@
-"""Chroma candidate adapter for explicit local RAG and memory retrieval.
+"""供显式本地 RAG 与记忆检索使用的 Chroma 候选适配器。
 
-Callers must verify every candidate against authoritative, current source data.
-This module does not execute models, manage migrations or synchronize outbox
-records; those responsibilities belong to the embedding/index and memory layers.
+调用方必须根据当前权威源码核验每个候选。
+本模块不会执行模型调用、管理数据库迁移或同步 outbox；
+这些职责由嵌入、索引和记忆层负责。
 """
 from dataclasses import dataclass
 import hashlib
@@ -59,13 +59,13 @@ def _metadata(source: ChromaSource) -> dict:
 
 
 def _identity(source: ChromaSource) -> str:
-    # Content hash intentionally excluded so updates replace the same record.
+    # 有意不将内容哈希加入 ID，以便更新时替换同一条记录。
     fields = (source.repository_id, source.source_type, source.chunk_id, source.model_id)
     return hashlib.sha256("\0".join(fields).encode("utf-8")).hexdigest()
 
 
 class ChromaCandidateStore:
-    """Operate on a caller-created, local collection with no embedding function."""
+    """操作由调用方创建的本地集合，不附带 Embedding 函数。"""
     def __init__(self, collection, *, dimension: int):
         if isinstance(dimension, bool) or not isinstance(dimension, int) or not 1 <= dimension <= 4096:
             raise ValueError("Invalid embedding dimension.")
@@ -79,6 +79,9 @@ class ChromaCandidateStore:
             if not isinstance(document, str) or not document.strip() or len(document.encode("utf-8")) > 1_000_000:
                 raise ValueError("Chroma source document must be non-empty and at most 1 MB.")
             kwargs["documents"] = [document]
+        else:
+            # Chroma 的 upsert 会保留被省略的旧 document；显式写空串才能清掉旧代码副本。
+            kwargs["documents"] = [""]
         self.collection.upsert(**kwargs)
 
     def delete(self, source: ChromaSource) -> None:
@@ -89,10 +92,12 @@ class ChromaCandidateStore:
                limit: int = 10, source_type: str | None = None):
         return [(source, distance) for source, distance, _document in self.search_with_documents(
             vector, repository_id=repository_id, model_id=model_id,
-            verify_source=verify_source, limit=limit, source_type=source_type)]
+            verify_source=verify_source, limit=limit, source_type=source_type,
+            include_documents=False)]
 
     def search_with_documents(self, vector, *, repository_id: str, model_id: str,
-                              verify_source, limit: int = 10, source_type: str | None = None):
+                              verify_source, limit: int = 10, source_type: str | None = None,
+                              include_documents: bool = True):
         if not callable(verify_source):
             raise ValueError("Authoritative source verification is required.")
         if not isinstance(repository_id, str) or not repository_id or not isinstance(model_id, str) or not model_id:
@@ -101,14 +106,19 @@ class ChromaCandidateStore:
             raise ValueError("Invalid result limit.")
         if source_type not in (None, "code", "document", "memory"):
             raise ValueError("Invalid source type filter.")
+        if not isinstance(include_documents, bool):
+            raise ValueError("include_documents must be boolean.")
         filters = [{"repository_id": repository_id}, {"model_id": model_id}]
         if source_type is not None:
             filters.append({"source_type": source_type})
         normalized = normalize_vector(vector, expected_dimension=self.dimension)
+        included = ["metadatas", "distances"]
+        if include_documents:
+            included.append("documents")
         result = self.collection.query(query_embeddings=[list(normalized)], n_results=limit,
-            where={"$and": filters}, include=["metadatas", "distances", "documents"])
+            where={"$and": filters}, include=included)
         ids, metas, distances = result["ids"][0], result["metadatas"][0], result["distances"][0]
-        documents = result.get("documents")
+        documents = result.get("documents") if include_documents else None
         if documents is None:
             documents = [[None] * len(ids)]
         documents = documents[0]
@@ -134,7 +144,7 @@ class ChromaCandidateStore:
 
 
 def delete_repository_vectors(client, repository_id: str) -> list[str]:
-    """Delete only records tagged with one repository ID across local collections."""
+    """只删除本地集合中标记为指定 repository ID 的记录。"""
     if not isinstance(repository_id, str) or not repository_id.strip() or len(repository_id) > 512:
         raise ValueError("Repository ID is invalid.")
     names = []

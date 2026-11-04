@@ -1,4 +1,4 @@
-"""Validation and evaluation helpers for AF-009G's independent corpus."""
+"""用于 AF-009G 独立语料的验证和评测辅助函数。"""
 
 from collections import Counter
 import hashlib
@@ -48,7 +48,7 @@ def load_generalization_dataset(
 
 
 def corpus_manifest(root: Path = DEFAULT_CORPUS) -> dict:
-    """Return a deterministic manifest without following links or reparse points."""
+    """生成确定性的清单，不跟随链接或重解析点。"""
     root = Path(root).resolve(strict=True)
     if not root.is_dir():
         raise ValueError("Generalization corpus must be a directory.")
@@ -267,7 +267,7 @@ def _fixed_threshold_result(report: dict, dataset: dict) -> dict | None:
 
 
 def _vector_rule_rows(report: dict, dataset: dict) -> list[dict]:
-    """Return labelled vector signals with an explicit no-candidate score policy."""
+    """返回带标签的向量信号，并明确规定无候选时的评分方式。"""
     vector = report["retrievers"].get("vector", {})
     if vector.get("status") == "not_measured":
         return []
@@ -339,7 +339,7 @@ def evaluate_generalization(*, base_url: str | None = None, model_id: str | None
                             split_plan_path: Path = DEFAULT_SPLIT_PLAN,
                             expected_dataset_version: str = GENERALIZATION_DATASET_VERSION,
                             calibrate_abstention_rule: bool = False) -> dict:
-    """Run Calibration first, freeze k/threshold, then evaluate Validation once."""
+    """先运行 Calibration 并固定 k/阈值，再对 Validation 评测一次。"""
     from .embeddings import LlamaServerEmbeddingProvider, VectorCandidateRetriever
     from .evaluation import evaluate_benchmark
     from .fusion import RrfRetriever
@@ -421,7 +421,7 @@ def evaluate_generalization(*, base_url: str | None = None, model_id: str | None
                 },
             }
             if split_name == "calibration":
-                # The prior AF-009FA rule and k=60 are fixed ex ante; Calibration is recorded before Validation runs.
+                # AF-009FA 既有规则和 k=60 事先固定；先记录 Calibration，再运行 Validation。
                 fixed_configuration = {
                     "rrf_k": RRF_K,
                     "top_score_rule": "top_score >= 0.70",

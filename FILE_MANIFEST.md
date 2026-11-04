@@ -19,7 +19,7 @@ This manifest describes the portable source tree at the repository root.
 
 - `tests/`: unit, integration, security-boundary, persistence, retrieval, and acceptance-contract tests.
 - `tests/fixtures/`: synthetic source repositories and frozen synthetic evaluation data; no user repository is intended to be stored here.
-- `learning/`: code-reading and conversation/memory learning guides.
+- `learning/`: 28 standalone daily lessons with embedded exact source excerpts and step-by-step explanations, plus optional operation, progress, interview, and conversation/memory reference guides.
 - `README.md`, `ARCHITECTURE.md`, `SECURITY.md`, `ROADMAP.md`: user, architecture, security, and release-scope documentation.
 - `RELEASE_NOTES.md`, `GITHUB_RELEASE_CHECKLIST.md`, and `GITHUB_RELEASE_RESULTS.json`: this release's sanitized notes and publication record.
 

@@ -1,4 +1,4 @@
-"""Memory lifecycle tests. SQLite here is isolated logic testing, not PG evidence."""
+"""记忆生命周期测试。此处 SQLite 仅用于隔离逻辑测试，不是 PostgreSQL 验收证据。"""
 from datetime import datetime, timedelta, timezone
 import importlib.util
 import json
@@ -180,6 +180,8 @@ class MemoryStoreTests(unittest.TestCase):
         vectors = ChromaCandidateStore(collection, dimension=2)
         sync = self.memories.sync_outbox(vectors, Provider())
         self.assertEqual(1, sync["completed"])
+        # 代码向量省略原文，但 Memory 向量需保留正文供记忆检索后交由 PostgreSQL 复核。
+        self.assertTrue(next(iter(collection.rows.values()))["document"])
         retriever = ChromaMemoryRetriever(collection, Provider(), self.memories)
         found = retriever.search("A differently worded style preference query", repository_id=self.repo)
         self.assertEqual(1, len(found))
@@ -192,7 +194,7 @@ class MemoryStoreTests(unittest.TestCase):
         self.assertEqual("user", candidate.sources[0].source_role)
         self.assertEqual([], retriever.search("same query", repository_id="another-repo"))
 
-        # The old vector is deliberately left behind: PostgreSQL approval state remains authoritative.
+        # 故意保留旧向量：PostgreSQL 中的审批状态仍是权威依据。
         self.memories.revoke(memory["id"], self.repo)
         self.assertEqual([], retriever.search("same query", repository_id=self.repo))
 

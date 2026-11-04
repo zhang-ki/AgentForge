@@ -52,8 +52,8 @@ class IntegrationTests(LocalTestCase):
         self.assertEqual(Path(first["database"]).resolve(), self.database_path.resolve())
         self.assertNotEqual(first["database"], str(DATABASE_PATH))
 
-        # Old indexes used only the window/overlap pair. The new line
-        # algorithm signature must invalidate all old chunks on reindex.
+        # 旧索引只依据窗口与重叠参数生成。新的行级
+        # 算法签名必须在重新索引时使旧分块失效。
         with IndexStore(self.database_path) as indexed:
             indexed.connection.execute("UPDATE files SET chunk_signature = ?", ("80:10",))
             indexed.connection.commit()

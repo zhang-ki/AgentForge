@@ -1,4 +1,4 @@
-"""Offline evaluation for the optional package-relation research channel."""
+"""针对可选 PackageRelation 研究通道的离线评测。"""
 
 from collections import defaultdict
 from pathlib import Path, PurePosixPath
@@ -16,7 +16,7 @@ PACKAGE_FILTERS = {
 
 
 def validate_package_dataset(dataset: dict, split: dict, repository) -> dict:
-    """Validate the frozen synthetic labels without consulting retrieval output."""
+    """验证冻结的合成标签，不参考检索结果。"""
     if dataset.get("dataset_version") != "agentforge-package-relations-v1":
         raise ValueError("Unexpected package-relation dataset version.")
     queries = dataset.get("queries")
@@ -89,7 +89,7 @@ def _result_dict(item):
 
 
 def evaluate_package_relations(store, dataset: dict, graph) -> dict:
-    """Compare existing channels and an isolated package graph on one fixture."""
+    """在同一个 fixture 上比较现有检索通道与隔离的 PackageRelation 图。"""
     baseline = evaluate_benchmark(store, dataset, include_timings=True)
     retriever = PackageRelationRetriever(graph)
     package_rows = []

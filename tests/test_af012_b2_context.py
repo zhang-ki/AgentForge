@@ -1,4 +1,4 @@
-"""Conversation message construction and scope checks with no model requests."""
+"""会话消息构造与作用域检查；不发送模型请求。"""
 import unittest
 from unittest.mock import Mock
 

@@ -1,4 +1,4 @@
-"""Bounded, read-only repository scanner that never follows reparse points."""
+"""有界的只读仓库扫描器，绝不跟随重解析点。"""
 
 from __future__ import annotations
 
@@ -104,7 +104,7 @@ def _is_within(root: Path, candidate: Path) -> bool:
 
 
 def _canonical_inside(root: Path, candidate: Path) -> Path:
-    """Resolve and re-check containment immediately before using a path."""
+    """在使用路径前，重新解析并核验其是否仍位于授权范围内。"""
     try:
         normalized = Path(os.path.abspath(os.fspath(candidate)))
         if not _is_within(root, normalized):
@@ -162,7 +162,7 @@ def _inside_excluded_dir(name: str) -> bool:
 
 
 def scan_repository(root: str | os.PathLike[str], limits: ScanLimits | None = None) -> ScanReport:
-    """Inspect one explicitly supplied repository root; never follows links."""
+    """检查用户明确指定的仓库根目录；绝不跟随链接。"""
     limits = limits or ScanLimits()
     root_input = Path(root).expanduser()
     try:
@@ -239,8 +239,8 @@ def scan_repository(root: str | os.PathLike[str], limits: ScanLimits | None = No
             if not stat_module.S_ISREG(info.st_mode):
                 report.add_issue(relative, "unsupported_file_type")
                 continue
-            # Windows DirEntry.stat() may contain zero link count and identity.
-            # Re-query the canonical path, failing closed if metadata is missing.
+            # Windows 的 DirEntry.stat() 可能返回为零的链接数或文件身份信息。
+            # 重新查询规范路径；元数据缺失时采用失败关闭策略。
             try:
                 info = canonical.lstat()
             except OSError:
@@ -278,7 +278,7 @@ def scan_repository(root: str | os.PathLike[str], limits: ScanLimits | None = No
                     inode=info.st_ino,
                 )
             )
-        # Reverse push keeps directory traversal deterministic with a LIFO stack.
+        # 反向压入目录，使后进先出栈的遍历顺序保持确定。
         for child in reversed(child_directories):
             stack.append(child)
 
@@ -300,7 +300,7 @@ def scan_repository(root: str | os.PathLike[str], limits: ScanLimits | None = No
 
 
 def read_candidate(candidate: ScanCandidate, root: Path, max_file_bytes: int = MAX_FILE_BYTES) -> str:
-    """Read one already-discovered text file, revalidating type and containment."""
+    """读取一个已发现的文本文件，并重新验证文件类型与仓库边界。"""
     relative_parts = candidate.relative_path.replace("\\", "/").split("/")
     if not relative_parts or any(part in ("", ".", "..") for part in relative_parts):
         raise ScanReadError("invalid_relative_path")

@@ -1,4 +1,4 @@
-"""Run AF-009G on its independent synthetic repository and provisional labels."""
+"""在独立合成仓库和暂定标签上运行 AF-009G。"""
 
 import argparse
 import json

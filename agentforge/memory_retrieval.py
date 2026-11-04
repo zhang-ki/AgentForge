@@ -1,4 +1,4 @@
-"""Semantic retrieval of approved memory with PostgreSQL source verification."""
+"""语义检索已批准记忆，并通过 PostgreSQL 核验来源。"""
 import hashlib
 
 from .conversation_context import MemoryCandidate, MemorySourceReference

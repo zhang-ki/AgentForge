@@ -1,4 +1,4 @@
-"""Python parser backed only by the standard-library AST module."""
+"""Python 解析器仅依赖标准库 AST 模块。"""
 
 import ast
 from collections import Counter
@@ -70,7 +70,7 @@ class _ParseLimitExceeded(Exception):
 
 
 def _ast_node_limit_exceeded(tree: ast.AST) -> bool:
-    """Bound AST traversal before recursive collectors and SQL row creation."""
+    """在递归遍历收集器和创建 SQL 记录前限制 AST 遍历规模。"""
     pending = [tree]
     visited = 0
     while pending:
@@ -80,14 +80,14 @@ def _ast_node_limit_exceeded(tree: ast.AST) -> bool:
             return True
         for child in ast.iter_child_nodes(node):
             pending.append(child)
-            # visited + pending is a lower-cost upper bound on reachable nodes.
+            # visited 与 pending 之和是可达节点数量的低成本上界。
             if visited + len(pending) > MAX_AST_NODES_PER_FILE:
                 return True
     return False
 
 
 def _definition_structure(node: ast.AST, signature: str) -> str:
-    """Hashable header summary, avoiding repeated dumps of nested function bodies."""
+    """可哈希的函数头摘要，避免反复序列化嵌套函数体。"""
     decorators = getattr(node, "decorator_list", ())
     return "\0".join((type(node).__name__, signature, *(ast.dump(item, include_attributes=False)
                                                        for item in decorators)))
@@ -270,7 +270,7 @@ class _ReferenceCollector(ast.NodeVisitor):
 
 
 class _LocalBindingCollector(ast.NodeVisitor):
-    """Find assignments that can shadow imported names, without entering child scopes."""
+    """查找可能遮蔽导入名称的赋值，但不进入子作用域。"""
 
     def __init__(self):
         self.names: set[str] = set()
@@ -286,8 +286,8 @@ class _LocalBindingCollector(ast.NodeVisitor):
         return
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        # Definitions are represented in the symbol table; the resolver checks
-        # those local candidates before imported aliases.
+        # 定义记录在符号表中；解析器先检查本地候选项，
+        # 再解析导入别名。
         return
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
@@ -297,8 +297,8 @@ class _LocalBindingCollector(ast.NodeVisitor):
         return
 
     def visit_Lambda(self, node: ast.Lambda) -> None:
-        # Lambda bodies are attributed to their containing symbol. Conservatively
-        # treat parameters as shadowing there rather than resolving through imports.
+        # 将 Lambda 函数体归属到所在符号；对于 Lambda，
+        # 把参数视为名称遮蔽，不通过导入关系解析。
         args = node.args
         self.names.update(arg.arg for arg in (*args.posonlyargs, *args.args, *args.kwonlyargs))
         if args.vararg:
@@ -359,7 +359,7 @@ class PythonAstParser:
         module_qualified_name = module_name or fallback_name
         module_name_for_symbol = module_qualified_name.rsplit(".", 1)[-1]
         try:
-            # Python AST and the indexer both count only CR/LF source boundaries.
+            # Python AST 与索引器都只把 CR/LF 视为源码行边界。
             normalised_source = source_text.replace("\r\n", "\n").replace("\r", "\n")
             tree = ast.parse(normalised_source, filename=relative, type_comments=True)
             if _ast_node_limit_exceeded(tree):

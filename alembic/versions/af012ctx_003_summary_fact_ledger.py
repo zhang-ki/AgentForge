@@ -1,4 +1,4 @@
-"""Persist source-linked facts used to guard rolling conversation summaries."""
+"""持久化带来源关联的事实，用于保护滚动更新的会话摘要。"""
 from alembic import op
 import sqlalchemy as sa
 

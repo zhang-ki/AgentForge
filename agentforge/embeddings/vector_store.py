@@ -1,4 +1,4 @@
-"""Bounded SQLite vector persistence and deterministic cosine candidate search."""
+"""有界的 SQLite 向量持久化和确定性余弦相似度候选搜索。"""
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -35,13 +35,13 @@ def _model_id(value: str) -> str:
 
 
 def cosine_similarity(left, right) -> float:
-    """Return dot(a,b)/(||a||*||b||); zero-vector similarity is defined as 0."""
+    """返回 dot(a,b)/(||a||*||b||)；零向量的相似度定义为 0。"""
     a = normalize_vector(left, allow_zero=True)
     b = normalize_vector(right, expected_dimension=len(a), allow_zero=True)
     if not any(a) or not any(b):
         return 0.0
     score = math.fsum(x * y for x, y in zip(a, b))
-    # Clamp float roundoff to the mathematical cosine range.
+    # 将浮点舍入误差限制在数学定义的余弦范围内。
     return max(-1.0, min(1.0, score))
 
 
@@ -64,7 +64,7 @@ class VectorCandidate:
 
 
 class VectorStore:
-    """Vector records share the current project's SQLite transaction and limits."""
+    """向量记录与当前项目共用 SQLite 事务和资源限制。"""
 
     def __init__(self, index_store):
         self.index_store = index_store

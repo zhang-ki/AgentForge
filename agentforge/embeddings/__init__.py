@@ -1,4 +1,4 @@
-"""Provider-neutral embedding and local vector-candidate interfaces."""
+"""与 Provider 无关的 Embedding 接口和本地向量候选接口。"""
 
 from .base import (
     EmbeddingError,

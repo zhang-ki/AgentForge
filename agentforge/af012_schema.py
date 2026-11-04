@@ -1,4 +1,4 @@
-"""AF-012 PostgreSQL model definitions; migrations control schema creation."""
+"""AF-012 PostgreSQL 模型定义；数据库结构由迁移管理。"""
 from uuid import uuid4
 
 from sqlalchemy import (CheckConstraint, DateTime, ForeignKey, Index, Integer, JSON,
@@ -24,7 +24,7 @@ class Conversation(Base):
 
 
 class RepositoryMetadata(Base):
-    """A local registry entry; the SQLite code index remains the source of file data."""
+    """本地仓库目录项；文件索引数据仍以 SQLite 代码索引为准。"""
     __tablename__ = "repository_metadata"
     repository_id: Mapped[str] = mapped_column(String(256), primary_key=True)
     canonical_path: Mapped[str] = mapped_column(String(2048), nullable=False, unique=True)

@@ -160,7 +160,7 @@ function Wait-ForModelReady {
             if ($listenerState -eq 'none' -and -not $LauncherProcess) {
                 throw "$Label 超时且已有监听已消失；不会自动重启服务。"
             }
-            # A bounded health-only poll continues; no chat or embedding request is sent here.
+            # 这里只进行有界的健康状态轮询，不发送聊天或嵌入请求。
         } elseif ($state -eq 'not_listening' -and $AllowExistingListener) {
             throw "$Label 的已有服务停止监听；没有自动重启或终止任何进程。"
         } elseif ($state -eq 'not_listening') {

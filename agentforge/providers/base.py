@@ -5,6 +5,6 @@ from ..models import Answer, BuiltContext
 
 class Provider(Protocol):
     def answer(self, context: BuiltContext) -> Answer:
-        """Return an answer whose structured citations belong to context."""
+        """返回结构化引用属于当前上下文的回答。"""
         ...
 

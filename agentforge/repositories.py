@@ -1,7 +1,7 @@
-"""Persistent repository identities and active-repository selection.
+"""持久化仓库身份和活动仓库选择。
 
-Repository source trees are never modified by this module.  The catalog stores
-canonical paths and points each repository at its own AgentForge-owned index.
+本模块绝不修改仓库源码树。仓库目录保存
+规范化路径，并将每个仓库关联到独立的 AgentForge 索引。
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def _ensure_data_directory() -> None:
 
 
 class RepositoryRegistry:
-    """Small local catalog for stable repository IDs and active selection."""
+    """用于稳定仓库 ID 和活动仓库选择的本地小型目录。"""
 
     def __init__(self, database: str | os.PathLike[str] | None = None, *, readonly: bool = False):
         if database is None:
@@ -226,7 +226,7 @@ class RepositoryRegistry:
 
 
 def open_index_for_repository(path: str | os.PathLike[str], *, readonly: bool = False):
-    """Open a repository-specific index, reusing the legacy index only for its owner."""
+    """打开仓库专属索引；仅当旧版索引确属该仓库时才复用。"""
     from .store import IndexStore
 
     root = canonical_repository(path)

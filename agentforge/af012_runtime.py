@@ -1,4 +1,4 @@
-"""Local persistence configuration with explicit, loopback-only embedding setup."""
+"""本地持久化配置与显式的仅回环 Embedding 设置。"""
 import hashlib
 import os
 from pathlib import Path
@@ -34,7 +34,7 @@ def embedding_provider_from_environment():
 
 
 def create_persistent_chroma(path=None):
-    """Create the local persistent client; never resets or deletes its directory."""
+    """创建本地持久化客户端；绝不重置或删除其数据目录。"""
     try:
         import chromadb
         from chromadb.config import Settings

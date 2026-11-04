@@ -1,4 +1,4 @@
-"""Bounded evidence packaging and exact citation membership validation."""
+"""有界证据组装与精确引用成员校验。"""
 
 from pathlib import PurePosixPath
 import re
@@ -47,12 +47,12 @@ def validate_citations(citations, context: BuiltContext) -> None:
 
 
 def validate_model_citations(text: str, context: BuiltContext) -> tuple[str, ...]:
-    """Map request-local ``[E#]`` markers to canonical evidence citations.
+    """将请求内的 ``[E#]`` 标记映射到规范化证据引用。
 
-    Models never establish paths or line ranges. Those identities come only from
-    the request's :class:`BuiltContext`. Obvious path/line citation attempts are
-    rejected, while ordinary prose such as ``line 12`` or a type annotation is
-    not treated as a citation.
+    模型不能决定路径或行范围；这些身份只能来自
+    当前请求的 :class:`BuiltContext`。明显的路径/行号引用尝试会被
+    拒绝；普通文字（如 ``line 12``）或类型注解则不会被
+    当作引用处理。
     """
     if not isinstance(text, str):
         raise ProviderError("Model answer must be text.")
@@ -62,8 +62,8 @@ def validate_model_citations(text: str, context: BuiltContext) -> tuple[str, ...
     matched_source_ids: list[str] = []
     validated_source_ids: list[str] = []
 
-    # The prompt exposes [E1] source labels. Validate every E-prefixed marker,
-    # including malformed markers that a permissive regex would silently miss.
+    # 提示词会展示 [E1] 这类来源标签。必须验证每个以 E 开头的标记，
+    # 也要检查宽松正则表达式可能悄悄漏掉的格式错误标记。
     cursor = 0
     while True:
         upper_start = text.find("[E", cursor)
@@ -98,8 +98,8 @@ def validate_model_citations(text: str, context: BuiltContext) -> tuple[str, ...
         validated_source_ids.append(source_id)
         cursor = end + 1
 
-    # Legacy path markers are never accepted from the model. The application,
-    # not generated text, owns repository paths and line ranges.
+    # 绝不接受模型提供的旧式路径标记；仓库路径和行号范围
+    # 由应用程序提供，而不是由模型生成。
     legacy_positions = [position for position in (text.find("[["), text.find("]]")) if position >= 0]
     if legacy_positions:
         position = min(legacy_positions)
@@ -119,9 +119,9 @@ def validate_model_citations(text: str, context: BuiltContext) -> tuple[str, ...
             validated_source_ids=validated_source_ids,
         )
 
-    # Reject only unambiguous path-plus-location references. Plain phrases such
-    # as "line 12", times, type annotations, filenames and Markdown remain
-    # ordinary technical text rather than being misclassified as citations.
+    # 只拒绝明确的“路径加位置”引用。
+    # “line 12”、时间、类型注解、文件名和 Markdown 都仍是
+    # 普通技术文本，不能被误判为引用。
     path_location = _BARE_PATH_LOCATION.search(text)
     if path_location:
         starts = [path_location.group(name) for name in (

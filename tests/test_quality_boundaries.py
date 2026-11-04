@@ -1,4 +1,4 @@
-"""Offline regression checks for isolation, evidence boundaries and agent budgets."""
+"""隔离性、证据边界和 Agent 预算的离线回归检查。"""
 
 import unittest
 

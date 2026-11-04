@@ -26,7 +26,7 @@ class _InMemoryChromaCollection:
         for index, identity in enumerate(ids):
             self.records[identity] = {
                 "embedding": list(embeddings[index]), "metadata": dict(metadatas[index]),
-                "document": None if documents is None else documents[index],
+                "document": "" if documents is None else documents[index],
             }
 
     def get(self, *, ids=None, where=None, limit=None, offset=0, include=None):
@@ -36,10 +36,24 @@ class _InMemoryChromaCollection:
             identities = [identity for identity, item in self.records.items()
                           if self._matches(item["metadata"], where or {})]
             identities = identities[offset:None if limit is None else offset + limit]
-        return {"ids": identities,
-                "metadatas": [dict(self.records[identity]["metadata"]) for identity in identities]}
+        result = {"ids": identities}
+        if include is None or "metadatas" in include:
+            result["metadatas"] = [dict(self.records[identity]["metadata"]) for identity in identities]
+        if include is not None and "documents" in include:
+            result["documents"] = [self.records[identity]["document"] for identity in identities]
+        if include is not None and "embeddings" in include:
+            result["embeddings"] = [list(self.records[identity]["embedding"]) for identity in identities]
+        return result
+
+    def update(self, *, ids, embeddings=None, documents=None):
+        for index, identity in enumerate(ids):
+            if embeddings is not None:
+                self.records[identity]["embedding"] = list(embeddings[index])
+            if documents is not None:
+                self.records[identity]["document"] = documents[index]
 
     def query(self, *, query_embeddings, n_results, where, include):
+        self.query_includes = list(include)
         query = query_embeddings[0]
         selected = [(identity, item) for identity, item in self.records.items()
                     if self._matches(item["metadata"], where)]
@@ -48,13 +62,15 @@ class _InMemoryChromaCollection:
             pair[0],
         ))
         selected = selected[:n_results]
-        return {
+        result = {
             "ids": [[identity for identity, _ in selected]],
             "metadatas": [[dict(item["metadata"]) for _, item in selected]],
             "distances": [[sum((left - right) ** 2 for left, right in zip(query, item["embedding"]))
                            for _, item in selected]],
-            "documents": [[item["document"] for _, item in selected]],
         }
+        if "documents" in include:
+            result["documents"] = [[item["document"] for _, item in selected]]
+        return result
 
     def delete(self, *, ids=None, where=None):
         if ids is not None:
@@ -102,7 +118,7 @@ class RepositoryLifecycleTests(LocalTestCase):
             yield
 
     def _cleanup_index(self, path):
-        # The path must remain under this test's unique temporary directory.
+        # 该路径必须始终位于本测试独有的临时目录中。
         self.assertTrue(path.resolve().is_relative_to(self.sandbox.resolve()))
         for suffix in ("", "-journal", "-wal", "-shm"):
             path.with_name(path.name + suffix).unlink(missing_ok=True)
@@ -164,8 +180,12 @@ class RepositoryLifecycleTests(LocalTestCase):
         second_chroma = ChromaCodeIndex(second_store, collection, provider)
         first_chroma.sync()
         second_chroma.sync()
-        self.assertEqual(1, len(first_chroma.search("alpha", top_k=3)))
-        self.assertIn("alpha marker", first_chroma.search("alpha", top_k=3)[0].text)
+        self.assertTrue(all(item["document"] == "" for item in collection.records.values()))
+        with patch.object(first_store, "iter_chunks", side_effect=AssertionError("full chunk scan")):
+            first_results = first_chroma.search("alpha", top_k=3)
+        self.assertEqual(1, len(first_results))
+        self.assertIn("alpha marker", first_results[0].text)
+        self.assertNotIn("documents", collection.query_includes)
         self.assertEqual(1, len(second_chroma.search("beta", top_k=3)))
         self.assertIn("beta marker", second_chroma.search("beta", top_k=3)[0].text)
 
@@ -181,6 +201,28 @@ class RepositoryLifecycleTests(LocalTestCase):
                           if row["relative_path"] == "src/shared.py"]
         self.assertEqual(1, len(rebuilt_chunks))
         self.assertIn("alpha revised", rebuilt_chunks[0]["text"])
+
+    def test_sync_clears_legacy_chroma_code_text_without_reembedding(self):
+        self.write("src/shared.py", "def shared_value():\n    return 'legacy text'")
+        with self._isolated_storage():
+            store = open_index_for_repository(self.root)
+        self.addCleanup(self._cleanup_index, Path(store.database))
+        self.addCleanup(store.close)
+        index_repository(self.root, store)
+        collection = _InMemoryChromaCollection()
+        provider = _SyntheticEmbeddingProvider()
+        service = ChromaCodeIndex(store, collection, provider)
+        service.repository = str(self.root)
+        service.repository_id = repository_identity(self.root)
+        source, document = next(service._sources())
+        service.store.upsert(source, provider.embed_document(document), document=document)
+        self.assertEqual(document, next(iter(collection.records.values()))["document"])
+
+        stats = service.sync()
+
+        self.assertEqual((0, 1), (stats.embedded, stats.unchanged))
+        self.assertEqual("", next(iter(collection.records.values()))["document"])
+        self.assertEqual(document, service.search("legacy", top_k=1)[0].text)
 
     def test_registered_unindexed_repository_can_be_target_indexed_from_cli(self):
         self.write("same.py", "def identical_name():\n    return 'first repository'\n")
@@ -198,8 +240,8 @@ class RepositoryLifecycleTests(LocalTestCase):
                 self.assertEqual(repository_id, registry.active_id())
                 self.assertTrue(registry.get(repository_id)["indexed_at"])
 
-            # A forced rebuild reparses the target while leaving its identity and
-            # the current registration stable.
+            # 强制重建会重新解析目标仓库，同时保留其身份和
+            # 当前注册信息不变。
             rebuilt = _repository_command(SimpleNamespace(
                 repo_action="rebuild", repository=repository_id))
             self.assertEqual("rebuild", rebuilt["operation"])

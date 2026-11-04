@@ -1,4 +1,4 @@
-"""Model-independent evidence contract and fail-closed answer verification."""
+"""与模型无关的证据合同和失败关闭式回答校验。"""
 
 from __future__ import annotations
 
@@ -183,8 +183,8 @@ def verify_generated_answer(answer: Answer, context: BuiltContext, *, route: str
         )
     else:
         _validate_required_role_coverage(context.question, evidence, citations)
-        # Citation membership proves provenance, not semantic entailment. Keep
-        # generated content limited until a separate entailment check exists.
+    # 引用属于证据集合只能证明来源，不代表语义蕴含成立。
+    # 在具备独立蕴含检查前，生成内容只能标记为有限结论。
         kind = "inference"
         status = "limited"
         contract = VerifiedAnswerContract(

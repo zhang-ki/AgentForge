@@ -1,4 +1,4 @@
-"""Initial conversation storage, separate from the existing SQLite index."""
+"""新增独立于现有 SQLite 索引的会话存储。"""
 from alembic import op
 import sqlalchemy as sa
 

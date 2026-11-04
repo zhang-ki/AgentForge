@@ -1,8 +1,8 @@
-"""Conservative, source-linked extraction of durable conversation statements.
+"""保守提取持久化对话陈述，并保留来源关联。
 
-These records are untrusted conversation context, never repository evidence.
-The extractor intentionally prefers false negatives to treating questions or
-assistant claims as durable user facts.
+这些记录属于不可信对话上下文，绝不是仓库源码证据。
+提取器会优先避免误报，不会把问题或
+助手的说法作为持久用户事实。
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def _fact_sentences(text: str):
 
 
 def extract_message_facts(rows):
-    """Return durable-looking statements from completed user messages only."""
+    """只从已完成的用户消息中提取看似稳定的陈述。"""
     output = []
     for row in rows:
         if row.get("role") != "user" or row.get("status", "completed") != "completed":
@@ -53,7 +53,7 @@ def extract_message_facts(rows):
         source_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         for sentence in _fact_sentences(text):
             if len(sentence) > 512:
-                # Do not persist a silently truncated statement.
+                # 不要保存被静默截断的陈述。
                 if _CUE.search(sentence) or (_STATEMENT.search(sentence) and _DISTINCTIVE.search(sentence)):
                     raise ValueError("Important conversation statement exceeds the safe fact size.")
                 continue
@@ -89,7 +89,7 @@ def _kind(text: str) -> str:
 
 
 def merge_fact_ledgers(*ledgers):
-    """Merge by normalized fact identity while preserving all source IDs."""
+    """按规范化事实身份合并，同时保留全部来源 ID。"""
     merged = {}
     for ledger in ledgers:
         for fact in ledger or ():
@@ -143,7 +143,7 @@ def validate_fact_ledger(ledger):
 
 
 def render_fact_section(summary: str, ledger):
-    """Append exact source statements and source IDs to the bounded summary."""
+    """将原始用户陈述及其来源 ID 附加到有界摘要中。"""
     body = summary.split(_FACT_SECTION, 1)[0].rstrip()
     facts = validate_fact_ledger(ledger)
     if not facts:
@@ -156,6 +156,6 @@ def render_fact_section(summary: str, ledger):
 
 
 def missing_fact_ids(summary: str, ledger):
-    """Check exact retained source statements in the composed summary."""
+    """检查合成后的摘要是否保留了准确的原始陈述。"""
     return [fact["fact_id"] for fact in validate_fact_ledger(ledger)
             if fact["text"] not in summary]

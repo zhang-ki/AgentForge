@@ -1,4 +1,4 @@
-"""Coordinate read-only scanning and atomic index updates."""
+"""协调只读扫描和原子化索引更新。"""
 
 from collections import Counter
 from dataclasses import replace

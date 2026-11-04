@@ -1,4 +1,4 @@
-"""Validate an opened Windows source handle's path before reading any bytes."""
+"""读取任何字节前，先验证已打开的 Windows 源码句柄所对应的路径。"""
 
 import os
 from pathlib import Path
@@ -36,7 +36,7 @@ def open_source(root: Path, path: Path):
         wintypes.HANDLE, wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD,
     ]
     kernel.GetFinalPathNameByHandleW.restype = wintypes.DWORD
-    # GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, OPEN_REPARSE_POINT.
+    # Windows 打开文件时使用的标志：GENERIC_READ、FILE_SHARE_READ、OPEN_EXISTING、OPEN_REPARSE_POINT。
     handle = kernel.CreateFileW(str(path), 0x80000000, 1, None, 3, 0x00200000, None)
     if handle == ctypes.c_void_p(-1).value:
         raise ctypes.WinError(ctypes.get_last_error())

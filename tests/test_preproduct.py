@@ -24,7 +24,7 @@ def _sha256(path):
 
 
 class DeterministicMockEmbeddingProvider:
-    """No-network test double; its rankings are not real-model evidence."""
+    """不联网的测试替身；其排序结果不是真实模型证据。"""
 
     def __init__(self, base_url, *, model_id, api_model, dimension,
                  connect_timeout, read_timeout):
@@ -161,8 +161,8 @@ class PreproductFixtureTests(unittest.TestCase):
             "tests/fixtures/retrieval_eval_generalization_v1.json": "607C0BE6DB9CAB0003E6D57A14E028758B27C248F79F125F6E818861F4D8CBF1",
             "tests/fixtures/retrieval_eval_generalization_split_v1.json": "78E367FCEC916C0BF062C8433367ADF5FC41E3BD4713CB4541AC9C8B69D12FDD",
         }
-        # The live index belongs to the user and changes when repositories are
-        # switched. Check isolation against its current state, not an old demo.
+        # 正式索引属于用户，会随着仓库切换而变化。测试应依据
+        # 当前状态检查隔离性，不应依赖旧演示数据。
         protected = [ROOT / ".agentforge/data/index.sqlite3",
                      ROOT / ".agentforge/data/read_only_evidence.json"]
         before = {p: _sha256(p) for p in protected if p.exists()}

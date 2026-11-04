@@ -1,4 +1,4 @@
-"""Explicit, optional Reciprocal Rank Fusion over existing candidate retrievers."""
+"""基于现有候选检索器的显式可选倒数排名融合（RRF）。"""
 
 from dataclasses import dataclass
 import math
@@ -101,7 +101,7 @@ def fuse_ranked_results(channels: dict[str, list], *, k: int = 60, top_k: int = 
 
 
 class RrfRetriever:
-    """File-level RRF; absent channels are empty, while channel failures propagate."""
+    """按文件级别进行 RRF；缺失通道视为空列表，通道故障则向上传播。"""
 
     def __init__(self, store, *, vector_retriever=None, k: int = 60, source_top_k: int = 10):
         if isinstance(source_top_k, bool) or not isinstance(source_top_k, int) or not 1 <= source_top_k <= MAX_TOP_K:

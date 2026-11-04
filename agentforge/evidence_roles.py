@@ -1,7 +1,7 @@
-"""Application-owned semantic roles for source evidence.
+"""由应用定义的源码证据语义角色。
 
-Roles describe source syntax selected by static analysis. They do not prove
-that an import binds or that a call executes at runtime.
+角色描述静态分析选出的源码语法事实，不能证明
+导入绑定了某个名称，或某个调用在运行时确实执行。
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ _CONFIG_USE = re.compile(
 
 
 def required_evidence_roles(question: str) -> tuple[str, ...]:
-    """Return evidence roles required to answer the question's explicit parts."""
+    """返回回答问题各个明确部分所需的证据角色。"""
     text = question if isinstance(question, str) else ""
     if _CALL.search(text) and _DEFINITION.search(text):
         roles = ["callsite", "target_definition"]
@@ -43,7 +43,7 @@ def required_evidence_roles(question: str) -> tuple[str, ...]:
 
 
 def role_coverage(question: str, available_roles, cited_roles=None) -> dict:
-    """Describe required, available and cited roles without retaining source text."""
+    """描述必需、可用及已引用的证据角色，不保留源码正文。"""
     required = required_evidence_roles(question)
     available = set(available_roles or ())
     cited = available if cited_roles is None else set(cited_roles or ())

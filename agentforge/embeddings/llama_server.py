@@ -1,4 +1,4 @@
-"""Small loopback-only client for llama.cpp's OpenAI-compatible embeddings API."""
+"""只连接回环地址的轻量客户端，调用 llama.cpp 兼容 OpenAI 格式的 Embedding API。"""
 
 from http.client import HTTPConnection, HTTPException
 from ipaddress import ip_address
@@ -19,7 +19,7 @@ DEFAULT_QUERY_INSTRUCTION = (
 
 
 class LlamaServerEmbeddingProvider:
-    """Call a user-started local llama-server; never starts or discovers services."""
+    """调用用户已启动的本地 llama-server；本模块不会启动或探测服务。"""
 
     def __init__(
         self,
@@ -50,7 +50,7 @@ class LlamaServerEmbeddingProvider:
 
     @property
     def request_counts(self) -> dict:
-        """Return non-secret request counters for controlled evaluation evidence."""
+        """返回非敏感请求计数，用于受控评测取证。"""
         return {
             "attempts": self.request_attempts,
             "sent": self.requests_sent,
@@ -96,7 +96,7 @@ class LlamaServerEmbeddingProvider:
         return parsed.hostname, port
 
     def embed(self, text: str):
-        """Legacy Provider entry point; unqualified text is treated as a document."""
+        """兼容旧版 Provider 入口；未指定角色的文本按文档处理。"""
         return self.embed_document(text)
 
     def embed_query(self, text: str):
@@ -106,7 +106,7 @@ class LlamaServerEmbeddingProvider:
         return self._embed(text, role="document")
 
     def health(self, *, timeout: float = 2.0) -> str:
-        """Check the model-specific llama.cpp health contract without inference."""
+        """不执行推理，仅检查该模型对应的 llama.cpp 健康状态合同。"""
         timeout = self._validate_timeout(timeout, "health_timeout")
         connection = HTTPConnection(self._host, self._port, timeout=timeout)
         try:
@@ -135,7 +135,7 @@ class LlamaServerEmbeddingProvider:
             connection.close()
 
     def wait_ready(self, *, timeout: float = 120.0, poll_interval: float = 1.0) -> float:
-        """Bounded model-readiness polling; it never sends an embedding request."""
+        """有界的模型就绪轮询；不会发送 Embedding 请求。"""
         timeout = self._validate_timeout(timeout, "readiness_timeout")
         poll_interval = self._validate_timeout(poll_interval, "poll_interval")
         started = time.monotonic()
@@ -166,7 +166,7 @@ class LlamaServerEmbeddingProvider:
         sent = False
         succeeded = False
         try:
-            # http.client connects directly to this parsed IP; it does not use environment proxies.
+            # http.client 直接连接解析出的 IP，不使用环境代理。
             connection.request(
                 "POST", "/v1/embeddings", body=payload,
                 headers={"Content-Type": "application/json", "Accept": "application/json"},

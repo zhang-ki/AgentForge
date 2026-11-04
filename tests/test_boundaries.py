@@ -22,7 +22,7 @@ class BoundaryTests(unittest.TestCase):
                     name = getattr(node.func, "id", getattr(node.func, "attr", ""))
                     if (name == "compile" and isinstance(node.func, ast.Attribute)
                             and isinstance(node.func.value, ast.Name) and node.func.value.id == "re"):
-                        # re.compile constructs a regex; builtin compile remains forbidden.
+                        # re.compile 用于构造正则表达式；内置 compile 仍被禁止。
                         continue
                     self.assertNotIn(name, banned_calls, str(path))
 

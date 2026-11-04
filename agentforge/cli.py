@@ -1,4 +1,4 @@
-"""Command-line interface. Indexing and the explicit agent index tool write only the fixed index."""
+"""命令行接口。索引命令和 Agent 的显式 index 工具只写入固定索引。"""
 
 import argparse
 import ast
@@ -60,7 +60,7 @@ def create_provider(
     connect_timeout: float = 2.0, read_timeout: float = 60.0,
     total_timeout: float = 180.0, max_output_tokens: int = 256,
 ):
-    """Build the explicitly requested ask provider; constructing the client makes no request."""
+    """创建用户明确选择的 ask Provider；构造客户端本身不会发起请求。"""
     if provider_name == "offline":
         if (base_url is not None or model is not None or connect_timeout != 2.0
                 or read_timeout != 60.0 or total_timeout != 180.0 or max_output_tokens != 256):
@@ -174,7 +174,7 @@ def _print_json(value) -> None:
 
 
 def _provider_failure_diagnostic(provider):
-    """Expose request counters and safe error codes without model text or credentials."""
+    """暴露请求计数和安全错误码，不包含模型原文或凭证。"""
     stats = provider.request_stats()
     if not isinstance(stats, dict):
         stats = {}
@@ -578,7 +578,7 @@ def _repository_id(repository: str) -> str:
 
 
 def _ensure_repository_inactive(registry, repository_id: str) -> None:
-    """Prevent removal from leaving the console without an active index."""
+    """防止移除仓库后控制台没有活动索引。"""
     if registry.active_id() == repository_id:
         raise ValueError("Switch to another indexed repository before removing the active repository.")
 
@@ -742,7 +742,7 @@ def _conversation_retrieval(outcome, retriever, conversation, arguments, store, 
 
 
 def _focus_large_class_symbol(question, symbol, store, retriever):
-    """Use exact class and member ranges when an oversized class is queried by behavior."""
+    """按行为查询过大的类时，使用精确的类头和成员源码范围。"""
     if len(symbol.text.encode("utf-8")) <= 1_400 or not symbol.symbol_ids:
         return None
     try:
@@ -815,7 +815,7 @@ def _focus_large_class_symbol(question, symbol, store, retriever):
 
 
 def _narrow_explicit_symbol_candidates(query, symbols, store):
-    """Resolve exact spelling and prefer a unique package re-export when needed."""
+    """按精确拼写解析；必要时优先选择唯一的包级重新导出项。"""
     from .product_retrieval import _mentioned_code_symbol
 
     mentioned = _mentioned_code_symbol(query)
@@ -835,9 +835,9 @@ def _narrow_explicit_symbol_candidates(query, symbols, store):
                  if any(row.get("qualified_name") == mentioned
                         for row in rows_by_candidate.get(id(candidate), ()))]
     else:
-        # Python identifiers are case-sensitive; the store's lookup is
-        # deliberately case-insensitive for interactive search, so remove
-        # case-folded near-matches before building evidence.
+            # Python 标识符区分大小写；交互式搜索的存储查找
+            # 不区分大小写，因此构建证据前要先移除
+        # 仅在大小写折叠后才匹配的近似结果，再构建证据。
         exact = [candidate for candidate in symbols
                  if any(row.get("name") == mentioned
                         for row in rows_by_candidate.get(id(candidate), ()))]
@@ -846,10 +846,10 @@ def _narrow_explicit_symbol_candidates(query, symbols, store):
     if len(exact) == 1 or "." in mentioned:
         return tuple(exact)
 
-    # If an unqualified exact name has several definitions, prefer the unique
-    # one re-exported from a package __init__.py. If the repository does not
-    # establish one unique public definition, retain all and let the existing
-    # budget/evidence gate fail closed instead of guessing.
+        # 若精确名称对应多个定义，则只有在包的 __init__.py 中存在唯一
+        # 重新导出项时才优先选择它。否则，如果仓库无法
+        # 确认唯一的公开定义，就保留全部候选，并由现有
+    # 预算与证据门禁安全拒绝，而不是猜测。
     public = []
     for candidate in exact:
         for row in rows_by_candidate.get(id(candidate), ()):
@@ -876,7 +876,7 @@ def _narrow_explicit_symbol_candidates(query, symbols, store):
 
 
 def _context_candidates(outcome, conversation, *, store=None, retriever=None):
-    """Keep exact definitions and their statically related evidence together."""
+    """将精确的定义及其静态关联证据一起保留。"""
     query = getattr(outcome, "query", "")
     if outcome.decision.route == "exact_symbol":
         symbols = tuple(item for item in outcome.candidates if item.symbol_ids)
@@ -922,7 +922,7 @@ def _context_candidates(outcome, conversation, *, store=None, retriever=None):
             configuration_names = set()
             for ref, name, possible_paths in targets:
                 configuration_names.add(name)
-                # An omitted retrieval candidate must not hide an ambiguous module/package.
+                # 被省略的检索候选不能掩盖模块或包名存在歧义的事实。
                 repository_paths = {path.casefold() for path in retriever._candidates}
                 if sum(path.casefold() in repository_paths for path in possible_paths) != 1:
                     continue
@@ -1004,10 +1004,10 @@ def _load_conversation(engine, conversation_id, repository):
 
 
 def _semantic_summary_callback(provider):
-    """Build a bounded semantic summarizer using the explicitly selected local chat provider."""
+    """使用明确选定的本地聊天 Provider 创建有界语义摘要器。"""
     diagnostics = []
-    # Summaries must fit source-linked facts and the replacement text in one
-    # bounded response. User-facing answers retain the CLI's separate limit.
+    # 摘要必须在一次有界响应中容纳来源关联事实与替换文本。
+    # 面向用户的答案仍使用 CLI 自己的独立长度限制。
     summary_output_tokens = 512
 
     def summarize(rows):
@@ -1106,7 +1106,7 @@ def _persist_conversation(store, arguments, repo_id, answer, provider_mode):
 
 
 def _injected_memory_metadata(conversation):
-    """Expose audit metadata only for approved memories actually admitted to context."""
+    """仅为实际进入上下文的已批准记忆暴露审计元数据。"""
     if not isinstance(conversation, dict):
         return []
     injected_ids = set(conversation.get("injected_memory_ids", ()))
@@ -1131,7 +1131,7 @@ def _injected_memory_metadata(conversation):
 
 
 def _followup_symbol(query, rows, store):
-    """Resolve only one uniquely indexed symbol named in the preceding question."""
+    """只解析前一个问题提到、且索引中唯一对应的符号。"""
     if not _is_followup(query):
         return None
     if len(rows) < 2 or rows[-2]["role"] != "user" or rows[-1]["role"] != "assistant":
@@ -1148,8 +1148,8 @@ def _is_followup(query):
 
 
 def _unique_mentioned_symbol(query, store):
-    # A module and its function can legitimately share a name.  Honor an
-    # explicit kind in the question, but never guess between definitions.
+            # 模块和其中的函数可以合法地同名。若问题已明确
+            # 指出符号种类，就按该种类解析；绝不在多个定义间猜选。
     explicit = re.findall(r"\b(function|class|method)\s+`?([A-Za-z_][A-Za-z0-9_]*)`?",
                           query, re.IGNORECASE)
     if explicit:

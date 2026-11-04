@@ -1,4 +1,4 @@
-"""Explicit embedding indexing and vector candidate retrieval over current SQLite data."""
+"""基于当前 SQLite 数据的显式 Embedding 索引与向量候选检索。"""
 
 from ..config import MAX_VECTOR_RECORDS, MAX_VECTOR_TOP_K, STRUCTURED_INDEX_VERSION, VECTOR_INDEX_VERSION
 from ..errors import StoreError
@@ -7,7 +7,7 @@ from .vector_store import VectorCandidate, VectorStore
 
 
 class VectorCandidateRetriever:
-    """Optional vector path; lexical and symbol retrieval do not depend on it."""
+    """可选的向量检索路径；词法和符号检索不依赖它。"""
 
     def __init__(self, index_store, embedding_provider):
         self.index_store = index_store

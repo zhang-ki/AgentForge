@@ -1,4 +1,4 @@
-"""Configuration-only tests: do not connect to PostgreSQL."""
+"""仅测试配置，不连接 PostgreSQL。"""
 import importlib.util
 import unittest
 from unittest.mock import patch

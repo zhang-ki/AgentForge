@@ -1,4 +1,4 @@
-"""Load the immutable AF-009 provisional AI dataset without overwriting its sources."""
+"""加载不可变的 AF-009 AI 暂定数据集，不覆盖其来源文件。"""
 
 import copy
 import hashlib
@@ -43,7 +43,7 @@ def _verified_source(manifest: dict, path_field: str, hash_field: str) -> tuple[
 
 
 def load_provisional_dataset(manifest_path: Path = DEFAULT_MANIFEST) -> dict:
-    """Resolve the v3 manifest into a normal evaluation dataset in memory."""
+    """在内存中将 v3 清单解析为标准评测数据集。"""
     manifest = _read_json(Path(manifest_path))
     if manifest.get("dataset_version") != PROVISIONAL_DATASET_VERSION:
         raise ValueError("Unsupported provisional dataset manifest version.")

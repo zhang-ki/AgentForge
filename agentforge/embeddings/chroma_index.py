@@ -1,10 +1,10 @@
-"""Persistent Chroma indexing and verified code/document vector retrieval."""
+"""持久化 Chroma 索引，以及经过验证的代码/文档向量检索。"""
 from dataclasses import dataclass
 import hashlib
 from pathlib import PurePosixPath
 import time
 
-from .base import embed_text, provider_identity
+from .base import embed_text, normalize_vector, provider_identity
 from .chroma_store import ChromaCandidateStore, ChromaSource
 from .vector_store import VectorCandidate
 
@@ -36,12 +36,12 @@ class ChromaIndexStats:
 
 
 class ChromaCodeIndex:
-    """Mirror the current SQLite chunk snapshot into Chroma.
+    """将当前 SQLite 代码块快照同步到 Chroma。
 
-    SQLite remains authoritative. Stale Chroma rows are pruned only after every
-    current source was read, hashed by the authoritative index, embedded and
-    upserted successfully. A failed run may leave idempotent upserts, but does
-    not delete records needed by the previous complete snapshot.
+    SQLite 仍是权威数据源。只有在每个当前来源都已
+    读取、经权威索引计算哈希、生成嵌入并
+    成功写入后才会清理过期 Chroma 记录。失败运行可能留下幂等写入项，但不会
+    删除上一次完整快照仍需使用的记录。
     """
 
     def __init__(self, index_store, collection, embedding_provider):
@@ -65,12 +65,13 @@ class ChromaCodeIndex:
 
     def _has_current(self, source):
         from .chroma_store import _identity
-        existing = self.store.collection.get(ids=[_identity(source)], include=["metadatas"])
+        identity = _identity(source)
+        existing = self.store.collection.get(ids=[identity], include=["metadatas", "documents"])
         metadata = existing.get("metadatas") or []
         if not metadata:
             return False
         row = metadata[0]
-        return (row.get("repository_id") == source.repository_id
+        metadata_matches = (row.get("repository_id") == source.repository_id
                 and row.get("source_type") == source.source_type
                 and row.get("chunk_id") == source.chunk_id
                 and row.get("file_path") == source.file_path
@@ -78,6 +79,21 @@ class ChromaCodeIndex:
                 and row.get("model_id") == source.model_id
                 and row.get("start_line") == source.start_line
                 and row.get("end_line") == source.end_line)
+        if not metadata_matches:
+            return False
+
+        # 旧版 Chroma 记录可能仍有完整代码文本；用已有向量原位清空文本，不重新请求 Embedding。
+        documents = existing.get("documents") or []
+        if documents and documents[0] not in (None, ""):
+            vector_result = self.store.collection.get(ids=[identity], include=["embeddings"])
+            vectors = vector_result.get("embeddings")
+            # Chroma returns a NumPy array here; do not use ``or []`` because
+            # NumPy deliberately rejects truth-value checks for multi-item arrays.
+            if vectors is None or len(vectors) != 1:
+                return False
+            vector = normalize_vector(vectors[0], expected_dimension=self.dimension)
+            self.store.collection.update(ids=[identity], embeddings=[list(vector)], documents=[""])
+        return True
 
     def _repo_existing(self):
         where = {"$and": [{"repository_id": self.repository_id}, {"model_id": self.model_id}]}
@@ -113,7 +129,7 @@ class ChromaCodeIndex:
                 unchanged += 1
                 continue
             vector = embed_text(self.provider, document, role="document")
-            self.store.upsert(source, vector, document=document)
+            self.store.upsert(source, vector)
             embedded += 1
         old_ids, old_metadata = self._repo_existing()
         stale = [identity for identity, meta in zip(old_ids, old_metadata)
@@ -135,19 +151,23 @@ class ChromaCodeIndex:
         repo_id = repository_identity(repository)
         query_vector = embed_text(self.provider, query, role="query")
         current = {}
-        for row in self.index_store.iter_chunks():
-            key = _chunk_key(row["relative_path"].replace("\\", "/"),
-                             row["start_line"], row["end_line"])
-            current[key] = row
+
+        def get_current(source):
+            key = _chunk_key(source.file_path, source.start_line, source.end_line)
+            if key not in current:
+                current[key] = self.index_store.get_chunk(
+                    source.file_path, source.start_line, source.end_line)
+            return current[key]
 
         found = []
         for source_type in ("code", "document"):
             candidates = self.store.search_with_documents(query_vector,
                 repository_id=repo_id, model_id=self.model_id, source_type=source_type,
-                limit=top_k, verify_source=lambda source: self._verify_source(source, current))
-            for source, distance, document in candidates:
-                row = current[source.chunk_id]
-                if document is None or document != row["text"]:
+                limit=top_k, verify_source=lambda source: self._verify_source(source, get_current),
+                include_documents=False)
+            for source, distance, _document in candidates:
+                row = get_current(source)
+                if row is None:
                     continue
                 score = max(-1.0, min(1.0, 1.0 - distance))
                 source_id = "F" + hashlib.sha256(source.file_path.encode("utf-8")).hexdigest()[:20]
@@ -168,12 +188,14 @@ class ChromaCodeIndex:
         return unique
 
     @staticmethod
-    def _verify_source(source, current):
+    def _verify_source(source, get_current):
         if source.start_line is None or source.end_line is None:
             return False
-        expected_key = _chunk_key(source.file_path, source.start_line, source.end_line)
-        row = current.get(expected_key)
+        row = get_current(source)
         if row is None:
             return False
-        return (row["content_hash"] == source.content_hash
+        return (row["relative_path"] == source.file_path
+                and row["start_line"] == source.start_line
+                and row["end_line"] == source.end_line
+                and row["content_hash"] == source.content_hash
                 and row["text"] is not None)

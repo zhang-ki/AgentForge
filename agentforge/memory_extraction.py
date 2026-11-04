@@ -1,4 +1,4 @@
-"""One-shot local candidate extraction; proposals remain untrusted and pending."""
+"""一次性本地候选提取；提案始终是不可信且待审批的状态。"""
 import json
 
 from .memory_store import _SECRET_LIKE
@@ -9,10 +9,10 @@ _ALLOWED_TYPES = {"preference", "project_fact", "workflow", "other"}
 
 def extract_memory_candidates(chat_client, model: str, messages, *, max_candidates=5,
                              max_input_bytes=10000):
-    """Ask the configured local chat provider for user-stated memory proposals.
+    """请求已配置的本地聊天 Provider 提取用户明确表达的记忆候选。
 
-    This function never persists or approves model output. It only returns
-    proposals tied to existing user message sequences for a human to inspect.
+    此函数不会持久化或批准模型输出，只会返回
+    与现有用户消息序列关联的候选项，供用户检查。
     """
     if not isinstance(model, str) or not model.strip():
         raise ValueError("A model name is required for local memory suggestions.")

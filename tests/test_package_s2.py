@@ -1,4 +1,4 @@
-"""AF-010-S2 multi-repository, routing and lifecycle regressions."""
+"""AF-010-S2 的多仓库、路由和生命周期回归测试。"""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ TEMP_ROOT = WORKSPACE / "tests" / ".tmp"
 
 
 class DeterministicTestEmbedding:
-    """Pipeline-only vector fixture; it is not a semantic model result."""
+    """仅用于测试流水线的向量夹具，不代表语义模型结果。"""
 
     model_id = "test-only-deterministic-vector"
     dimension = 8
@@ -378,8 +378,8 @@ class PackageS2Tests(unittest.TestCase):
             self.assertTrue(initial["full_rebuild"])
             self.assertEqual(lifecycle.graph, build_package_relation_graph(root))
 
-            # This source change invalidates a package re-export and a consumer
-            # even though neither dependent file changed on disk.
+            # 这次源码变更会使包级重新导出项及其使用方
+            # 失效，即使这两个依赖文件本身没有发生磁盘变更。
             (package / "api.py").write_text(
                 "from .core import assemble\n"
                 "def issue_invoice():\n    return assemble()\n", encoding="utf-8"
@@ -397,7 +397,7 @@ class PackageS2Tests(unittest.TestCase):
             self.assertEqual(len(stale_public), 1)
             self.assertEqual(stale_public[0].resolution_status, "unresolved")
 
-            # A static __all__ update removes the old public export edge.
+            # 静态 __all__ 更新会移除旧的公开导出关系。
             (package / "__init__.py").write_text(
                 "from .api import issue_invoice as invoice\n__all__ = []\n",
                 encoding="utf-8",

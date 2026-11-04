@@ -1,4 +1,4 @@
-"""PostgreSQL-backed, explicitly approved long-term memory and vector outbox."""
+"""由 PostgreSQL 支持、须明确审批的长期记忆及向量 outbox。"""
 from datetime import datetime, timedelta, timezone
 import hashlib
 import re
@@ -59,7 +59,7 @@ def _memory(row):
 
 
 class MemoryStore:
-    """All durable memory changes are scoped and audited in PostgreSQL."""
+    """所有持久化记忆变更都在 PostgreSQL 中按作用域管理并记录审计。"""
 
     def __init__(self, engine):
         self.sessions = sessionmaker(bind=engine, expire_on_commit=False)
@@ -93,7 +93,7 @@ class MemoryStore:
 
     def propose(self, repository_id, conversation_id, content, source_message_ids, *,
                 memory_type="other", expires_at=None, scope="repository"):
-        """Store a pending suggestion; it is never made active without approval."""
+        """保存待审批提案；未经批准绝不将其设为有效记忆。"""
         if memory_type not in _MEMORY_TYPES:
             raise ValueError("Unsupported memory type.")
         content = _valid_text(content, "memory content", 4000)
@@ -269,7 +269,7 @@ class MemoryStore:
             return [_memory(row) for row in rows]
 
     def approved_by_id(self, memory_id, repository_id):
-        """Resolve an authoritative active memory for Chroma candidate validation."""
+        """为 Chroma 候选验证解析权威且有效的记忆记录。"""
         with self.sessions() as session:
             row = session.scalar(select(Memory).where(
                 Memory.id == _uuid(memory_id, "memory ID"),
@@ -282,7 +282,7 @@ class MemoryStore:
             return _memory(row)
 
     def requeue_approved(self, repository_id):
-        """Explicitly rebuild this repository's active memory vectors via the outbox."""
+        """通过 outbox 显式重建当前仓库的有效记忆向量。"""
         if not isinstance(repository_id, str) or not repository_id.strip():
             raise ValueError("Repository ID is required.")
         now = _now()
@@ -332,7 +332,7 @@ class MemoryStore:
                      "created_at": item.created_at} for item in events]
 
     def sync_outbox(self, vector_store, embedding_provider, *, limit=50, repository_ids=None):
-        """Attempt each claimed item once. Retry is explicit on a later invocation."""
+        """每个已领取项目只尝试一次。重试必须在后续调用中显式发起。"""
         from .embeddings.base import embed_text
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 500:
             raise ValueError("Outbox batch limit must be between 1 and 500.")
