@@ -1,0 +1,567 @@
+{
+  "schema": "agentforge-v0.1-package-manifest-v1",
+  "bundle": "AgentForge-v0.1",
+  "status": "PREPARED_RELEASE_CANDIDATE",
+  "directory": "release/AgentForge-v0.1",
+  "archive": "release/AgentForge-v0.1.zip",
+  "archive_size_bytes": 357857,
+  "archive_sha256": "bb5ce89edd6a4351e8c241797ae5b14fb481a78f7508e134333c44ac6e2aa654",
+  "archive_integrity": "PASS",
+  "archive_entry_count": 109,
+  "package_file_count": 109,
+  "total_uncompressed_bytes": 1331690,
+  "sensitive_scan": {
+    "files_scanned": 109,
+    "blocked_filename_or_path_hits": [],
+    "content_pattern_hits": [],
+    "archive_forbidden_entries": [],
+    "status": "PASS"
+  },
+  "files": [
+    {
+      "path": "agentforge/__init__.py",
+      "size_bytes": 82,
+      "sha256": "5567118c3aceea2bf7eee082d82bba344ba75413362d844483731b427fa67e33"
+    },
+    {
+      "path": "agentforge/__main__.py",
+      "size_bytes": 49,
+      "sha256": "76fa916e93e0ae1a6c1bb51dcc0bcf289c014e9f760a47165f8a84401ccf41d7"
+    },
+    {
+      "path": "agentforge/af012_connection.py",
+      "size_bytes": 1157,
+      "sha256": "381d4abdcc5ec4f5190d0ec09b3a6ff53b6b66aca4f135686d3db1be8b7234ff"
+    },
+    {
+      "path": "agentforge/af012_runtime.py",
+      "size_bytes": 3098,
+      "sha256": "2c221e825ddd7139d2aa3c9a36d9c1469634cad41237bac90c7278442a6677e4"
+    },
+    {
+      "path": "agentforge/af012_schema.py",
+      "size_bytes": 11723,
+      "sha256": "c5d87c2b8331df7c58422e3d363929bf91f9c67084465b00ab701dacc71e8fa1"
+    },
+    {
+      "path": "agentforge/agent_execution.py",
+      "size_bytes": 185247,
+      "sha256": "9f4082d8e19261a33af0617ab428c1b4a903df632a0e6e089655abd4aff03dec"
+    },
+    {
+      "path": "agentforge/agent_loop.py",
+      "size_bytes": 22696,
+      "sha256": "fbcc5842893e3eada1829115838c3556f23c8d8d55891429b2ec448dd0efb5b4"
+    },
+    {
+      "path": "agentforge/answer_contract.py",
+      "size_bytes": 15975,
+      "sha256": "b20c27cda4d8d3e175737e07054757b26e55b723e7134b19ec85d3ac71d4f0ad"
+    },
+    {
+      "path": "agentforge/calibration.py",
+      "size_bytes": 6412,
+      "sha256": "82190e156de4a0e1c363f12b9c8668145543c620186d7b7519421ba0b980e1c7"
+    },
+    {
+      "path": "agentforge/chunker.py",
+      "size_bytes": 3374,
+      "sha256": "e60ae546c83c65d9db3d63ac0c8f360e945a05f250a4cfd0f2556866146e68cd"
+    },
+    {
+      "path": "agentforge/cli.py",
+      "size_bytes": 91756,
+      "sha256": "a71dea38e44f0703a0f00ed4b1363255b57a63aff6ec9a41903e5b9d46569405"
+    },
+    {
+      "path": "agentforge/config.py",
+      "size_bytes": 899,
+      "sha256": "9006de535306840fcded1232b6c6561841f0b138eda058252f261703e1fcf397"
+    },
+    {
+      "path": "agentforge/context.py",
+      "size_bytes": 8963,
+      "sha256": "fb2ae62f2fa516d0ebcaaba347278b9b8734fdd04b2393c6ec2421ca7c814789"
+    },
+    {
+      "path": "agentforge/context_assembler.py",
+      "size_bytes": 18907,
+      "sha256": "7ab8b49e58a66970a785cbe0559afe08f4c02eae1b1bb350cf055f1968565f73"
+    },
+    {
+      "path": "agentforge/conversation_agent.py",
+      "size_bytes": 10873,
+      "sha256": "3dd3d8dc56f91f6885b23b132745c9e4d385fca25f744b05bb400e194bbe553e"
+    },
+    {
+      "path": "agentforge/conversation_console.py",
+      "size_bytes": 32706,
+      "sha256": "24d0f0ed950af596329c85b45c59e7bc3db929a805a4dc305a665c6fa7dd5ac2"
+    },
+    {
+      "path": "agentforge/conversation_context.py",
+      "size_bytes": 18723,
+      "sha256": "ba58fa9cc9fa6e7794b7e69410ad28de42f7ee77623b73da9dd02692185b71ec"
+    },
+    {
+      "path": "agentforge/conversation_facts.py",
+      "size_bytes": 7621,
+      "sha256": "cf6933c9aa00ebbb8e730468828a5975bf0a9baa1a5164589cee8b244d029b64"
+    },
+    {
+      "path": "agentforge/conversation_migrations.py",
+      "size_bytes": 408,
+      "sha256": "fbb7076118fda47db1fa8e2f1dc8d1d2a4d38cc2e789e50191d1ab048dcba6fc"
+    },
+    {
+      "path": "agentforge/conversation_orchestrator.py",
+      "size_bytes": 59634,
+      "sha256": "1ff6aed883d26389d83ab2067deab7151eb52b9a5743d07f1093f2287acd7a68"
+    },
+    {
+      "path": "agentforge/conversation_store.py",
+      "size_bytes": 50761,
+      "sha256": "ed16a5f185982dc5da0d600a6fa4c4850e99f3aa12dbb8c878a909434c1afa79"
+    },
+    {
+      "path": "agentforge/credential_store.py",
+      "size_bytes": 7657,
+      "sha256": "c0bd5617e132c973bbc7cf0a59f4d375355e83b88ec332b50c8f0791f9d12950"
+    },
+    {
+      "path": "agentforge/dialogue_retrieval.py",
+      "size_bytes": 14662,
+      "sha256": "427c086818b7796e94c52aad7a304536d68255de35d7290f3cf9f2cc3f69dbe9"
+    },
+    {
+      "path": "agentforge/dialogue_router.py",
+      "size_bytes": 3488,
+      "sha256": "80dc72c1f84f53198551d6f5f00a3a938c1bdbfff1ef02c42e5599cb354b480c"
+    },
+    {
+      "path": "agentforge/embeddings/__init__.py",
+      "size_bytes": 638,
+      "sha256": "397baeff9ddb891378f42584c65e87df46ffd80cf90c6b6925db697ebdc69e9e"
+    },
+    {
+      "path": "agentforge/embeddings/base.py",
+      "size_bytes": 4859,
+      "sha256": "3b8499931252912413aae76b71a3ab5b5c4fc99164d16a67f901dac6e4893714"
+    },
+    {
+      "path": "agentforge/embeddings/chroma_index.py",
+      "size_bytes": 9023,
+      "sha256": "4291d1cd0ca1f4edeb53adb08937140f5654d3fc56bd0c1a29f1d0cdb2f09080"
+    },
+    {
+      "path": "agentforge/embeddings/chroma_store.py",
+      "size_bytes": 8628,
+      "sha256": "bfcb4fc723a0e0172fdfcf28e38f7804f717e07a042af2e13e03eef5025f3867"
+    },
+    {
+      "path": "agentforge/embeddings/llama_server.py",
+      "size_bytes": 10686,
+      "sha256": "6680af7e4cb099cdf56141f6e2445482b787f41a22a3d9d71726f0c5aeba2b0c"
+    },
+    {
+      "path": "agentforge/embeddings/retriever.py",
+      "size_bytes": 3931,
+      "sha256": "f59e512b486875ecfe60965e3743dcb16ff96b8f35a7234bb7b68b6b06c977e3"
+    },
+    {
+      "path": "agentforge/embeddings/vector_store.py",
+      "size_bytes": 12845,
+      "sha256": "233a1b4304100327a1bd7be475742f28fb830e68b201defacd3c1f798517b2a9"
+    },
+    {
+      "path": "agentforge/errors.py",
+      "size_bytes": 811,
+      "sha256": "81454a773343b13b73c74cc6fa6b07fc1946715e834b6d55e28e81b03321583a"
+    },
+    {
+      "path": "agentforge/eval_generalization.py",
+      "size_bytes": 3198,
+      "sha256": "ee2f9a30eb4f46f722c3e77a09ddba8cd361a2450a9751ee4a5b842256cf42ba"
+    },
+    {
+      "path": "agentforge/eval_local_embeddings.py",
+      "size_bytes": 6552,
+      "sha256": "ffc3b65b6934aeee8ba15083ea6d82e42480767feae84362817e3a8d8393c222"
+    },
+    {
+      "path": "agentforge/eval_provisional.py",
+      "size_bytes": 6766,
+      "sha256": "540622089bd874179633ca79529af7db9b81b7ce5bbe88c501459d5e58ab2864"
+    },
+    {
+      "path": "agentforge/eval_retrieval.py",
+      "size_bytes": 1812,
+      "sha256": "12430d8c5076f500f69247ea0ba2aac27672bf3bfbb4153e1a4a4c93eff330a9"
+    },
+    {
+      "path": "agentforge/evaluation.py",
+      "size_bytes": 27036,
+      "sha256": "b2be6b982146870adb7dfe8bbbdc0f56b03bc2b5b24175dac0a46e1c82dfbf2d"
+    },
+    {
+      "path": "agentforge/evidence_evaluator.py",
+      "size_bytes": 5193,
+      "sha256": "5e69029d35a5d709d72c62dd069813ad21dc09e1c3e3518746e294003010f736"
+    },
+    {
+      "path": "agentforge/evidence_roles.py",
+      "size_bytes": 3207,
+      "sha256": "e90b9f8bb9cf7eaf261e5238d30c0058f95c0bad3620d5d7f4105c53729a01b0"
+    },
+    {
+      "path": "agentforge/fusion.py",
+      "size_bytes": 4807,
+      "sha256": "0c73ba449778511979b911a3387034608d8b59bb9270a491f16032d6375b573f"
+    },
+    {
+      "path": "agentforge/generalization.py",
+      "size_bytes": 29650,
+      "sha256": "e38d5b9525c16ddb351cc24854bbc2f9e0e28e4315a9d9daafd18c638ca78f8f"
+    },
+    {
+      "path": "agentforge/indexer.py",
+      "size_bytes": 4674,
+      "sha256": "ba0505c813bf3e4245edcb0b96e5c9b39846cad73ae1d92e7616d12ed387469b"
+    },
+    {
+      "path": "agentforge/memory_extraction.py",
+      "size_bytes": 5889,
+      "sha256": "d5372278e2e1dd6b8d602783cbd13bf201dd217c393029d805edfc819cec9fb6"
+    },
+    {
+      "path": "agentforge/memory_retrieval.py",
+      "size_bytes": 3318,
+      "sha256": "a554763497b820e7c388b0be9707ddeffc465610cf550e51c4420a589256a4d2"
+    },
+    {
+      "path": "agentforge/memory_service.py",
+      "size_bytes": 7873,
+      "sha256": "561916e95b925b5ad1a6fcedd6e3ffda43964a1a525678d992b623aaa1ef2a07"
+    },
+    {
+      "path": "agentforge/memory_store.py",
+      "size_bytes": 23142,
+      "sha256": "b93918470250566614018f559c85f0a84da7a3e625e1f15f7100e411c1d8dae9"
+    },
+    {
+      "path": "agentforge/model_registry.py",
+      "size_bytes": 14672,
+      "sha256": "2872f964aa513d7b46db197c38cb5d45817a9b51c899e9cbe2ad6d836cceaa64"
+    },
+    {
+      "path": "agentforge/model_types.py",
+      "size_bytes": 2372,
+      "sha256": "05f6950ee885d6f761ca59cdbddf20d7f361af04590c24951d80142956c2098b"
+    },
+    {
+      "path": "agentforge/models.py",
+      "size_bytes": 1090,
+      "sha256": "2b729c8be0ea5592e77e36dd54e360368323a549c9a3ed405b29f4dff1d3c4e4"
+    },
+    {
+      "path": "agentforge/package_evaluation.py",
+      "size_bytes": 10642,
+      "sha256": "9cd87b78aa6207f1001440e0f00df0160f8043b81ffb615b175f1c9e36d27b59"
+    },
+    {
+      "path": "agentforge/package_relations.py",
+      "size_bytes": 47368,
+      "sha256": "4e1d9b97f002bc82259e43332cd194853ae412e98701b4ff2a813ac268a7389c"
+    },
+    {
+      "path": "agentforge/package_s2.py",
+      "size_bytes": 24504,
+      "sha256": "6406c2a4d1633e834e68dd566c4ddd84024ab4d8002e5256a608904f8716e973"
+    },
+    {
+      "path": "agentforge/parsers/__init__.py",
+      "size_bytes": 361,
+      "sha256": "38ad29e3ebaf3b37c3f33898b3bcdcdf935ee10c1977438704ce82c13930cc6b"
+    },
+    {
+      "path": "agentforge/parsers/base.py",
+      "size_bytes": 1557,
+      "sha256": "74d6e37323aa97ba17b3ec5b2c1020cd16fda71aa4addfb616492f8b107dab18"
+    },
+    {
+      "path": "agentforge/parsers/python_ast.py",
+      "size_bytes": 17379,
+      "sha256": "a0af8f6f9a8e90c72006ba73c04ec83837962b2e07fc20eba2341c298c2d6b84"
+    },
+    {
+      "path": "agentforge/parsers/resolver.py",
+      "size_bytes": 9794,
+      "sha256": "bb73240eb23dffa3242a4d6098e431af671658ebce3f55a8639e551731319812"
+    },
+    {
+      "path": "agentforge/planner.py",
+      "size_bytes": 41229,
+      "sha256": "4e4ad2dc04ad00bf13523c1f0337a548427c234655b7197255cf86e49feed860"
+    },
+    {
+      "path": "agentforge/preproduct.py",
+      "size_bytes": 9119,
+      "sha256": "a1b6d1fa13f67ef3940eef8d2d17647daecd62ee12f7ca62fb260787e90902c6"
+    },
+    {
+      "path": "agentforge/presentation.py",
+      "size_bytes": 7905,
+      "sha256": "b8eb8b4f7acee239f1d96c55e1fe79a39224f83bb0651ddd1c3920511d4c9eb5"
+    },
+    {
+      "path": "agentforge/product_acceptance.py",
+      "size_bytes": 12077,
+      "sha256": "4382a060fbfd44d0bc12d3cb38badca3e699c532511c64136feba83d489c798d"
+    },
+    {
+      "path": "agentforge/product_retrieval.py",
+      "size_bytes": 31583,
+      "sha256": "9a7a279f51a1729ef8921586ca7f85b8c5741823844201a79eb99cac4084aef5"
+    },
+    {
+      "path": "agentforge/providers/__init__.py",
+      "size_bytes": 59,
+      "sha256": "6fb355b4e0d3c01e99fbdaabfc3934d809a24bad2f4c6e76ef89bd013e72ff5d"
+    },
+    {
+      "path": "agentforge/providers/base.py",
+      "size_bytes": 271,
+      "sha256": "73c8c1a47404f3c3a561a9888e9a4d5d7aa3cbed5ca7af7efaa9b005c059b50a"
+    },
+    {
+      "path": "agentforge/providers/deepseek.py",
+      "size_bytes": 47689,
+      "sha256": "2808734593d88542cb2c0fd0d17a97fdb2fe26d8d69890e8d7fb9dedb789a2ba"
+    },
+    {
+      "path": "agentforge/providers/deepseek_agent.py",
+      "size_bytes": 10433,
+      "sha256": "c2f836fcbd63c46e00eed6480ebf3e15864fd9e0939eacb8833b46c9af629be3"
+    },
+    {
+      "path": "agentforge/providers/dialogue_protocol.py",
+      "size_bytes": 8481,
+      "sha256": "4ee5dcdaf01bb73aff574520e09c62767ba378bf25b9a0209ad10064b5c783ce"
+    },
+    {
+      "path": "agentforge/providers/llama_server.py",
+      "size_bytes": 24287,
+      "sha256": "69255ec37cbe9e242009ae9ab6847e536609695350a234132cc7186c6aac61a1"
+    },
+    {
+      "path": "agentforge/providers/local_health.py",
+      "size_bytes": 3937,
+      "sha256": "7d2d280bae03693019b372889bce53d548f7195b9905a8968ea44e1c4c58ba62"
+    },
+    {
+      "path": "agentforge/providers/offline.py",
+      "size_bytes": 1124,
+      "sha256": "e9214b8c54dc976df0e53e43f4993f26aa0fca73a42e59720f7fbd531e2a61ca"
+    },
+    {
+      "path": "agentforge/provisional.py",
+      "size_bytes": 7439,
+      "sha256": "7c7ddb550fda187433619ab389b07e41b06b6e9182d6e0779d9f77477b76479c"
+    },
+    {
+      "path": "agentforge/query_routing.py",
+      "size_bytes": 4282,
+      "sha256": "143970d8a59833a3eea52bcc9c4f80343d9ae3f35422a36897d2dd3186d924d4"
+    },
+    {
+      "path": "agentforge/repositories.py",
+      "size_bytes": 11161,
+      "sha256": "844e1ea706b1f7f87e0e7dde90fb4ad8662e539f33404914854ad42d86ee75ef"
+    },
+    {
+      "path": "agentforge/repository_identity.py",
+      "size_bytes": 870,
+      "sha256": "a7188ff7d2c132472badc4a64ae54e3a02ec0d81e6c710f6c31ea1583bed26c9"
+    },
+    {
+      "path": "agentforge/retriever.py",
+      "size_bytes": 3198,
+      "sha256": "1bf914367954b5437c588304cb2fa86fc3ee57ecff10e2aa6aa5731d6b0c26f4"
+    },
+    {
+      "path": "agentforge/safeio.py",
+      "size_bytes": 3152,
+      "sha256": "7d3709a595d8d6f5a66394efbc373975456193f446d763d962fcecca1d330637"
+    },
+    {
+      "path": "agentforge/scanner.py",
+      "size_bytes": 14254,
+      "sha256": "6573cbdc507bb13a0c2c1cfec979952b96a75e8dadb7e26d5e9d30b67d0c69ae"
+    },
+    {
+      "path": "agentforge/session_service.py",
+      "size_bytes": 8835,
+      "sha256": "3caad479a7746667964f2196f7632d6e7348c6f273af3036125a70f22be734dd"
+    },
+    {
+      "path": "agentforge/store.py",
+      "size_bytes": 31734,
+      "sha256": "49262701635cdd4fdf91705fc118070bd207aebfe8721002d1cdbeedbfa50b1b"
+    },
+    {
+      "path": "agentforge/streaming.py",
+      "size_bytes": 9641,
+      "sha256": "6f0a14a1e32b7422eeca8e1cc7f0cab5aadc974a7682e7d0820793c65f3a2986"
+    },
+    {
+      "path": "agentforge/token_budget.py",
+      "size_bytes": 15978,
+      "sha256": "d9bcc1359e8ddddf2525cfc9bb1c55e7704bfb776c34151ed1f16f87781d4c6b"
+    },
+    {
+      "path": "alembic/env.py",
+      "size_bytes": 401,
+      "sha256": "42b802d2060e7f77ccbd9eabeaebb0d2adc30e24cda7796fbebed289403dd3c9"
+    },
+    {
+      "path": "alembic/versions/af012b2_001_conversations.py",
+      "size_bytes": 3453,
+      "sha256": "14e4a92d6610d52837db02fe0dea3840e606ba0f86156ff1a67f513be096abfe"
+    },
+    {
+      "path": "alembic/versions/af012cap_005_capability_mode.py",
+      "size_bytes": 851,
+      "sha256": "7ea961972a69a3a0794199b17eef277ea6703ba692076fd006b9d728393cc470"
+    },
+    {
+      "path": "alembic/versions/af012ctx_003_summary_fact_ledger.py",
+      "size_bytes": 473,
+      "sha256": "846b3f1e8302475622700c999717c57c4ee968cf0fc539c568e2e79d23bb320c"
+    },
+    {
+      "path": "alembic/versions/af012mm_004_model_binding.py",
+      "size_bytes": 988,
+      "sha256": "0b28a76a41fe52dd031118b036e00316cd2c5f84116d79ceada46cc2164afe31"
+    },
+    {
+      "path": "alembic/versions/af012mvp_002_memory_vector.py",
+      "size_bytes": 5545,
+      "sha256": "b475c36f5f5c5ea8168447a2e6da5acd7cae5cfae9caa815b8e3adb582d51308"
+    },
+    {
+      "path": "alembic/versions/af012pref_006_session_preferences.py",
+      "size_bytes": 506,
+      "sha256": "ba63aaa589671d4fa86f2e46310e3caba13eaec697c89562b6bef3f0d1606bfe"
+    },
+    {
+      "path": "alembic/versions/af013ae_001_agent_execution_state.py",
+      "size_bytes": 2932,
+      "sha256": "cdf8e5d36fbe3467e66a2b6c18c0369382100d94d237e0722e34ea8ca175e5b4"
+    },
+    {
+      "path": "alembic/versions/af013mg_002_merge_preferences_and_agent.py",
+      "size_bytes": 505,
+      "sha256": "3e0726391cf546dbc2c1546e4066be3e4d76b313adfd790db5980af5df98248e"
+    },
+    {
+      "path": "alembic.ini",
+      "size_bytes": 93,
+      "sha256": "70e3246abd2804ec7c292aef7b3e3d31e1ae6c776bf4679a6eee2fd688bd1d02"
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "size_bytes": 30672,
+      "sha256": "8a5b7e8655a2721b3e81adb61e2f053fb06c52878f06752881bad5fd874f01d6"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "size_bytes": 1591,
+      "sha256": "0ba538eb317ab1e555f3c2c1ccfef13dac25a5aef73f0d365540c9bc7f606fef"
+    },
+    {
+      "path": "launchers/common.ps1",
+      "size_bytes": 3197,
+      "sha256": "57aa470710a562b148280c53844b83a3430397228c5d4428726a255e1dc47431"
+    },
+    {
+      "path": "launchers/start-agentforge.ps1",
+      "size_bytes": 1848,
+      "sha256": "7b63786f59682bcf8aaa265103d2e9493063b16f4703b69e76985c9686987828"
+    },
+    {
+      "path": "launchers/start-all.ps1",
+      "size_bytes": 12403,
+      "sha256": "770c128507bd5d3ac537f172a92ba1ba4511f8e9a93c06d4af659437eb2b1e68"
+    },
+    {
+      "path": "launchers/start-qwen-embedding.ps1",
+      "size_bytes": 2456,
+      "sha256": "8cfa77a03898e2ad4beda450619918ce03c33ae7b5ca3926b4baaf2de41f299a"
+    },
+    {
+      "path": "launchers/start-qwen.ps1",
+      "size_bytes": 1687,
+      "sha256": "84f4dd4fa095b00e93c3df8b2a450e5bbb2341aa95035c1f58647bb20c648f2f"
+    },
+    {
+      "path": "PACKAGE_FILE_MANIFEST.json",
+      "size_bytes": 19388,
+      "sha256": "96c5db5879704f49d34f941229666bd0616107eed0650a04b6292e14d2e66fb4"
+    },
+    {
+      "path": "pyproject.toml",
+      "size_bytes": 459,
+      "sha256": "a605e64a7e8e9714a0c59afa69187695fdcd9a527bd69ea9bd95f11a4f051eec"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 1488,
+      "sha256": "048e5da445410dddf68bf975bf27b49060d437b5440963cfab9ddf4c39ca8306"
+    },
+    {
+      "path": "RELEASE_V0.1_ACCEPTANCE.json",
+      "size_bytes": 16226,
+      "sha256": "e4a6ee9c2a1f6c2688f7d497c9596feee873dfbf9943b9c605a77a2dc9c2b86c"
+    },
+    {
+      "path": "RELEASE_V0.1_LIMITATIONS.md",
+      "size_bytes": 5138,
+      "sha256": "adfbcb5aff44635b2438b8f53cfa20a55e85275c521a95ba9b17c975faeed3d7"
+    },
+    {
+      "path": "RELEASE_V0.1_QUICKSTART.md",
+      "size_bytes": 5849,
+      "sha256": "a1578d3e1b4c58824cc9df8dc58cea6fd5f91e6f46eb1799d3f67541c4389bd0"
+    },
+    {
+      "path": "RELEASE_V0.1_REPORT.md",
+      "size_bytes": 10652,
+      "sha256": "530d06e2be64d0b984e69d99593e5536884c6d90e240d08c81a33ecaf834f207"
+    },
+    {
+      "path": "SECURITY.md",
+      "size_bytes": 2235,
+      "sha256": "b9dfe7bd7f8c55bd34e7efcae4858b72825addd3355d0f3aa0bbfddc7a5304c0"
+    },
+    {
+      "path": "Start-AgentForge-All.cmd",
+      "size_bytes": 277,
+      "sha256": "baaf9a97f62f93c5d7c09e0eeecedeb01f20cbcc684568b0dc55f03dc9b39880"
+    },
+    {
+      "path": "Start-AgentForge.cmd",
+      "size_bytes": 156,
+      "sha256": "8763b373df717baabb25edf54ef5176191057ab1750b7f1db7a11cbd4b5edc9b"
+    },
+    {
+      "path": "Start-Qwen-Embedding.cmd",
+      "size_bytes": 154,
+      "sha256": "dd564128e0136f1dfd08eafd89e4c5e9d6d5f291c1ca3cd79e050f9bcb2e54c2"
+    },
+    {
+      "path": "Start-Qwen.cmd",
+      "size_bytes": 181,
+      "sha256": "231a57088efeef1ec5761d4bba8d51ff5f85fa8ddc38c986e4b96987bcb49232"
+    }
+  ]
+}

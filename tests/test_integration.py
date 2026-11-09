@@ -100,7 +100,7 @@ class IntegrationTests(LocalTestCase):
                 item["text"],
                 "\n".join(expected_by_path[item["relative_path"]][item["start_line"] - 1:item["end_line"]]),
             )
-        code, answer, errors = invoke(["ask", "refresh_access_token"])
+        code, answer, errors = invoke(["ask", "refresh_access_token", "--mode", "repository"])
         self.assertEqual((code, errors), (0, ""))
         payload = json.loads(answer)
         self.assertEqual(payload["provider"], "offline")
@@ -114,7 +114,7 @@ class IntegrationTests(LocalTestCase):
              payload["answer_contract"]["evidence"][0]["end_line"]),
             (4, 6),
         )
-        code, unknown, errors = invoke(["ask", "qzxnonexistent"])
+        code, unknown, errors = invoke(["ask", "qzxnonexistent", "--mode", "repository"])
         self.assertEqual((code, errors), (0, ""))
         unknown_payload = json.loads(unknown)
         self.assertEqual(unknown_payload["answer_contract"]["status"], "refused")

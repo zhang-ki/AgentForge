@@ -3,7 +3,10 @@
     Set-Location -LiteralPath $ProjectRoot
     $Python = Join-Path $ProjectRoot '.agentforge\af012-venv\Scripts\python.exe'
     if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) { throw '找不到 AF-012 项目环境，请先完成数据库依赖安装。' }
-    $env:AGENTFORGE_LLAMA_API_KEY = Get-LauncherKey $false
+    $qwenKeyPath = Join-Path $ProjectRoot '.agentforge\launcher\qwen-key.dpapi'
+    if (Test-Path -LiteralPath $qwenKeyPath -PathType Leaf) {
+        $env:AGENTFORGE_LLAMA_API_KEY = Get-LauncherKey $false
+    }
     $env:AGENTFORGE_DB_PASSWORD = Get-ConversationDatabaseKey
     if (-not $env:AGENTFORGE_EMBEDDING_BASE_URL) {
         $env:AGENTFORGE_EMBEDDING_BASE_URL = 'http://127.0.0.1:58067'
@@ -17,7 +20,7 @@
     if (-not $env:AGENTFORGE_EMBEDDING_DIMENSION) {
         $env:AGENTFORGE_EMBEDDING_DIMENSION = '1024'
     }
-    Write-Host '请保持 PostgreSQL 和千问服务窗口运行。'
+    Write-Host '请保持 PostgreSQL 运行。新会话默认使用 DeepSeek Flash，并会先征求本会话云端数据授权；本地 Qwen 是可选模型。'
     & $Python -X utf8 -B -m agentforge session migrate
     if ($LASTEXITCODE -ne 0) { throw '数据库连接或迁移失败；未启动会话。' }
     & $Python -X utf8 -B -m agentforge.conversation_console

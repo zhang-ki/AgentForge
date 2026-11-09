@@ -7,16 +7,10 @@ import time
 from .base import embed_text, normalize_vector, provider_identity
 from .chroma_store import ChromaCandidateStore, ChromaSource
 from .vector_store import VectorCandidate
+from ..repository_identity import repository_identity
 
 
 _DOCUMENT_SUFFIXES = {".md", ".rst", ".txt"}
-
-
-def repository_identity(path: str) -> str:
-    import os
-    from pathlib import Path
-    canonical = str(Path(path).resolve(strict=True))
-    return hashlib.sha256(os.path.normcase(canonical).encode("utf-8")).hexdigest()
 
 
 def _chunk_key(path, start, end):

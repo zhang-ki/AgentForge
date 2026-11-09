@@ -13,6 +13,7 @@ import ipaddress
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -51,9 +52,68 @@ EXPECTED_POSTGRES_IDENTITY = {
     "server_address": "127.0.0.1",
     "server_port": 5432,
 }
+TEST_DATABASE_ENV = "AF012_TEST_DATABASE"
+TEST_CHROMA_PATH_ENV = "AF012_TEST_CHROMA_PATH"
+_TEST_DATABASE_RE = re.compile(r"af012_accept_[0-9a-f]{20}\Z")
+_TEST_TEMP_RE = re.compile(r"af012-dual-host-[0-9a-f]{32}-[a-z0-9_]{8}\Z")
 
 
-def _postgres_identity_diagnostic(identity):
+def _is_link_or_junction(path):
+    junction_check = getattr(path, "is_junction", None)
+    return path.is_symlink() or (callable(junction_check) and junction_check())
+
+
+def _isolated_test_scope(environ=None):
+    """Require the coordinator's disposable database and Chroma directory."""
+    env = os.environ if environ is None else environ
+    database_name = env.get(TEST_DATABASE_ENV)
+    if not isinstance(database_name, str) or not _TEST_DATABASE_RE.fullmatch(database_name):
+        raise AcceptanceFailure("isolation_preflight", "isolated_test_database_required")
+
+    raw_path = env.get(TEST_CHROMA_PATH_ENV)
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise AcceptanceFailure("isolation_preflight", "isolated_test_chroma_path_required")
+    supplied = Path(raw_path)
+    temp_root = ROOT / "tests" / ".tmp"
+    try:
+        if (not supplied.is_absolute() or not temp_root.is_dir()
+                or _is_link_or_junction(temp_root)
+                or _is_link_or_junction(supplied)
+                or _is_link_or_junction(supplied.parent)
+                or not supplied.is_dir()):
+            raise ValueError
+        resolved_root = temp_root.resolve(strict=True)
+        resolved_path = supplied.resolve(strict=True)
+        resolved_parent = resolved_path.parent
+        if (resolved_path.name != "chroma"
+                or not _TEST_TEMP_RE.fullmatch(resolved_parent.name)
+                or resolved_parent.parent != resolved_root
+                or _is_link_or_junction(resolved_parent)):
+            raise ValueError
+    except (OSError, RuntimeError, ValueError):
+        raise AcceptanceFailure("isolation_preflight", "isolated_test_chroma_path_required") from None
+    return database_name, resolved_path
+
+
+def _create_isolated_test_engine(password, database_name):
+    """Connect only to the UUID-scoped database created by the host coordinator."""
+    if (not isinstance(password, str) or not password or "\x00" in password
+            or not isinstance(database_name, str) or not _TEST_DATABASE_RE.fullmatch(database_name)):
+        raise AcceptanceFailure("isolation_preflight", "isolated_test_database_required")
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import URL
+
+    url = URL.create(
+        drivername="postgresql+psycopg", username="agentforge_app", password=password,
+        host="127.0.0.1", port=5432, database=database_name,
+    )
+    return create_engine(
+        url, connect_args={"connect_timeout": 3}, pool_size=2, max_overflow=0,
+        pool_timeout=5, pool_pre_ping=True, hide_parameters=True,
+    )
+
+
+def _postgres_identity_diagnostic(identity, *, expected_database=None):
     """Return only non-secret connection identity fields and their mismatches."""
     observed = {
         "current_user": identity["current_user"],
@@ -77,10 +137,13 @@ def _postgres_identity_diagnostic(identity):
     # textual forms 127.0.0.1 and 127.0.0.1/32, but no other address or prefix.
     if normalized_address != "127.0.0.1":
         normalized_address = None
-    mismatches = [key for key, expected in EXPECTED_POSTGRES_IDENTITY.items()
+    expected_identity = dict(EXPECTED_POSTGRES_IDENTITY)
+    if expected_database is not None:
+        expected_identity["current_database"] = expected_database
+    mismatches = [key for key, expected in expected_identity.items()
                   if (normalized_address if key == "server_address" else observed[key]) != expected]
     return {
-        "expected": dict(EXPECTED_POSTGRES_IDENTITY),
+        "expected": expected_identity,
         "observed": observed,
         "normalized_server_address": normalized_address,
         "mismatches": mismatches,
@@ -183,6 +246,18 @@ def _main():
                           "embedding_requests": result["embedding_requests"]}, ensure_ascii=False, indent=2))
         return 2
 
+    try:
+        test_database_name, test_chroma_path = _isolated_test_scope()
+    except AcceptanceFailure as exc:
+        result.update(status="blocked_by_configuration", state="ISOLATION_PREFLIGHT",
+                      failure_stage=exc.stage, failure_code=exc.code)
+        result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"result_file": str(result_path), "status": result["status"],
+                          "failure_stage": exc.stage, "failure_code": exc.code,
+                          "chat_requests": result["chat_requests"],
+                          "embedding_requests": result["embedding_requests"]}, ensure_ascii=False, indent=2))
+        return 2
+
     missing = [name for name in ("AGENTFORGE_DB_PASSWORD", CHAT_KEY,
                                   "AGENTFORGE_EMBEDDING_BASE_URL", "AGENTFORGE_EMBEDDING_MODEL_ID",
                                   "AGENTFORGE_EMBEDDING_API_MODEL") if not os.environ.get(name)]
@@ -246,7 +321,7 @@ def _main():
         result["checks"]["both_models_ready"] = "passed"
 
         result["state"] = "DATABASE_MIGRATION"
-        from agentforge.af012_connection import create_local_engine, check_database_health
+        from agentforge.af012_connection import check_database_health
         from agentforge.conversation_migrations import upgrade
         from agentforge.conversation_store import ConversationStore
         from agentforge.memory_store import MemoryStore
@@ -254,7 +329,7 @@ def _main():
                                               RepositoryMetadata, VectorSyncOutbox)
         from sqlalchemy import delete, text, update
         from datetime import datetime, timedelta, timezone
-        engine = create_local_engine(os.environ["AGENTFORGE_DB_PASSWORD"])
+        engine = _create_isolated_test_engine(os.environ["AGENTFORGE_DB_PASSWORD"], test_database_name)
         if not check_database_health(engine):
             raise AcceptanceFailure("database", "postgresql_health_failed")
         with engine.connect() as connection:
@@ -262,7 +337,9 @@ def _main():
                 "SELECT current_user AS current_user, current_database() AS current_database, "
                 "inet_server_addr()::text AS server_address, inet_server_port() AS server_port"
             )).mappings().one()
-        result["postgresql_identity"] = _postgres_identity_diagnostic(identity)
+        result["postgresql_identity"] = _postgres_identity_diagnostic(
+            identity, expected_database=test_database_name,
+        )
         if result["postgresql_identity"]["mismatches"]:
             raise AcceptanceFailure("database", "postgresql_identity_or_scope_mismatch")
         upgrade(engine)
@@ -305,7 +382,7 @@ def _main():
         result["checks"]["two_repository_scoped_sessions_created"] = "passed"
 
         from agentforge.af012_runtime import create_persistent_chroma, collection_for_model
-        chroma_client = create_persistent_chroma()
+        chroma_client = create_persistent_chroma(path=test_chroma_path)
         collection = collection_for_model(chroma_client, embedding_provider.model_id,
                                           embedding_provider.dimension)
         collection_name = collection.name
@@ -598,7 +675,7 @@ def _main():
         # A new engine and process both reopen persisted PostgreSQL/Chroma state.
         result["state"] = "REOPEN_CHECK"
         engine.dispose()
-        engine = create_local_engine(os.environ["AGENTFORGE_DB_PASSWORD"])
+        engine = _create_isolated_test_engine(os.environ["AGENTFORGE_DB_PASSWORD"], test_database_name)
         restored = ConversationStore(engine).get_messages(first["id"], repo_id)
         if len(restored) < 6:
             raise AcceptanceFailure("postgresql_reopen", "conversation_history_not_restored")
@@ -611,7 +688,7 @@ def _main():
             "print(json.dumps({'count':len(r.get('ids',[])),'paths':sorted(m.get('file_path') for m in r.get('metadatas',[]))}))"
         )
         child = subprocess.run([sys.executable, "-X", "utf8", "-B", "-c", reopened_child,
-            str(ROOT / ".agentforge" / "data" / "chroma"), collection_name,
+            str(test_chroma_path), collection_name,
             source_repo_id, embedding_provider.model_id], cwd=ROOT, capture_output=True,
             timeout=30, check=False, env={**os.environ, "ANONYMIZED_TELEMETRY": "False"})
         if child.returncode != 0:

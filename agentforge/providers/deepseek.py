@@ -1,7 +1,7 @@
 """Explicit DeepSeek HTTPS Chat Completions provider; never used as a fallback."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import http.client
 import json
 import math
@@ -10,17 +10,27 @@ import ssl
 import time
 from typing import Callable
 
-from ..context import validate_model_citations
-from ..errors import CitationValidationError, ProviderError
+from ..errors import ProviderError
+from ..context_assembler import ContextAssembler
 from ..models import Answer, BuiltContext
-from .llama_server import (_ANSWER_SYSTEM_PROMPT, _model_descriptor, _model_evidence_text,
-                           _model_messages, validate_output_tokens, validate_timeout)
+from ..token_budget import ContextBudgetManager
+from .dialogue_protocol import (_ANSWER_SYSTEM_PROMPT, _GENERAL_SYSTEM_PROMPT,
+                                _HYBRID_SYSTEM_PROMPT,
+                                _external_data_unavailable_prompt,
+                                _model_evidence_text, _model_messages,
+                                with_planner_task_outline,
+                                validate_output_tokens, validate_timeout)
 
 
 _API_HOST = "api.deepseek.com"
 _CHAT_PATH = "/chat/completions"
 _MODELS_PATH = "/models"
-_MAX_BODY = 2_000_000
+_DEFAULT_DISCOVERY_REQUEST_BYTES = 2_000_000
+_DEFAULT_DISCOVERY_RESPONSE_BYTES = 2_000_000
+_HTTP_BODY_HARD_LIMIT = 64_000_000
+_REQUEST_BYTES_PER_INPUT_TOKEN = 12
+_RESPONSE_BYTES_PER_OUTPUT_TOKEN = 16
+_DYNAMIC_BODY_OVERHEAD_BYTES = 1_000_000
 _SAFE_ERRORS = {
     400: ("bad_request", "DeepSeek rejected the request parameters or context size (HTTP 400)."),
     401: ("authentication", "DeepSeek rejected the configured API key (HTTP 401)."),
@@ -55,6 +65,7 @@ class DeepSeekClient:
         self._stats = {"attempted": 0, "sent": 0, "succeeded": 0, "failed": 0, "retries": 0,
             "last_http_status": None, "last_failure_phase": None, "last_elapsed_seconds": None,
             "last_error_code": None, "last_usage": None, "last_request_id": None,
+            "last_requested_output_tokens": None,
             "last_reasoning_chars": None, "last_finish_reason": None,
             "last_response_diagnostic": None, "discovery_attempted": 0,
             "discovery_succeeded": 0, "discovery_failed": 0, "credential_source": None,
@@ -80,7 +91,8 @@ class DeepSeekClient:
 
     def chat(self, messages: list[dict], *, model: str, max_output_tokens: int,
              thinking: bool | None = None, effort: str | None = None, stream: bool = False,
-             on_content: Callable[[str], None] | None = None, tools: list[dict] | None = None) -> DeepSeekCompletion:
+             on_content: Callable[[str], None] | None = None, tools: list[dict] | None = None,
+             timeout_seconds: float | None = None) -> DeepSeekCompletion:
         if not isinstance(model, str) or not model.strip() or len(model) > 256:
             raise ValueError("A discovered DeepSeek model ID is required.")
         output_tokens = validate_output_tokens(max_output_tokens)
@@ -92,18 +104,29 @@ class DeepSeekClient:
             raise ValueError("Reasoning effort requires thinking mode.")
         if on_content is not None and not callable(on_content):
             raise ValueError("on_content must be callable.")
-        body = {"model": model.strip(), "messages": _validate_messages(messages),
+        checked_messages = _validate_messages(messages)
+        checked_tools = None if tools is None else _validate_tool_schemas(tools)
+        max_request_bytes, max_response_bytes = _chat_body_limits(
+            checked_messages, output_tokens, tools=checked_tools or (),
+        )
+        body = {"model": model.strip(), "messages": checked_messages,
                 "max_tokens": output_tokens, "stream": bool(stream)}
         if thinking is not None:
             body["thinking"] = {"type": "enabled" if thinking else "disabled"}
         if effort is not None:
             body["reasoning_effort"] = effort
-        if tools is not None:
-            body["tools"] = _validate_tool_schemas(tools)
+        if checked_tools is not None:
+            body["tools"] = checked_tools
         if stream:
             body["stream_options"] = {"include_usage": True}
+        timeout = self.total_timeout if timeout_seconds is None else validate_timeout(
+            timeout_seconds, "request timeout", 10, self.total_timeout, inclusive_minimum=True,
+        )
         payload = self._request("POST", _CHAT_PATH, body=body,
-                                streaming=stream, on_content=on_content)
+                                streaming=stream, on_content=on_content,
+                                timeout_seconds=timeout,
+                                max_request_bytes=max_request_bytes,
+                                max_response_bytes=max_response_bytes)
         try:
             completion = _parse_completion(payload)
         except ProviderError:
@@ -118,10 +141,29 @@ class DeepSeekClient:
     def _connect(self):
         return self.connection_factory(_API_HOST, timeout=self.connect_timeout, context=self.ssl_context)
 
-    def _request(self, method, path, *, body=None, streaming=False, on_content=None):
-        encoded = None if body is None else json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-        if encoded is not None and len(encoded) > _MAX_BODY:
-            raise ProviderError("DeepSeek request exceeds the bounded request size.")
+    def _request(self, method, path, *, body=None, streaming=False, on_content=None,
+                 timeout_seconds=None, max_request_bytes=None, max_response_bytes=None):
+        request_limit = (_DEFAULT_DISCOVERY_REQUEST_BYTES if max_request_bytes is None
+                         else _bounded_http_body_limit(max_request_bytes))
+        response_limit = (_DEFAULT_DISCOVERY_RESPONSE_BYTES if max_response_bytes is None
+                          else _bounded_http_body_limit(max_response_bytes))
+        if body is None:
+            encoded = None
+        else:
+            try:
+                serialized_size = _json_utf8_size(body, stop_after=request_limit)
+            except (TypeError, ValueError, RecursionError):
+                raise ProviderError("DeepSeek request contains invalid JSON data.") from None
+            if serialized_size > request_limit:
+                self._stats["last_error_code"] = "request_too_large"
+                self._stats["last_failure_phase"] = "request_write"
+                raise ProviderError("DeepSeek request exceeds the bounded request size.")
+            try:
+                encoded = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            except (TypeError, ValueError, UnicodeError, RecursionError):
+                raise ProviderError("DeepSeek request contains invalid JSON data.") from None
+            if len(encoded) != serialized_size:
+                raise ProviderError("DeepSeek request size validation failed.")
         discovery = method == "GET"
         if not discovery:
             self._stats.update({"last_http_status": None, "last_failure_phase": None,
@@ -129,8 +171,15 @@ class DeepSeekClient:
                 "last_request_id": None, "last_reasoning_chars": None, "last_finish_reason": None,
                 "last_response_diagnostic": None, "last_application_failure_phase": None,
                 "last_application_error_code": None})
+            self._stats["last_request_byte_limit"] = request_limit
+            self._stats["last_response_byte_limit"] = response_limit
+            requested_output = body.get("max_tokens") if isinstance(body, dict) else None
+            self._stats["last_requested_output_tokens"] = requested_output
             self._stats["attempted"] += 1
-        started, deadline = time.monotonic(), time.monotonic() + self.total_timeout
+        timeout = self.total_timeout if timeout_seconds is None else validate_timeout(
+            timeout_seconds, "request timeout", 10, self.total_timeout, inclusive_minimum=True,
+        )
+        started, deadline = time.monotonic(), time.monotonic() + timeout
         connection = None
         phase = "connect"
         success = False
@@ -180,11 +229,11 @@ class DeepSeekClient:
                         raise TimeoutError
                     if connection.sock is not None:
                         connection.sock.settimeout(min(self.read_timeout, remaining))
-                payload = _read_sse(response, on_content=on_content, max_bytes=_MAX_BODY,
+                payload = _read_sse(response, on_content=on_content, max_bytes=response_limit,
                                     deadline=deadline, prepare_read=prepare_stream_read)
             else:
-                raw = response.read(_MAX_BODY + 1)
-                if len(raw) > _MAX_BODY:
+                raw = response.read(response_limit + 1)
+                if len(raw) > response_limit:
                     raise _DeepSeekFailure("response_too_large", "DeepSeek response exceeds the bounded response size.")
                 try:
                     payload = json.loads(raw.decode("utf-8"))
@@ -387,6 +436,10 @@ def _usage_metadata(value):
     tokens = value.get("reasoning_tokens")
     if "reasoning_tokens" not in result and isinstance(tokens, int) and not isinstance(tokens, bool) and tokens >= 0:
         result["reasoning_tokens"] = tokens
+    completion = result.get("completion_tokens")
+    reasoning = result.get("reasoning_tokens")
+    if completion is not None and reasoning is not None and reasoning <= completion:
+        result["visible_completion_tokens"] = completion - reasoning
     for output, key in (("prompt_cache_hit_tokens", "prompt_cache_hit_tokens"),
                         ("prompt_cache_miss_tokens", "prompt_cache_miss_tokens")):
         number = value.get(key)
@@ -431,8 +484,95 @@ def _bounded_header(response, name):
     return value[:256] if isinstance(value, str) and all(ord(ch) >= 32 for ch in value) else None
 
 
-def _read_sse(response, *, on_content=None, max_bytes=_MAX_BODY, deadline=None,
+def _bounded_http_body_limit(value):
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError("HTTP body byte limit must be a positive integer.")
+    return min(value, _HTTP_BODY_HARD_LIMIT)
+
+
+def _chat_body_limits(messages, output_tokens, *, tools=()):
+    """Separate byte guards scaled to the already budgeted request and response."""
+    input_tokens = ContextBudgetManager().measure_request(messages, tools=tools).count
+    request_bytes = max(
+        _DEFAULT_DISCOVERY_REQUEST_BYTES,
+        input_tokens * _REQUEST_BYTES_PER_INPUT_TOKEN + _DYNAMIC_BODY_OVERHEAD_BYTES,
+    )
+    response_bytes = max(
+        _DEFAULT_DISCOVERY_RESPONSE_BYTES,
+        output_tokens * _RESPONSE_BYTES_PER_OUTPUT_TOKEN + _DYNAMIC_BODY_OVERHEAD_BYTES,
+    )
+    return (_bounded_http_body_limit(request_bytes),
+            _bounded_http_body_limit(response_bytes))
+
+
+def _json_utf8_size(value, *, stop_after):
+    """Exact compact UTF-8 JSON size, stopping as soon as the request cap is exceeded."""
+    total = 0
+
+    def add(amount):
+        nonlocal total
+        total += amount
+        return total <= stop_after
+
+    def string_size(text):
+        size = 2  # opening and closing quotes
+        for char in text:
+            codepoint = ord(char)
+            if char in {'"', "\\"}:
+                size += 2
+            elif codepoint < 0x20:
+                size += 2 if char in "\b\f\n\r\t" else 6
+            elif 0xD800 <= codepoint <= 0xDFFF:
+                raise ValueError("JSON string contains an invalid Unicode surrogate.")
+            else:
+                size += (1 if codepoint <= 0x7F else 2 if codepoint <= 0x7FF
+                         else 3 if codepoint <= 0xFFFF else 4)
+            if size > stop_after - total:
+                return size
+        return size
+
+    def visit(item):
+        if isinstance(item, str):
+            return add(string_size(item))
+        if item is None:
+            return add(4)
+        if item is True:
+            return add(4)
+        if item is False:
+            return add(5)
+        if isinstance(item, int):
+            return add(len(str(item)))
+        if isinstance(item, float):
+            return add(len(json.dumps(item, separators=(",", ":"))))
+        if isinstance(item, (list, tuple)):
+            if not add(2):
+                return False
+            for index, child in enumerate(item):
+                if index and not add(1):
+                    return False
+                if not visit(child):
+                    return False
+            return True
+        if isinstance(item, dict):
+            if not add(2):
+                return False
+            for index, (key, child) in enumerate(item.items()):
+                if not isinstance(key, str):
+                    raise TypeError("JSON object keys must be strings.")
+                if index and not add(1):
+                    return False
+                if not add(string_size(key)) or not add(1) or not visit(child):
+                    return False
+            return True
+        raise TypeError("Unsupported JSON value.")
+
+    visit(value)
+    return total
+
+
+def _read_sse(response, *, on_content=None, max_bytes=_DEFAULT_DISCOVERY_RESPONSE_BYTES, deadline=None,
               prepare_read=None, monotonic=time.monotonic):
+    max_bytes = _bounded_http_body_limit(max_bytes)
     content, reasoning = [], []
     tool_calls: dict[int, dict] = {}
     usage = {}
@@ -498,14 +638,18 @@ def _read_sse(response, *, on_content=None, max_bytes=_MAX_BODY, deadline=None,
             prepare_read()
         elif deadline is not None and monotonic() >= deadline:
             raise TimeoutError
-        line = response.readline(65_537)
+        # A fixed 64 KiB line cap silently made Streaming support less output
+        # than non-streaming. Bound each read by the remaining response budget
+        # instead; the total remains capped by the model-aware byte envelope.
+        remaining_bytes = max_bytes - total
+        line = response.readline(min(remaining_bytes + 1, _HTTP_BODY_HARD_LIMIT + 1))
         if deadline is not None and monotonic() >= deadline:
             raise TimeoutError
         if not line:
             break
-        total += len(line)
-        if total > max_bytes or len(line) > 65_536:
+        if len(line) > remaining_bytes:
             raise _DeepSeekFailure("stream_too_large", "DeepSeek stream exceeded its size limit.")
+        total += len(line)
         line = line.rstrip(b"\r\n")
         if not line:
             if data_lines:
@@ -533,23 +677,36 @@ def _read_sse(response, *, on_content=None, max_bytes=_MAX_BODY, deadline=None,
 
 class DeepSeekProvider:
     provider_id = "deepseek"
+    PLANNER_OUTPUT_TOKENS = 4_096
 
-    def __init__(self, client: DeepSeekClient, model: str, *, max_output_tokens: int = 256,
+    def __init__(self, client: DeepSeekClient, model: str, *, max_output_tokens: int | None = None,
+                 output_budget_mode: str = "standard",
                  thinking: bool = False, effort: str | None = None, stream: bool = False,
-                 descriptor=None):
+                 descriptor=None, context_assembler: ContextAssembler | None = None):
         if not isinstance(client, DeepSeekClient):
             raise ValueError("DeepSeek client is required.")
+        if descriptor is None:
+            raise ValueError("DeepSeek model metadata must be supplied by the application registry.")
         if not isinstance(thinking, bool):
             raise ValueError("thinking must be a boolean.")
         if effort is not None and (not thinking or effort not in {"low", "high", "max"}):
             raise ValueError("Reasoning effort is invalid or thinking is disabled.")
         self.client, self.model = client, model
-        self.descriptor = descriptor or _model_descriptor(model)
+        self.descriptor = descriptor
+        self.context_assembler = context_assembler or ContextAssembler()
         if self.descriptor.provider_id != "deepseek" or self.descriptor.model_id != model:
             raise ValueError("Selected DeepSeek model does not match its registry metadata.")
         if effort is not None and effort not in self.descriptor.supported_efforts:
             raise ValueError("Reasoning effort is not supported by this DeepSeek model.")
-        self.max_output_tokens, self.thinking, self.effort = validate_output_tokens(max_output_tokens), thinking, effort
+        # The conversational answer budget remains separate from the larger
+        # bounded budget used by structured Agent planning requests.
+        output_budget = self.context_assembler.budgets.resolve_output_budget(
+            self.descriptor, mode=output_budget_mode,
+            explicit_output_tokens=max_output_tokens,
+        )
+        self.max_output_tokens = output_budget.effective_tokens
+        self.output_budget = output_budget
+        self.thinking, self.effort = thinking, effort
         self.stream = bool(stream)
         if self.stream and self.descriptor.supports_streaming is not True:
             raise ValueError("Streaming capability is unknown or unsupported for this DeepSeek model.")
@@ -561,12 +718,47 @@ class DeepSeekProvider:
         return self.thinking if self.descriptor.supports_thinking is True else None
 
     def request_stats(self):
-        return self.client.request_stats()
+        return {**self.client.request_stats(), "output_budget": asdict(self.output_budget)}
+
+    def plan_completion(self, messages: list[dict], *, max_output_tokens: int,
+                        timeout_seconds: float) -> str:
+        """Run a bounded, non-streaming plan request through this session's selected model."""
+        if (isinstance(max_output_tokens, bool) or not isinstance(max_output_tokens, int)
+                or not 1 <= max_output_tokens <= self.PLANNER_OUTPUT_TOKENS):
+            raise ValueError(
+                f"Planner output token budget must be between 1 and {self.PLANNER_OUTPUT_TOKENS}."
+            )
+        output_tokens = self.context_assembler.budgets.resolve_output_budget(
+            self.descriptor, explicit_output_tokens=max_output_tokens,
+        ).effective_tokens
+        # Planner messages already contain the selected history/summary and
+        # have been assembled for this model. Reassembling as a dialogue here
+        # assumes exactly [system, user] and rejects valid multi-turn plans.
+        # Keep the provider boundary's budget check without rebuilding context.
+        planned, _diagnostics = self.context_assembler.fit_messages(
+            messages, descriptor=self.descriptor,
+            requested_output_tokens=output_tokens,
+            phase="agent_execution_planner_provider",
+        )
+        result = self.client.chat(
+            planned, model=self.model, max_output_tokens=output_tokens,
+            thinking=False if self.descriptor.supports_thinking is True else None,
+            effort=None, stream=False, timeout_seconds=min(timeout_seconds, self.client.total_timeout),
+        )
+        if result.tool_calls or not result.content.strip() or result.finish_reason not in {None, "stop"}:
+            self.client.record_application_failure("planning_response", "invalid_planning_completion")
+            raise ProviderError("DeepSeek returned an incomplete or non-text planning response.")
+        return result.content
 
     def summary_text(self, messages, *, max_output_tokens: int):
-        output_tokens = min(validate_output_tokens(max_output_tokens),
-                            self.descriptor.max_output_tokens or validate_output_tokens(max_output_tokens))
-        result = self.client.chat(messages, model=self.model, max_output_tokens=output_tokens,
+        output_tokens = self.context_assembler.budgets.resolve_output_budget(
+            self.descriptor, explicit_output_tokens=max_output_tokens,
+        ).effective_tokens
+        bounded_messages, _diagnostics = self.context_assembler.fit_messages(
+            messages, descriptor=self.descriptor, requested_output_tokens=output_tokens,
+            phase="conversation_summary",
+        )
+        result = self.client.chat(bounded_messages, model=self.model, max_output_tokens=output_tokens,
                                   thinking=self.thinking_request, effort=self.effort, stream=False)
         if result.tool_calls or not result.content.strip():
             raise ProviderError("DeepSeek did not return plain summary text.")
@@ -575,8 +767,7 @@ class DeepSeekProvider:
     def answer(self, context: BuiltContext, *, conversation: dict | None = None,
                settings: dict | None = None, on_content=None) -> Answer:
         if not context.evidence:
-            from .offline import OfflineProvider
-            return OfflineProvider().answer(context)
+            raise ProviderError("Repository generation requires request-local evidence.")
         thinking = self.thinking if settings is None else settings.get("thinking_enabled", self.thinking)
         effort = self.effort if settings is None else settings.get("reasoning_effort", self.effort)
         if not isinstance(thinking, bool) or (thinking and self.descriptor.supports_thinking is not True):
@@ -585,13 +776,15 @@ class DeepSeekProvider:
             raise ProviderError("Reasoning effort is unsupported or thinking is disabled; no request was sent.")
         if self.stream and self.descriptor.supports_streaming is not True:
             raise ProviderError("Streaming capability is unknown or unsupported; no request was sent.")
+        user_text = (f"Question:\n{context.question}\n\nUntrusted evidence:\n"
+                     f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
+                     f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
+                     "Cite the applicable IDs.")
         messages = _model_messages(context, conversation, [
             {"role": "system", "content": _ANSWER_SYSTEM_PROMPT},
-            {"role": "user", "content": f"Question:\n{context.question}\n\nUntrusted evidence:\n"
-                                        f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
-                                        f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
-                                        "Cite the applicable IDs."},
-        ], descriptor=self.descriptor, max_output_tokens=self.max_output_tokens)
+            {"role": "user", "content": with_planner_task_outline(context, user_text)},
+        ], descriptor=self.descriptor, max_output_tokens=self.max_output_tokens,
+            context_assembler=self.context_assembler)
         result = self.client.chat(messages, model=self.model, max_output_tokens=self.max_output_tokens,
                                   thinking=(thinking if self.descriptor.supports_thinking is True else None),
                                   effort=effort, stream=self.stream,
@@ -608,10 +801,62 @@ class DeepSeekProvider:
         if result.finish_reason not in {None, "stop"}:
             self.client.record_application_failure("response_validation", "unexpected_finish_reason")
             raise ProviderError("DeepSeek returned an unexpected final-response finish reason.")
-        try:
-            citations = validate_model_citations(result.content, context)
-        except CitationValidationError as exc:
-            self.client._stats.update({"last_application_failure_phase": "citation_validation",
-                "last_application_error_code": exc.code})
-            raise
-        return Answer(result.content, citations, False)
+        return Answer(result.content, (), False)
+
+    def answer_general(self, context: BuiltContext, *, conversation=None,
+                       settings=None, on_content=None,
+                       external_data_unavailable=False) -> Answer:
+        return self._answer_mode(context, "general", conversation, settings, on_content,
+                                 external_data_unavailable)
+
+    def answer_hybrid(self, context: BuiltContext, *, conversation=None,
+                      settings=None, on_content=None,
+                      external_data_unavailable=False) -> Answer:
+        return self._answer_mode(context, "hybrid", conversation, settings, on_content,
+                                 external_data_unavailable)
+
+    def _answer_mode(self, context, mode, conversation, settings, on_content,
+                     external_data_unavailable=False):
+        thinking = self.thinking if settings is None else settings.get("thinking_enabled", self.thinking)
+        effort = self.effort if settings is None else settings.get("reasoning_effort", self.effort)
+        if not isinstance(thinking, bool) or (thinking and self.descriptor.supports_thinking is not True):
+            raise ProviderError("Thinking capability is unknown or unsupported; no request was sent.")
+        if effort is not None and (thinking is not True or effort not in self.descriptor.supported_efforts):
+            raise ProviderError("Reasoning effort is unsupported or thinking is disabled; no request was sent.")
+        if self.stream and self.descriptor.supports_streaming is not True:
+            raise ProviderError("Streaming capability is unknown or unsupported; no request was sent.")
+        system_prompt = _GENERAL_SYSTEM_PROMPT if mode == "general" else _HYBRID_SYSTEM_PROMPT
+        system_prompt = _external_data_unavailable_prompt(system_prompt, external_data_unavailable)
+        if mode == "general":
+            user_text = with_planner_task_outline(context, "Question:\n" + context.question)
+        else:
+            ids = ", ".join(f"[{source.source_id}]" for source in context.evidence)
+            evidence = (_model_evidence_text(context) if context.evidence
+                        else "No relevant repository evidence was retrieved.")
+            user_text = (f"Question:\n{context.question}\n\nCurrent repository evidence:\n{evidence}\n"
+                         f"\nAvailable source IDs: {ids or '(none)'}. Cite only applicable IDs in the Repository evidence section.")
+            user_text = with_planner_task_outline(context, user_text)
+        messages = _model_messages(context, conversation, [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_text},
+        ], descriptor=self.descriptor, max_output_tokens=self.max_output_tokens, mode=mode,
+            context_assembler=self.context_assembler)
+        thinking_parameter = thinking if self.descriptor.supports_thinking is True else None
+        result = self.client.chat(
+            messages, model=self.model, max_output_tokens=self.max_output_tokens,
+            thinking=thinking_parameter, effort=effort,
+            stream=self.stream, on_content=on_content if self.stream else None,
+        )
+        if result.finish_reason == "length":
+            self.client.record_application_failure("response_validation", "truncated_final_content")
+            raise ProviderError("DeepSeek stopped at the output limit; the partial answer was rejected.")
+        if result.tool_calls:
+            self.client.record_application_failure("tool_dispatch", "model_tools_not_enabled_for_rag_ask")
+            raise ProviderError("DeepSeek requested a tool call, but this conversation path does not execute model tools.")
+        if not result.content.strip():
+            self.client.record_application_failure("response_validation", "empty_final_content")
+            raise ProviderError("DeepSeek returned empty final content; reasoning is not a final answer.")
+        if result.finish_reason not in {None, "stop"}:
+            self.client.record_application_failure("response_validation", "unexpected_finish_reason")
+            raise ProviderError("DeepSeek returned an unexpected final-response finish reason.")
+        return Answer(result.content, (), False)

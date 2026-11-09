@@ -42,6 +42,9 @@ class ContextTests(unittest.TestCase):
                 validate_model_citations(text, context)
         self.assertEqual(validate_model_citations("Ordinary uncited answer.", context), ())
         self.assertEqual(validate_model_citations("[E1]", context), ("src/example.py:4-5",))
+        with self.assertRaises(CitationValidationError) as caught:
+            validate_model_citations("The claim [E1] (src/example.py:4-5).", context)
+        self.assertEqual("model_supplied_path_location_forbidden", caught.exception.code)
         ordinary = (
             "line 12 explains `def parse(value: int)`, at 12:30; "
             "see [the Markdown guide](docs/reference.md)."

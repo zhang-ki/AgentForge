@@ -61,6 +61,102 @@ class ConversationStoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.store.save_summary(first["id"], "repo-a", rows[0]["id"], "partial turn")
 
+    def test_agent_execution_turn_is_idempotent_and_bound_to_exact_content(self):
+        item = self.store.create_conversation("repo-a", "Agent execution")
+        turn_id = self.store.append_execution_turn(
+            item["id"], "repo-a", "exec-123", "read this module", "The module defines a parser.",
+            provider_id="llama-server", model_id="qwen3.5-4b",
+            request_diagnostics={"agent_planner_1": {
+                "phase": "agent_execution_planner", "context_window_tokens": 4096,
+                "input_budget_tokens": 3000, "estimated_input_tokens": 200,
+                "request_sent": True, "request_succeeded": True,
+            }},
+        )
+        repeated = self.store.append_execution_turn(
+            item["id"], "repo-a", "exec-123", "read this module", "The module defines a parser.",
+            provider_id="llama-server", model_id="qwen3.5-4b",
+        )
+        self.assertEqual(turn_id, repeated)
+        rows = self.store.get_messages(item["id"], "repo-a")
+        self.assertEqual(2, len(rows))
+        self.assertEqual("exec-123", rows[-1]["metadata"]["agent_execution_id"])
+        self.assertEqual(4096, rows[-1]["metadata"]["request_diagnostics"]["agent_planner_1"]["context_window_tokens"])
+        with self.assertRaisesRegex(ValueError, "different turn content"):
+            self.store.append_execution_turn(
+                item["id"], "repo-a", "exec-123", "different objective", "different answer")
+
+    def test_answer_persists_bounded_model_budget_and_usage_without_prompt_content(self):
+        item = self.store.create_conversation("repo-a", "Budget metadata")
+        self.store.append_turn(
+            item["id"], "repo-a", "synthetic question", "synthetic answer",
+            model_name="deepseek-chat", provider_id="deepseek", model_id="deepseek-chat",
+            usage={"prompt_tokens": 120, "completion_tokens": 24, "reasoning_tokens": 8},
+            request_diagnostics={"request_phases": {
+                "planner": {"input_budget_tokens": 900_000, "estimated_input_tokens": 120,
+                            "usage": {"prompt_tokens": 120, "completion_tokens": 5},
+                            "prompt": "must not be persisted"},
+                "answer": {"context_window_tokens": 1_000_000, "input_budget_tokens": 990_000,
+                           "requested_output_tokens": 256, "estimated_input_tokens": 120,
+                           "tokenizer_method": "conservative_estimated",
+                           "usage": {"prompt_tokens": 120, "completion_tokens": 24,
+                                     "reasoning_tokens": 8}},
+            }},
+        )
+        metadata = self.store.get_messages(item["id"], "repo-a")[-1]["metadata"]
+        self.assertEqual(120, metadata["usage"]["prompt_tokens"])
+        phases = metadata["request_diagnostics"]
+        self.assertEqual(900_000, phases["planner"]["input_budget_tokens"])
+        self.assertEqual(1_000_000, phases["answer"]["context_window_tokens"])
+        self.assertEqual(8, phases["answer"]["usage"]["reasoning_tokens"])
+        self.assertNotIn("prompt", phases["planner"])
+        self.assertNotIn("synthetic question", str(phases))
+
+    def test_oversized_agent_diagnostics_are_compacted_without_failing_turn_persistence(self):
+        import json
+        item = self.store.create_conversation("repo-a", "Large diagnostics")
+        long_value = "x" * 512
+        planner_diagnostic = {
+            "phase": "agent_execution_planner",
+            "model_id": "deepseek-flash",
+            "capability_source": long_value,
+            "capability_verified_at": long_value,
+            "token_estimate_description": long_value,
+            "context_window_tokens": 1_048_576,
+            "input_budget_tokens": 900_000,
+            "requested_output_tokens": 4_096,
+            "estimated_input_tokens": 2_000,
+            "request_sent": True,
+            "request_succeeded": True,
+            "finish_reason": "stop",
+            "usage": {"prompt_tokens": 100, "completion_tokens": 20,
+                      "ignored_field": "not persisted"},
+            "prompt": "SENSITIVE_SYNTHETIC_PROMPT_MUST_NOT_PERSIST",
+        }
+        diagnostics = {
+            "answer": {"phase": "answer", "requested_output_tokens": 16_384,
+                       "request_succeeded": True, "usage": {"completion_tokens": 50}},
+            "agent_execution": {"phase": "agent_execution", "request_count": 50},
+        }
+        for position in range(1, 51):
+            diagnostics[f"agent_planner_{position}"] = dict(planner_diagnostic)
+
+        self.store.append_execution_turn(
+            item["id"], "repo-a", "exec-large-diagnostics", "synthetic question",
+            "synthetic completed answer", provider_id="deepseek", model_id="deepseek-flash",
+            request_diagnostics=diagnostics,
+        )
+
+        rows = self.store.get_messages(item["id"], "repo-a")
+        self.assertEqual(["user", "assistant"], [row["role"] for row in rows])
+        phases = rows[-1]["metadata"]["request_diagnostics"]
+        self.assertEqual("deepseek-flash", phases["agent_planner_50"]["model_id"])
+        self.assertIn("answer", phases)
+        self.assertNotIn("agent_planner_1", phases)
+        self.assertTrue(phases["_meta"]["truncated"])
+        self.assertGreater(phases["_meta"]["omitted_phase_count"], 0)
+        self.assertNotIn("SENSITIVE_SYNTHETIC_PROMPT_MUST_NOT_PERSIST", str(phases))
+        self.assertLessEqual(len(json.dumps(phases, separators=(",", ":"))), 8_192)
+
     def test_failed_write_rolls_back_both_messages(self):
         from sqlalchemy import event, select, func
         from agentforge.af012_schema import Message
@@ -740,7 +836,10 @@ class OfflineConsoleIntegrationTests(LocalTestCase):
               patch("agentforge.cli._open_current_index", side_effect=index_scope),
               patch.object(ConversationStore, "prepare_history", side_effect=AssertionError("unexpected compaction"))):
             cid = json.loads(invoke(["session", "create", "refusal"])[1])["result"]["id"]
-            code, output, error = invoke(["ask", "What does function nonexistent_zephyr_941 return?", "--conversation-id", cid])
+            code, output, error = invoke([
+                "ask", "What does function nonexistent_zephyr_941 return?",
+                "--conversation-id", cid, "--mode", "repository",
+            ])
             self.assertEqual((0, ""), (code, error))
             self.assertEqual("refused", json.loads(output)["answer_contract"]["status"])
 
@@ -805,7 +904,8 @@ class OfflineConsoleIntegrationTests(LocalTestCase):
             import json
             cid = json.loads(output)["result"]["id"]
             self.assertEqual(0, invoke(["session", "switch", cid])[0])
-            args = ["--conversation-id", cid, "--provider", "llama-server", "--base-url", "http://127.0.0.1", "--model", "test"]
+            args = ["--conversation-id", cid, "--provider", "llama-server", "--base-url", "http://127.0.0.1", "--model", "test",
+                    "--mode", "repository"]
             self.assertEqual(0, invoke(["ask", "refresh_access_token", *args])[0])
             code, output, errors = invoke(["ask", "它返回什么？", *args])
             self.assertEqual((0, ""), (code, errors))

@@ -77,7 +77,9 @@ class AiAdjudicationTests(unittest.TestCase):
         corpus_root = CORPUS.resolve()
         actual_scope = sorted(
             path.relative_to(CORPUS).as_posix()
-            for path in CORPUS.rglob("*") if path.is_file()
+            for path in CORPUS.rglob("*")
+            if path.is_file() and "__pycache__" not in path.relative_to(CORPUS).parts
+            and path.suffix.casefold() not in {".pyc", ".pyo"}
         )
         self.assertEqual(actual_scope, sorted(self.artifact["frozen_scope"]))
 

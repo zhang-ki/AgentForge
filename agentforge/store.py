@@ -19,7 +19,7 @@ from .config import (
     VECTOR_INDEX_VERSION,
 )
 from .errors import IndexConflictError, StoreError
-from .repositories import repository_identity
+from .repository_identity import repository_identity
 
 
 def _ordinary(path: Path, directory: bool) -> None:

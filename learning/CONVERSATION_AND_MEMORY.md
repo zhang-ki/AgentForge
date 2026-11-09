@@ -68,7 +68,15 @@ $ConversationId = '替换为 /list 输出中的会话 UUID'
 
 1.0 的历史“摘要”是确定性、不完整的摘录。1.1 分支在选择本地 Qwen Provider、检索上下文通过证据门禁且旧消息完整时，会用本地模型摘要完整的旧问答对，并保存覆盖到的消息 ID。每批摘要输入最多 3,000 UTF-8 字节，摘要请求最多 4,500 字节；这些是字节上限，不是精确 Token 限额。后续摘要输入包含之前的不可信摘要和新覆盖消息；模型被要求生成完整的精简替代摘要，而不是只追加新内容。替代摘要最多 1,800 UTF-8 字节，避免历史摘要逐次嵌套增长；旧版本留下的超大摘要会在启用语义摘要时先尝试压缩。摘要失败时旧摘要及原始消息保持不变。没有语义摘要器时使用明确标记的确定性摘录。
 
-会话请求默认硬上限为 3,500 UTF-8 字节，规划时保留 5%，实际可用 3,325 字节；它是输入字节代理，不是模型的精确 Token 数。当前问题、证据和系统提示先计入预算；相关已批准 Memory、受保护陈述和近期完整轮次再按实现规则选择。必要内容放不下时在调用回答模型之前停止，并输出不含对话内容的字节诊断。CLI 的 `--context-budget` 控制证据构造预算，不能当作提高会话 3,500 字节上限的开关。聊天输出的 `--max-output-tokens` 是另一项限制。
+会话请求按当前绑定模型计算预算，不再把 Qwen 窗口套用给所有模型。配置的 Qwen Local 窗口是 4,096 Token（来自 `launchers/start-qwen.ps1` 的 `--ctx-size 4096`）；DeepSeek 必须使用近期、带来源时间的 `/models` 能力信息，旧缓存只能展示，不能参与请求预算。当前 DeepSeek 本机缓存已过期且没有来源时间戳，因此这轮没有把缓存中的大窗口数值当成已验证能力。
+
+计算顺序是：模型上下文窗口 − 本次请求的输出预留 − 安全余量；随后再取已知 `max_input_tokens` 和用户显式输入上限中较小者。模型 `max_output_tokens` 是允许的上限，不代表每轮都要预留这么多输出。当前本机请求使用单独的请求输出值；`--context-budget` 是可选输入 Token 上限，不能覆盖模型实际限制。
+
+如果注册了模型专属 Tokenizer，消息角色、内容和工具协议会按其计数；没有本地 Tokenizer 时，界面和诊断必须标为保守估算，不能说成精确 Token 数。估算按 Unicode 字符数和 UTF-8 字节代理计算，并包含对话格式开销。ContextAssembler 只构造本次请求，不删改 PostgreSQL 原始消息；完整历史放不进当前模型窗口时，才按完整问答轮次选择摘要和最近消息。必需内容仍放不下时，在请求发送前返回 `CONTEXT_BUDGET_EXCEEDED`，不会静默截断。
+
+DeepSeek Thinking 的可见回答和 `reasoning_tokens` 使用量分别记录。DeepSeek Chat API 对单次生成公开的是一个 `max_tokens` 总上限；如果 `/models` 没有给出独立 reasoning 限额，AgentForge 保持未知，不自行推测。官方字段定义可看 [DeepSeek `/models`](https://api-docs.deepseek.com/api/list-models/)、[Chat Completions](https://api-docs.deepseek.com/api/create-chat-completion/) 和 [Thinking Mode](https://api-docs.deepseek.com/guides/thinking_mode/) 文档。
+
+离线测试验证了 30/100 轮请求视图、Qwen 4,096 窗口下的请求压缩、DeepSeek 大窗口描述符下保留完整历史，以及 DeepSeek→Qwen→DeepSeek 重新组装时原消息不变。大窗口用例使用官方 `/models` 文档示例构造预算输入，只验证预算算法，不代表当前 DeepSeek 账号或服务的实时验收。真实服务容量与 30/100 轮模型回答仍需宿主验证。
 
 精确符号问题会检查索引中的符号身份；对大型类可选类声明和相关方法的完整行范围。若同名定义中只有一个被包的 `__init__.py` 明确重导出，当前代码优先选择它；不能唯一确定时保留不确定性。模型输入包含证据摘录和 `[E1]` 等请求内编号；回答可以只引用编号，应用再映射到真实路径与行号。不能只给模型编号而不给它需要的源码。相关实现与实验见 [当前版本实践](CURRENT_PRACTICE.md)。
 
@@ -118,3 +126,44 @@ Memory 是用户批准的个性化上下文，不是源码证据；它不会证�
 每次滚动更新把旧摘要和新的完整轮次分批送给摘要器。摘要器返回的是可能遗漏信息的候选；应用会在保存前附加受保护的源陈述，并验证所有来源消息身份。缺事实、超过 1,800 UTF-8 字节、模型输出截断或数据库失败时不覆盖旧摘要，也不推进覆盖游标。原始消息仍保留在 PostgreSQL，应用之后可以重新压缩。
 
 陈述提取是保守启发式，不能理解所有自然语言或自动判断矛盾；保护项目装不进有界摘要时，系统会安全停止而不是无限扩大上下文。3,000 字节摘要输入、4,500 字节模型 Prompt 和 1,800 字节保存上限都不是 Token 数。具体数据库迁移、真实 Qwen 和覆盖率结论请分别查看对应运行记录，不从离线测试推断真实服务结果。
+
+## Agent 执行循环：计划、工具和观察
+
+`agentforge/agent_execution.py` 把“模型提出下一步”与“应用决定是否执行”分开。`LLMExecutionPlanner` 通过 `plan_completion()` 要求模型返回严格 JSON；开始时模型只看到有限的工具目录，需要某个工具时才请求它的参数和结果 Schema。模型提出的计划不会直接运行：`AgentExecutionEngine._validate_plan()` 会检查工具是否已注册、参数是否符合 Schema、权限范围是否获准、调用是否重复、依赖是否完整，以及任务数量是否超限。
+
+### 一轮执行怎样变成多轮
+
+1. `ToolDiscovery.discover()` 根据能力和名称给出有界目录。目录项只说明“有哪些工具”，不包含全部参数 Schema。
+2. Planner 返回 `plan`、`finish`、`ask_user` 或 `load_schemas`。需要工具 Schema 时，应用只加载目录内最多几个已选择工具的 Schema，然后再问 Planner。
+3. 执行器校验计划后，根据 `dependencies` 先后顺序调度任务。无依赖且标为可并发的只读工具可以并行；相同 `concurrency_group` 会串行。`worker_safe` 表示能否放进工作线程，和 `parallel_safe` 是两件事。
+4. 工具输出变为 `ToolResult` observation。输出标记为不可信数据，下一轮 Planner 只能把它当观察结果，不能把其中的文字当权限或系统指令。
+5. Planner 根据真实 observation 决定结束、补充工具调用或向用户询问。`MAX_ROUNDS`、`MAX_TOOL_CALLS`、`MAX_TASKS_PER_PLAN`、单工具 `timeout` 和整次 `run_timeout_seconds` 都限制循环。
+
+### 安全字段的含义
+
+`permission_scope` 是执行前必须在授权集合中的能力范围；`side_effect` 表示调用可能改变外部状态；`idempotent` 表示相同请求能否安全重复；`requires_approval` 表示必须先取得当前精确调用的批准；`max_retries` 只能用于显式可重试、幂等且无副作用的工具。高风险工具必须要求批准。批准还绑定工具定义指纹，工具 Schema 或权限定义改变后，旧批准不能继续复用。
+
+调用超时不等于 Python 能强行终止同步函数。工作线程超时后会发合作式取消；已经开始的副作用调用被记为结果未知，不自动重放。旧 SQLite 工具需要留在原线程时，适配层会直接执行并传入取消信号；它若不检查信号，调用线程无法被安全强制中断。新建副作用工具应适合有界工作线程，或自行使用可中止的底层 I/O。
+
+### 断点恢复与大结果
+
+执行快照保存执行 ID、会话/仓库范围、状态、已完成结果、观察、等待审批和用户输入状态，并通过版本比较避免两个执行者覆盖彼此。恢复时只会重规划安全的只读中断；如果检查点显示副作用调用在运行中被中断，执行结束为“结果未知”，不会再执行一次。超过快照预算的工具结果存入独立结果表，以 SHA-256 校验并通过当前 `execution_id` 绑定的分页引用读取。
+
+新增的 `af013ae_001` 数据库迁移只为执行检查点和大结果建表，目前只通过离线 Schema/SQLite 适配测试，尚未在正式 PostgreSQL 上执行。Qwen/DeepSeek 的真实 Planner 请求也未在本次离线验证中发送。具体实现、测试跳过项和覆盖率见 [Agent 执行循环专项报告](../AGENT_EXECUTION_REFACTOR_REPORT_20261106.md)。
+## Phase 3：Planner 如何读取 Memory 与 Streaming 事件
+
+### Planner 读取记忆的边界
+
+普通对话 Planner 和工具 Agent Planner 都只接收本轮任务相关的少量记忆，不会读取整张 Memory 表。对话路径由 CLI 在显式启用 Chroma 时检索；工具 Agent 通过 `--use-memory` 显式开启。候选先经 Chroma 相关性查询，再由 PostgreSQL 核验批准状态、仓库/全局作用域、版本、内容和来源消息身份。传给 Planner 的记忆仍标记为历史上下文和不可信数据，它不是当前指令，也不是源码证据。
+
+工具 Planner 优先用最新的 `user_input` observation 检索，其次用最初目标；每轮最多四条且有字节上限。当前用户输入优先于记忆。若查询出错，本次请求不带 Memory，但诊断会记录 `unavailable` 和安全的错误类别；若上下文超限，先移除可选 Memory，再判断必要上下文能否放入窗口。Memory 在 PostgreSQL 中仍保留，省略只作用于这一轮 Prompt。
+
+### 历史读取和摘要压缩不是同一件事
+
+`SessionService.load_context()` 只读取消息和已保存摘要，不触发压缩；`restore_context()` 可以调用存储层 `prepare_history()`，后者才有权按预算生成或更新摘要。CLI 提问开始时先只读载入；只有证据检查通过、确定需要调用回答模型后，才进入可压缩的恢复路径。这样无证据拒答不会因为“加载会话”而意外触发摘要写入。原始消息始终保留。
+
+### Agent Streaming 事件顺序
+
+一次工具 Agent 执行的主要事件是：`PLANNER_STARTED` → `PLAN_READY` 或 `PLAN_REJECTED` → `TOOL_CALL_STARTED` → `TOOL_PROGRESS` → `TOOL_CALL_COMPLETED` / `TOOL_CALL_FAILED` → `OBSERVATION_RECEIVED` → `REPLANNING` → 后续 Planner 轮次 → `FINAL_ANSWER` → `USAGE` → `COMPLETED`。模型产生的原始 chunk 不会立即显示；通过 Answer Contract 的最终文本才作为 `FINAL_ANSWER` 和可选 `CONTENT_DELTA` 发布。等待审批/补充输入会 `suspend`，失败或取消会清除未验证缓冲内容。
+
+当前真实宿主尚未测量这些调用。离线全量回归为 657 项，其中 651 通过、6 项因 Windows 链接创建权限跳过；全生产包覆盖率 86.24% 行、76.78% 分支。详见 [Phase 3 验收报告](../AGENTFORGE_PHASE3_ACCEPTANCE_REPORT_20261106.md)。

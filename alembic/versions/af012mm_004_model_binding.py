@@ -21,4 +21,4 @@ def upgrade():
 
 
 def downgrade():
-    raise RuntimeError("Conversation model bindings are durable user settings; use an explicit recovery plan.")\n
+    raise RuntimeError("Conversation model bindings are durable user settings; use an explicit recovery plan.")

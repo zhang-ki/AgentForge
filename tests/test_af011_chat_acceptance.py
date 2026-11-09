@@ -214,9 +214,10 @@ class AF011ChatAcceptanceTests(LocalTestCase):
                     "--provider", "llama-server",
                     "--base-url", "http://127.0.0.1:32123/v1/chat/completions",
                     "--model", "synthetic-model",
+                    "--mode", "repository",
                 ])
         self.assertEqual(1, result["exit_code"])
-        self.assertEqual("CITATION_VALIDATION", result["failure"]["stage"])
+        self.assertEqual("ANSWER_CONTRACT", result["failure"]["stage"])
         self.assertEqual(
             "model_supplied_path_location_forbidden", result["failure"]["code"]
         )
@@ -225,6 +226,7 @@ class AF011ChatAcceptanceTests(LocalTestCase):
             stats[key] for key in ("attempted", "sent", "succeeded", "failed")
         ))
         self.assertEqual("rejected", stats["last_citation_diagnostic"]["validation_result"])
+        self.assertEqual("answer_contract", stats["last_application_failure_phase"])
 
     def test_answer_contract_failure_does_not_reclassify_provider_success(self):
         shutil.copytree(runner.SOURCE_FIXTURE, self.root, dirs_exist_ok=True)
@@ -248,7 +250,7 @@ class AF011ChatAcceptanceTests(LocalTestCase):
             with (
                 patch.dict(os.environ, {"AGENTFORGE_LLAMA_API_KEY": "synthetic-test-key"}),
                 patch("agentforge.cli.LlamaServerClient", return_value=client),
-                patch("agentforge.cli.verify_generated_answer",
+                patch("agentforge.conversation_orchestrator.verify_generated_answer",
                       side_effect=ProviderError("synthetic contract failure")),
             ):
                 result = runner._invoke_cli(cli, store, [
@@ -256,6 +258,7 @@ class AF011ChatAcceptanceTests(LocalTestCase):
                     "--provider", "llama-server",
                     "--base-url", "http://127.0.0.1:32123/v1/chat/completions",
                     "--model", "synthetic-model",
+                    "--mode", "repository",
                 ])
         self.assertEqual("ANSWER_CONTRACT", result["failure"]["stage"])
         stats = result["provider_request_stats"]
@@ -324,6 +327,7 @@ class AF011ChatAcceptanceTests(LocalTestCase):
                     "--provider", "llama-server",
                     "--base-url", "http://127.0.0.1:32123/v1/chat/completions",
                     "--model", "synthetic-model",
+                    "--mode", "repository",
                 ])
         self.assertEqual(0, result["exit_code"])
         self.assertEqual(_stats(0, 0, 0, 0), result["provider_request_stats"])

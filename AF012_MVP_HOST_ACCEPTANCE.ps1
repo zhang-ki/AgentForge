@@ -1,6 +1,9 @@
 ﻿$ErrorActionPreference = 'Stop'
 try {
-    . "$PSScriptRoot\launchers\common.ps1"
+    if (-not $env:AF012_TEST_DATABASE -or -not $env:AF012_TEST_CHROMA_PATH) {
+        Write-Host 'This is an isolated child runner. Use AF012_DUAL_CAPABILITY_HOST_ACCEPTANCE.ps1; no credential or service was accessed.'
+        exit 2
+    }    . "$PSScriptRoot\launchers\common.ps1"
     $env:AGENTFORGE_DB_PASSWORD = Get-ConversationDatabaseKey
     $env:AGENTFORGE_LLAMA_API_KEY = Get-LauncherKey $false
     $env:AGENTFORGE_EMBEDDING_BASE_URL = 'http://127.0.0.1:58067'

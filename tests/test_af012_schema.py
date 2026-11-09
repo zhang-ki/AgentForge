@@ -5,13 +5,14 @@ import unittest
 
 @unittest.skipUnless(importlib.util.find_spec("sqlalchemy"), "SQLAlchemy optional dependency unavailable")
 class AF012SchemaTests(unittest.TestCase):
-    def test_eight_tables_compile_for_postgresql(self):
+    def test_all_tables_compile_for_postgresql(self):
         from sqlalchemy.dialects import postgresql
         from sqlalchemy.schema import CreateTable
         from agentforge.af012_schema import Base
         expected = {"conversations", "messages", "conversation_summaries", "conversation_selections",
                     "repository_metadata", "memories", "memory_sources", "memory_approvals",
-                    "memory_events", "vector_sync_outbox"}
+                    "memory_events", "vector_sync_outbox", "agent_executions",
+                    "agent_execution_results"}
         self.assertEqual(set(Base.metadata.tables), expected)
         for table in Base.metadata.sorted_tables:
             with self.subTest(table=table.name):

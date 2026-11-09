@@ -6,6 +6,7 @@ SQLite 仅适用于隔离测试，不能作为 PostgreSQL 的验收证据。
 from datetime import datetime, timezone
 import hashlib
 import json
+import re
 from uuid import UUID, uuid4
 
 from sqlalchemy import delete, func, select
@@ -51,6 +52,133 @@ def _id(value):
         return UUID(str(value))
     except (ValueError, TypeError, AttributeError):
         raise ValueError("Invalid conversation ID.") from None
+
+
+_REQUEST_DIAGNOSTIC_FIELDS = frozenset({
+    "phase", "model_id", "capability_source", "capability_verified_at",
+    "context_window_tokens", "provider_max_input_tokens", "input_budget_tokens",
+    "requested_output_tokens", "reserved_output_tokens", "model_max_output_tokens",
+    "provider_max_output_tokens", "adapter_max_output_tokens", "reasoning_token_limit",
+    "reasoning_tokens_counted_separately", "safety_margin_tokens", "estimated_input_tokens",
+    "tokenizer_method", "token_estimate_description", "persisted_history_messages",
+    "retained_history_sequences", "dropped_history_messages", "summary_included",
+    "summary_suppressed_as_duplicate", "summary_omitted_for_budget", "memory_count",
+    "request_sent", "request_succeeded", "usage", "request_id", "finish_reason",
+    "request_count", "required_tokens", "budget_tokens", "max_input_tokens",
+    "max_output_tokens", "retained_history_messages", "tool_schema_included",
+})
+_USAGE_FIELDS = frozenset({
+    "prompt_tokens", "completion_tokens", "total_tokens", "reasoning_tokens",
+    "prompt_cache_hit_tokens", "prompt_cache_miss_tokens",
+})
+_REQUEST_DIAGNOSTIC_MAX_BYTES = 8_192
+_COMPACT_REQUEST_DIAGNOSTIC_FIELDS = frozenset({
+    "phase", "model_id", "context_window_tokens", "provider_max_input_tokens",
+    "input_budget_tokens", "requested_output_tokens", "reserved_output_tokens",
+    "model_max_output_tokens", "provider_max_output_tokens", "adapter_max_output_tokens",
+    "reasoning_token_limit", "reasoning_tokens_counted_separately", "safety_margin_tokens",
+    "estimated_input_tokens", "tokenizer_method", "persisted_history_messages",
+    "retained_history_sequences", "dropped_history_messages", "summary_included",
+    "summary_suppressed_as_duplicate", "summary_omitted_for_budget", "memory_count",
+    "request_sent", "request_succeeded", "usage", "finish_reason", "request_count",
+    "required_tokens", "budget_tokens", "max_input_tokens", "max_output_tokens",
+    "tool_schema_included",
+})
+
+
+def _request_diagnostic_priority(phase_name):
+    """保留最终回答、主规划和最近的 Agent Planner 记录。"""
+    if phase_name == "answer":
+        return 500, 0
+    if phase_name in {"planner", "conversation_planner"}:
+        return 400, 0
+    if phase_name == "agent_execution":
+        return 350, 0
+    match = re.fullmatch(r"agent_planner_(\d+)", phase_name)
+    if match:
+        return 300, int(match.group(1))
+    if phase_name == "memory_retrieval":
+        return 250, 0
+    return 100, 0
+
+
+def _safe_request_diagnostics(value):
+    """Persist budget/usage metadata only; never persist request content or evidence."""
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError("Request diagnostics must be an object.")
+    phases = value.get("request_phases", value)
+    if not isinstance(phases, dict):
+        raise ValueError("Request phase diagnostics must be an object.")
+    safe = {}
+    for phase_name, diagnostic in phases.items():
+        if not isinstance(phase_name, str) or len(phase_name) > 64 or not isinstance(diagnostic, dict):
+            continue
+        item = {}
+        for key, field_value in diagnostic.items():
+            if key not in _REQUEST_DIAGNOSTIC_FIELDS:
+                continue
+            if key == "usage":
+                if isinstance(field_value, dict):
+                    item[key] = {name: number for name, number in field_value.items()
+                                 if name in _USAGE_FIELDS and isinstance(number, int)
+                                 and not isinstance(number, bool) and number >= 0}
+                continue
+            if isinstance(field_value, (str, int, bool)) or field_value is None:
+                if not isinstance(field_value, str) or len(field_value) <= 512:
+                    item[key] = field_value
+            elif (key == "retained_history_sequences" and isinstance(field_value, (list, tuple))
+                  and len(field_value) <= 256
+                  and all(isinstance(number, int) and not isinstance(number, bool)
+                          and number >= 0 for number in field_value)):
+                item[key] = list(field_value)
+        if item:
+            safe[phase_name[:64]] = item
+    encode = lambda item: json.dumps(item, ensure_ascii=True, separators=(",", ":"))
+    if len(encode(safe)) <= _REQUEST_DIAGNOSTIC_MAX_BYTES:
+        return safe
+
+    compacted = {}
+    removed_fields = 0
+    for phase_name, diagnostic in safe.items():
+        compacted[phase_name] = {
+            key: field_value for key, field_value in diagnostic.items()
+            if key in _COMPACT_REQUEST_DIAGNOSTIC_FIELDS
+        }
+        removed_fields += len(diagnostic) - len(compacted[phase_name])
+
+    def bounded_projection(phase_names):
+        projection = {name: compacted[name] for name in safe if name in phase_names}
+        omitted = len(safe) - len(projection)
+        projection["_meta"] = {
+            "truncated": True,
+            "omitted_phase_count": omitted,
+            "omitted_field_count": removed_fields,
+        }
+        return projection
+
+    names_by_priority = sorted(
+        safe,
+        key=lambda name: _request_diagnostic_priority(name),
+        reverse=True,
+    )
+    kept = set()
+    for phase_name in names_by_priority:
+        candidate = bounded_projection(kept | {phase_name})
+        if len(encode(candidate)) <= _REQUEST_DIAGNOSTIC_MAX_BYTES:
+            kept.add(phase_name)
+
+    result = bounded_projection(kept)
+    if len(encode(result)) > _REQUEST_DIAGNOSTIC_MAX_BYTES:
+        # The compacted priority phases are scalar-only and bounded; this is a
+        # defensive fallback for pathological phase counts or key lengths.
+        result = {"_meta": {
+            "truncated": True,
+            "omitted_phase_count": len(safe),
+            "omitted_field_count": removed_fields + sum(len(item) for item in compacted.values()),
+        }}
+    return result
 
 
 def _conversation(row):
@@ -186,7 +314,32 @@ class ConversationStore:
             session.delete(row)
 
     def append_turn(self, conversation_id, repository_id, question, answer, *, model_name=None,
-                    provider_id=None, model_id=None, usage=None, latency_ms=None, request_id=None):
+                    provider_id=None, model_id=None, usage=None, latency_ms=None, request_id=None,
+                    request_diagnostics=None):
+        return self._append_turn(
+            conversation_id, repository_id, question, answer, model_name=model_name,
+            provider_id=provider_id, model_id=model_id, usage=usage,
+            latency_ms=latency_ms, request_id=request_id,
+            request_diagnostics=request_diagnostics,
+        )
+
+    def append_execution_turn(self, conversation_id, repository_id, execution_id,
+                              question, answer, *, model_name=None, provider_id=None,
+                              model_id=None, usage=None, latency_ms=None, request_id=None,
+                              request_diagnostics=None):
+        if (not isinstance(execution_id, str) or not execution_id.strip()
+                or len(execution_id) > 64 or any(ord(ch) < 33 for ch in execution_id)):
+            raise ValueError("Agent execution identity is invalid.")
+        return self._append_turn(
+            conversation_id, repository_id, question, answer, model_name=model_name,
+            provider_id=provider_id, model_id=model_id, usage=usage,
+            latency_ms=latency_ms, request_id=request_id,
+            request_diagnostics=request_diagnostics, execution_id=execution_id,
+        )
+
+    def _append_turn(self, conversation_id, repository_id, question, answer, *, model_name=None,
+                     provider_id=None, model_id=None, usage=None, latency_ms=None,
+                     request_id=None, request_diagnostics=None, execution_id=None):
         question = _text(question, "question", 100_000)
         answer = _text(answer, "answer", 100_000)
         if model_name is not None:
@@ -209,22 +362,41 @@ class ConversationStore:
         if request_id is not None and (not isinstance(request_id, str) or len(request_id) > 256
                                         or any(ord(ch) < 32 for ch in request_id)):
             raise ValueError("Model request ID is invalid.")
+        safe_request_diagnostics = _safe_request_diagnostics(request_diagnostics)
         with self.sessions.begin() as session:
             row = self._get(session, conversation_id, repository_id, lock=True)
             if row.status != "active":
                 raise ValueError("Cannot append to an archived conversation.")
+            if execution_id is not None:
+                for message in session.scalars(select(Message).where(
+                        Message.conversation_id == row.id, Message.role == "assistant")):
+                    metadata = message.message_metadata if isinstance(message.message_metadata, dict) else {}
+                    if metadata.get("agent_execution_id") == execution_id:
+                        turn_messages = list(session.scalars(select(Message).where(
+                            Message.conversation_id == row.id,
+                            Message.turn_id == message.turn_id).order_by(Message.sequence_number)))
+                        prior = {item.role: item.content for item in turn_messages}
+                        if prior.get("user") != question or prior.get("assistant") != answer:
+                            raise ValueError("Agent execution was already persisted with different turn content.")
+                        return str(message.turn_id)
             highest = session.scalar(select(func.max(Message.sequence_number)).where(
                 Message.conversation_id == row.id)) or 0
             turn_id = uuid4()
             for offset, role, content in ((1, "user", question), (2, "assistant", answer)):
+                metadata = {}
+                if role == "assistant" and provider_id:
+                    metadata.update({"provider_id": provider_id,
+                        "model_id": model_id or model_name, "usage": safe_usage,
+                        "latency_ms": latency_ms, "request_id": request_id,
+                        **({"request_diagnostics": safe_request_diagnostics}
+                           if safe_request_diagnostics else {})})
+                if role == "assistant" and execution_id is not None:
+                    metadata["agent_execution_id"] = execution_id
                 session.add(Message(id=uuid4(), conversation_id=row.id, turn_id=turn_id,
                                     sequence_number=highest + offset, role=role,
                                     content=content, request_status="completed",
                                     model_name=model_name if role == "assistant" else None,
-                                    message_metadata=({"provider_id": provider_id,
-                                        "model_id": model_id or model_name, "usage": safe_usage,
-                                        "latency_ms": latency_ms, "request_id": request_id}
-                                        if role == "assistant" and provider_id else {})))
+                                    message_metadata=metadata))
             row.last_message_at = row.updated_at = datetime.now(timezone.utc)
             session.flush()
             return str(turn_id)

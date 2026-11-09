@@ -231,6 +231,7 @@ class MemoryStoreTests(unittest.TestCase):
 class MemoryExtractionTests(unittest.TestCase):
     def test_suggestions_are_untrusted_and_only_user_source_messages_are_allowed(self):
         from agentforge.memory_extraction import extract_memory_candidates
+        from agentforge.model_types import LOCAL_QWEN
         client = Mock()
         client.chat.return_value = json.dumps({"candidates": [
             {"content": "User prefers concise answers.", "memory_type": "preference", "source_sequences": [1]},
@@ -242,16 +243,43 @@ class MemoryExtractionTests(unittest.TestCase):
             {"sequence": 1, "role": "user", "status": "completed", "content": "I prefer concise answers."},
             {"sequence": 2, "role": "assistant", "status": "completed", "content": "Model claim."},
         ]
-        result = extract_memory_candidates(client, "local-model", messages)
+        diagnostics = {}
+        result = extract_memory_candidates(
+            client, "local-model", messages, descriptor=LOCAL_QWEN,
+            budget_diagnostics=diagnostics,
+        )
         self.assertEqual(1, len(result))
         self.assertEqual([1], result[0]["source_sequences"])
         self.assertEqual("user", result[0]["source_messages"][0]["role"])
         self.assertIn("untrusted data", client.chat.call_args.args[0][0]["content"])
+        self.assertEqual("memory_candidate_extraction", diagnostics["phase"])
+        self.assertTrue(diagnostics["request_sent"])
+        self.assertTrue(diagnostics["request_succeeded"])
+        self.assertEqual(512, client.chat.call_args.kwargs["max_output_tokens"])
+
+    def test_memory_suggestion_refuses_model_budget_overflow_before_request(self):
+        from agentforge.memory_extraction import extract_memory_candidates
+        from agentforge.model_types import LOCAL_QWEN
+        client = Mock()
+        diagnostics = {}
+        with self.assertRaisesRegex(ValueError, "no request was sent"):
+            extract_memory_candidates(
+                client, "local-model", [
+                    {"sequence": 1, "role": "user", "status": "completed",
+                     "content": "I prefer " + ("long " * 1000)},
+                ], descriptor=LOCAL_QWEN, max_input_bytes=20_000,
+                budget_diagnostics=diagnostics,
+            )
+        client.chat.assert_not_called()
+        self.assertFalse(diagnostics["request_sent"])
+        self.assertEqual("memory_candidate_extraction", diagnostics["phase"])
 
     def test_malformed_model_json_fails_without_proposal(self):
         from agentforge.memory_extraction import extract_memory_candidates
+        from agentforge.model_types import LOCAL_QWEN
         client = Mock()
         client.chat.return_value = "not json"
         with self.assertRaisesRegex(ValueError, "not valid JSON"):
             extract_memory_candidates(client, "local-model", [
-                {"sequence": 1, "role": "user", "status": "completed", "content": "I prefer concise answers."}])
+                {"sequence": 1, "role": "user", "status": "completed", "content": "I prefer concise answers."}],
+                descriptor=LOCAL_QWEN)

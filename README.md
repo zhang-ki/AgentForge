@@ -1,16 +1,35 @@
 # AgentForge
 
-> `main` and `v1.0.0-mvp` remain the frozen MVP 1.0 release. The current local development branch is `feature/1.1-core`; its 1.1/1.2 additions are not released.
+## DeepSeek Agent v0.1 release preparation (2026-11-09)
 
-The branch now contains the AF-012 multi-model implementation: Qwen Local remains the default, DeepSeek is an explicit cloud option with per-conversation binding and consent, credentials are protected with Windows DPAPI, and context budgets use model metadata with an explicitly labeled estimate when a tokenizer is unavailable. Offline tests cover the implementation. Current acceptance is **PARTIAL**: this environment blocks network access, so live DeepSeek discovery, live multi-model calls, and fresh PostgreSQL/Chroma/Qwen acceptance have not been performed. See [Multi-Model Acceptance](AF012_MULTIMODEL_ACCEPTANCE_REPORT_20261104.md) and [Model Management](MODEL_MANAGEMENT.md).
+Current worktree release status: **RELEASE_CANDIDATE** for the declared v0.1 scope. A current-worktree targeted DeepSeek Flash `multi_turn` host scenario passed (12/12 Chat requests, one tool, one Observation, one successful replan, three persisted turns). The runner overall remains PARTIAL because the 15-scenario matrix was not run. Historical scenarios are recorded separately; results are not merged into a full-matrix PASS.
 
-The latest 1.1 real-host attempt is preserved in `AF011_1_FULL_HOST_RESULT_d1adc4d20278413a808b465c3eeade4d.json`. It completed 19 of 30 answer turns; 19 answer-generation requests and 7 semantic-summary requests all returned HTTP 200, then turn 20 stopped before its answer request because the accumulated summary exceeded the conversation context budget. The offline code now stores a compact rolling replacement summary and compacts oversized legacy summaries when semantic summarization is available. That historical 1.1 outcome is not evidence of a fresh 1.2 host pass; earlier failed attempts remain preserved.
+See [final report](RELEASE_V0.1_REPORT.md), [limitations](RELEASE_V0.1_LIMITATIONS.md), [Windows quick start](RELEASE_V0.1_QUICKSTART.md), and [machine-readable acceptance](RELEASE_V0.1_ACCEPTANCE.json). The prepared package is under `release/AgentForge-v0.1`; it excludes credentials, model weights, formal databases, virtual environments, and historical host-run files.
 
-AgentForge is a local, read-only code assistant. It indexes one explicitly selected repository, retrieves source evidence, and can ask a locally hosted Qwen model to explain that evidence. It also provides persistent conversations and approval-based cross-session memory.
+## Latest AF042 follow-up (2026-11-08)
+
+The user-host DeepSeek run sent 62/62 requests successfully and passed `general_direct` plus the 65,536-token `long_answer`, but the full 15-scenario matrix failed (2 passed, 13 failed). Six completed turns hit an 8 KB diagnostics-metadata persistence limit; bounded metadata compaction is fixed and passes offline tests. The host runner's six-step override rejected a seven-call dependency plan; it now follows the product's bounded eight-step limit, and the targeted `multi_tool_dependency` host rerun passed. The oversized-metadata compaction still needs a live case that exceeds the bound. Offline tests pass: 109 targeted and 808 full-suite (798 passed, 10 skipped). See [follow-up report](AF042_HOST_FOLLOWUP_REPORT_20261108.md) and [machine results](AF042_HOST_FOLLOWUP_RESULTS_20261108.json). The earlier 86.2779% line / 76.7955% branch coverage predates these fixes; current coverage is not measured.
+
+The subsequent targeted DeepSeek `multi_tool_dependency` run passed (10/10 requests, four completed tools, three replanning rounds); other scenarios were not measured. This scenario uses a SQLite lexical index and an empty Chroma close/reopen check, so it does not start Qwen Embedding or verify vector search. The Answer Contract result was `limited`.
+
+## Latest stabilization result (2026-11-08)
+
+**PARTIAL.** The bounded tool-schema discovery path and shared model-aware output budgets have been repaired and passed offline regression (806 run, 800 passed, 0 failed/errors, 6 Windows link-permission skips). Coverage across all 80 production modules is 86.2779% line and 76.7955% branch, below the 90%/85% targets. Real DeepSeek/Qwen and PostgreSQL/Chroma host checks were blocked in this execution environment; no live requests or service operations occurred. See [the stabilization report](AF042_TOOL_DISCOVERY_OUTPUT_BUDGET_REPORT_20261108.md), [machine results](AF042_TOOL_DISCOVERY_OUTPUT_BUDGET_RESULTS_20261108.json), and [coverage summary](AF042_TOOL_DISCOVERY_OUTPUT_BUDGET_COVERAGE_REPORT_20261108.md). Historical Phase 4.2 snapshots below are retained as dated records.
+
+> main and v1.0.0-mvp remain the frozen MVP 1.0 release. The local development branch feature/1.1-core is not released.
+
+**Latest Phase 4.2 status: BLOCKED for real host acceptance.** A unified real-Qwen Agent runner now enters through `ConversationOrchestrator` and reuses the existing Agent execution engine with only synthetic tools. The current environment blocks local network access, so the runner stopped before checking services or reading credentials and sent 0 model requests. The latest offline regression passed 706 tests (700 passed, 0 failed/errors, 6 Windows link-permission skips); all-package coverage is 85.96% line, 76.58% branch, and 83.35% combined. These offline results do not establish real Qwen/PostgreSQL/Chroma acceptance. See [Phase 4.2 acceptance report](PHASE4_2_ACCEPTANCE_REPORT.md), [architecture and matrix](PHASE4_2_ARCHITECTURE_AND_MATRIX.md), and [machine results](PHASE4_2_ACCEPTANCE_RESULTS.json).
+
+The current development worktree adds an Auto-planned route from ordinary conversation into the shared bounded Agent execution engine when iterative repository tools are needed. The Phase 4 offline regression ran 692 tests: 686 passed, 0 failed, and 6 were skipped for Windows link-permission limits. Real Qwen/DeepSeek planning and live PostgreSQL acceptance were not run in this phase; this is not a release approval. See [the Phase 4 integration report](PHASE4_UNIFIED_AGENT_INTEGRATION_REPORT.md).
+
+New interactive conversations select DeepSeek Flash by default only after per-session cloud-data consent. If declined, local Qwen is an explicit alternative when its credential and service are available. Existing sessions retain their persisted model binding; no provider fallback is silent. The bounded `invalid_json` recovery passed the targeted real-host scenario. The interactive first-session default/consent flow has offline tests and remains a recommended manual smoke check.
+
+AgentForge is a local-first code assistant with General, Repository, Hybrid and Auto modes, repository evidence retrieval, persistent conversations, and approval-based long-term memory.
+
 
 ## Architecture
 
-- **Python** scans repositories, parses Python symbols and static relationships, retrieves evidence, builds bounded context, validates citations, and coordinates the CLI and conversation console.
+- **Python** parses repositories, plans Auto/Hybrid turns with the selected LLM, retrieves and assesses source candidates, builds bounded context, validates citations, and coordinates the CLI and conversation console.
 - **Project SQLite** remains the authoritative local code index for file snapshots, chunks, symbols, and static references. The 1.1 development branch keeps one independent SQLite index per registered repository, with a compatibility path for the legacy index.
 - **PostgreSQL** stores repository-scoped conversations, messages, history excerpts, approved memories, provenance, audit events, and vector-sync outbox records.
 - **Chroma** stores rebuildable code and approved-memory vectors. A vector candidate is checked against the authoritative SQLite or PostgreSQL record before use.
@@ -18,13 +37,27 @@ AgentForge is a local, read-only code assistant. It indexes one explicitly selec
 - **DeepSeek** is an optional, explicitly selected cloud chat provider. Model metadata is fetched only by `/model refresh`; switching a conversation to a cloud model requires a separate confirmation that its question, relevant code evidence, and necessary history or approved memory may be sent to the cloud.
 - **Model Registry and Token Budget Manager** keep model capability metadata separate from connection state and calculate input budgets from the selected model's context and output limits. Counts are labeled `estimated` unless an exact tokenizer is configured; UTF-8 bytes are not presented as token counts.
 
-Retrieval follows: repository snapshot → intent-aware lexical/symbol/relationship retrieval and optional Chroma candidates → source identity and content checks → bounded context → local Qwen → request-local citation validation and Answer Contract. Historical experiments did not establish that RRF improves retrieval, so RRF, reranking, and a production similarity-based refusal threshold are not enabled by default.
+Retrieval follows: the Auto/Hybrid LLM plan or an explicit Repository request → symbol/relationship/lexical retrieval and optional Chroma candidates → source identity and content checks → bounded context → selected Qwen or DeepSeek provider → request-local citation validation and Answer Contract. Historical experiments did not establish that RRF improves retrieval, so RRF, reranking, and a production similarity-based refusal threshold are not enabled by default.
+
+### Conversation routing
+
+The interactive conversation console defaults every ordinary question to Auto. The selected model's bounded, schema-validated LLM Planner uses the current question and restored conversation context to choose General, Repository or Hybrid; users do not need to issue a mode command. Planner failures are reported instead of silently switching to lexical routing. `/mode` and `ask --mode` remain advanced overrides for development and acceptance. General does not require repository retrieval. Repository requires source evidence for repository claims. Hybrid can retain its general-knowledge portion when repository evidence is missing. Live external-data requests are recognized and safely refused because no authorized live-data tool is configured. Answer Contract validates citation identity, path, line and structure, but does not prove semantic entailment; conclusions may remain limited.
+
+When the validated conversation plan requests iterative repository inspection, `ConversationOrchestrator` invokes `ConversationAgentExecutor`, which uses the existing `AgentLoop` compatibility facade and `AgentExecutionEngine`. The engine replans from bounded tool observations and the result then returns to the normal retrieval, evidence evaluation, and Answer Contract path. Tool-search observations sent to the replanner contain source IDs and path/line references rather than full excerpts; the later evidence path reloads and validates source content. The conversational route currently exposes only scoped, read-only repository tools. The explicit `agent` command remains available for execution controls; neither route enables shell, arbitrary code, SQL, or network tools by default.
+
+
+```powershell
+python -X utf8 -B -m agentforge ask "Explain attention in a transformer" --provider llama-server --base-url http://127.0.0.1:56572/v1/chat/completions --model qwen3.5-4b
+python -X utf8 -B -m agentforge ask "Where is refresh_access_token defined?" --provider llama-server --base-url http://127.0.0.1:56572/v1/chat/completions --model qwen3.5-4b
+python -X utf8 -B -m agentforge ask "Explain FIFO generally and show how this repository implements it" --provider llama-server --base-url http://127.0.0.1:56572/v1/chat/completions --model qwen3.5-4b
+```
 
 ## Requirements
 
 - Windows for the included double-click launchers; Python 3.10 or newer.
 - A local PostgreSQL server with an `agentforge` database and least-privilege `agentforge_app` role for persistent conversations and memory.
-- Local llama.cpp `llama-server` runtime and the chat and embedding GGUF assets described below. They must be obtained and configured by the operator; they are not distributed here.
+- A configured DeepSeek Flash credential for the primary cloud model. Interactive credentials are stored using Windows DPAPI for the current user; `DEEPSEEK_API_KEY` may be used as a process-environment override.
+- Local llama.cpp `llama-server` runtime and GGUF assets are optional and are not distributed here. They are required only when choosing local Qwen or local embedding features.
 - The `persistence` optional dependency group for PostgreSQL, migrations, and Chroma.
 
 ## Install
@@ -56,17 +89,20 @@ The launcher verifies the pinned embedding model/runtime assets before starting 
 
 ## Start on Windows
 
-1. Start the local PostgreSQL service.
-2. Double-click `Start-AgentForge-All.cmd`. It checks or opens the local chat and embedding model windows, waits for model readiness, applies database migrations, then opens the conversation console.
-3. In the console, use `/new Project question`, `/list`, `/switch 1`, `/history`, or `/exit`. `/switch` takes the number shown by `/list`. Use `/rename New title` and `/delete` for the current conversation.
-4. To build or refresh vectors for the currently indexed repository, use `/chroma index`; `/chroma on` enables Chroma retrieval for the current console session. `/chroma rebuild` recreates vectors from the current SQLite snapshot.
-5. For long-term memory, use `/memory suggest`, review the proposal, `/memory save 1`, then explicitly `/memory approve <id>` and `/memory sync`. A model proposal is not saved as active memory until approved. Revocation and expiry remove it from retrieval after synchronization/validity checks. If a removed repository is registered and indexed again, use `/memory rebuild` to explicitly requeue its approved repository-scoped memories for vector synchronization.
+1. Start PostgreSQL and confirm the `agentforge` database and least-privilege `agentforge_app` role exist.
+2. Double-click `Start-AgentForge.cmd`. It applies migrations and opens the console; it does not start PostgreSQL or model services. The project environment must already exist at `.agentforge\af012-venv`.
+3. Run `/model auth set deepseek` and complete the hidden credential prompt. Then use `/new Project question`; type `YES` at the separate per-session cloud-data notice. If capability metadata is stale, run `/model refresh` after consent.
+4. Register and index a codebase with `/repo register <path>` and `/repo index <path>`. Ordinary questions are planned as General or Repository automatically; repository claims require source evidence and citations.
+5. Use `/list`, `/switch 1`, `/history`, `/rename New title`, `/delete`, and `/exit` to manage conversations. Existing sessions retain their saved model selection.
+6. For this DeepSeek-first release, use `Start-AgentForge.cmd`. Do not use `Start-Qwen.cmd` or `Start-AgentForge-All.cmd` unless you supplied the local llama-server runtime and Qwen assets; the release bundle does not include them. `Start-AgentForge-All.cmd` also starts the optional Embedding service. DeepSeek symbol/keyword retrieval does not need Qwen Embedding.
+7. Chroma vectors are optional: configure and start the local embedding service, then use `/chroma index` and `/chroma on`. Long-term Memory requires explicit review and approval before activation.
 
-`Start-AgentForge.cmd` starts the console without starting the models. `Start-Qwen.cmd` and `Start-Qwen-Embedding.cmd` can start the services individually. PostgreSQL is not started or stopped by AgentForge.
+`Start-AgentForge.cmd` starts the console without starting model services. `Start-AgentForge-All.cmd` may launch local model windows and therefore requires the operator-supplied binaries and weights. PostgreSQL is never started or stopped by AgentForge.
+
 
 ## Model management (1.2 development branch)
 
-The default remains Qwen Local. In the interactive console:
+New interactive sessions default to DeepSeek Flash after explicit cloud-data consent. Existing sessions keep their model binding. In the interactive console:
 
 ```text
 /modellist
@@ -80,9 +116,9 @@ The default remains Qwen Local. In the interactive console:
 /model default
 ```
 
-`/model refresh` explicitly contacts DeepSeek to retrieve public model metadata. `/model auth set deepseek` asks for the key without echoing it and stores it using DPAPI for the current Windows account. `DEEPSEEK_API_KEY` is supported as an environment override; `/model auth status` shows only the source, never the key. A cloud model switch displays the data-sharing notice and requires typing `YES`; declining leaves the session binding unchanged. Use `/model default` to return to Qwen Local. See [Model Management](MODEL_MANAGEMENT.md) for configuration, capability limits, token estimates, and failure handling.
+`/model refresh` explicitly contacts DeepSeek to retrieve public model metadata. `/model auth set deepseek` asks for the key without echoing it and stores it using DPAPI for the current Windows account. `DEEPSEEK_API_KEY` is supported as an environment override; `/model auth status` shows only the source, never the key. A cloud model switch displays the data-sharing notice and requires typing `YES`; declining leaves the session binding unchanged. Use `/model default` to select DeepSeek Flash for the current session; use `/model qwen-local` to explicitly select Qwen Local. See [Model Management](MODEL_MANAGEMENT.md) for configuration, capability limits, token estimates, and failure handling.
 
-Do not reuse a key previously disclosed in chat. Configure a newly issued key locally. The current Codex environment cannot make live API requests; [the bounded host smoke runner](AF012_MULTIMODEL_HOST_ACCEPTANCE.ps1) asks for explicit permission before sending synthetic code and questions, and does not replace full 1.2 acceptance.
+No live model request was made during this release-preparation turn. See `RELEASE_V0.1_REPORT.md` for the separate host evidence and the pending authorized validation.
 
 ## Index and storage
 
@@ -132,12 +168,17 @@ Tests use synthetic repositories, temporary directories, and in-memory SQLite wh
 - Repository scanning is constrained and read-only; the Agent tool loop has a finite read-only tool allowlist.
 - Citations are checked against request-local evidence identity, paths, line ranges, and source text. This does not prove every natural-language claim is entailed; generated answers can remain `limited` and need user judgment.
 - Static Python relationships do not prove dynamic runtime behavior.
-- Long conversation history remains in PostgreSQL and is bounded in the prompt. With an explicitly selected local chat provider and usable evidence, older complete turns can be summarized by Qwen and stored with their source message identity; otherwise the system uses a labeled deterministic extract. The context budget is a UTF-8 byte proxy, not an exact tokenizer count.
-- For 1.1 conversation requests the default context planning limit is 3500 UTF-8 bytes. This is a bounded byte proxy, not an exact tokenizer count or a guarantee for every model/template. Semantic summaries use a compact replacement capped at 1800 UTF-8 bytes; oversized legacy summaries are compacted before reuse when the local semantic summarizer is available. Failed compaction preserves the prior summary and original messages.
+- Long conversation history remains in PostgreSQL. `ContextAssembler` builds a request-only view from the selected model's registered capabilities; compression never removes or overwrites durable messages. Qwen uses the configured 4,096-token `llama-server` window. DeepSeek uses fresh per-model `/models` metadata, and stale or unverified metadata is display-only until `/model refresh` succeeds.
+- Input budgets reserve the requested output size and a safety margin, then apply any verified provider input cap and optional `--context-budget` cap. The model's maximum output is a ceiling, not the size automatically requested for every turn. A tokenizer is used only when one is available and registered for that model; otherwise the request records a conservative estimate, not an exact token count. Conversation summaries retain their separate bounded storage limit (1,800 UTF-8 bytes); this is not a model context-window limit.
+- Model capability-aware context assembly is offline-tested, including Qwen's launcher-configured 4,096 window, 30/100-turn request views, model switching without mutating stored history, and fail-closed overflow. The current DeepSeek capability cache is stale and has no provenance, so no DeepSeek request was made in this run. See [Model-aware context report](MODEL_AWARE_CONTEXT_REPORT_20261106.md) and [machine results](MODEL_AWARE_CONTEXT_RESULTS_20261106.json).
 - The 1.1 branch has deterministic synthetic coverage for repository isolation and a 30-turn context lifecycle. Those checks use temporary SQLite/test doubles; they do not replace live PostgreSQL, Chroma, or Qwen acceptance for the new branch changes.
 - A bounded real-service entry point is available as `AF011_1_FULL_HOST_ACCEPTANCE.ps1`; it has only passed offline checks in the current environment and does not yet verify desktop or PostgreSQL service restart. It must not be treated as complete 1.1 acceptance.
 - Chroma retrieval is optional and explicitly enabled in the console. RRF, reranking, and a production score threshold remain deferred.
 - AF-011 chat and AF-012-MVP database/Chroma/model acceptance covered bounded scenarios; they are not a guarantee for arbitrary repositories, questions, or model outputs. See [release notes](RELEASE_NOTES.md).
+
+### Phase 3 integration status (2026-11-06)
+
+Both Planner paths can receive a bounded set of approved memories scoped to the current repository; current user input has priority. Agent streaming distinguishes planning, tool execution, observations, replanning, and validated final output. The full offline suite passed with six Windows link-permission skips; whole-package coverage remains below the 90% line and 85% branch goals. Live host acceptance is blocked because PostgreSQL, Qwen Chat, and Embedding had no local listener. See [the Phase 3 acceptance report](AGENTFORGE_PHASE3_ACCEPTANCE_REPORT_20261106.md) for evidence and limits.
 
 ## License
 
@@ -151,3 +192,15 @@ The 1.1 branch keeps original messages in PostgreSQL and uses a bounded rolling 
 ### 1.1 development acceptance note
 
 The current 1.1 development branch uses a bounded conversation plan with a 5% byte reserve. This is not a model-token guarantee. The latest reserve and prompt changes have offline tests only; full host acceptance and some memory/context behaviors remain pending. See `AF011_1_HARDENING_ACCEPTANCE_20261101.md`.
+
+### Iterative Agent execution (development branch)
+
+The `agent` command has a shared execution engine that can discover registered tools, load only selected tool schemas, validate a bounded dependency plan, execute authorized tools, pass observations back to the planner, and resume a saved execution when explicitly given its execution ID. The current built-in repository tools remain read-oriented except for the explicitly scoped index update. No shell, arbitrary code, SQL, or network tool is registered by default.
+
+Example offline invocation:
+
+```powershell
+python -X utf8 -B -m agentforge agent --repo .\path\to\repository "Find the implementation and summarize it"
+```
+
+For Qwen, select `--provider llama-server` and provide the explicit loopback endpoint/model settings used by the local launcher. For DeepSeek, select `--provider deepseek` and pass `--allow-cloud-data` only after reviewing the prompt/data-sharing notice; the objective and read-only tool results can be sent to the cloud model. Saved executions require `--conversation-id` and `--execution-id`; `WAITING_APPROVAL` and `WAITING_USER_INPUT` have separate explicit resume options. See [the implementation report](AGENT_EXECUTION_REFACTOR_REPORT_20261106.md) for limits. The current result is offline-verified only; live Planner, PostgreSQL migration/restart, and native token streaming are not yet verified.

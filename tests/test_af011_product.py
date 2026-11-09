@@ -10,12 +10,14 @@ from agentforge.answer_contract import (
     verify_generated_answer,
 )
 from agentforge.context import build_context
+from agentforge.model_types import LOCAL_QWEN
 from agentforge.errors import ProviderError
 from agentforge.indexer import index_repository
 from agentforge.models import Answer, SearchResult
 from agentforge.product_retrieval import ProductIntentRouter, ProductRetriever
 from agentforge.providers.offline import OfflineProvider
 from agentforge.store import IndexStore
+from agentforge.token_budget import TokenBudgetManager
 from tests.support import LocalTestCase
 
 
@@ -47,6 +49,7 @@ class AF011ProductRetrievalTests(LocalTestCase):
         from agentforge.providers.llama_server import (
             _ANSWER_SYSTEM_PROMPT, _conversation_messages,
         )
+        from agentforge.providers.dialogue_protocol import _model_evidence_text
 
         lines = [
             "class Conv2d(Module):",
@@ -64,7 +67,7 @@ class AF011ProductRetrievalTests(LocalTestCase):
         ))
         lines.extend(
             f"        output = convolution(output, self.weight, stride={index % 4 + 1})"
-            for index in range(30)
+            for index in range(28)
         )
         lines.extend(("        return output", ""))
         full_source = "\n".join(lines)
@@ -79,18 +82,22 @@ class AF011ProductRetrievalTests(LocalTestCase):
                 query, [item.as_search_result() for item in selected],
                 max_candidates=5, budget=6000,
             )
+            prompt = (f"Question:\n{query}\n\nUntrusted evidence:\n"
+                      f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
+                      f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
+                      "Cite the applicable IDs.")
             messages = _conversation_messages(context, {
                 "conversation_id": "conversation-1", "repository_id": "repo-1", "history": (),
             }, [
                 {"role": "system", "content": _ANSWER_SYSTEM_PROMPT},
-                {"role": "user", "content": "unused by planner"},
-            ])
+                {"role": "user", "content": prompt},
+            ], descriptor=LOCAL_QWEN)
 
-        total_bytes = sum(len(item["role"].encode("utf-8")) +
-                          len(item["content"].encode("utf-8")) for item in messages)
+        total_tokens = TokenBudgetManager().measure_messages(messages).count
         joined = "\n".join(item["content"] for item in messages)
         self.assertGreater(len(full_source.encode("utf-8")), 3500)
-        self.assertLessEqual(total_bytes, 3325)
+        self.assertLessEqual(total_tokens, TokenBudgetManager().budget(
+            LOCAL_QWEN, requested_output_tokens=256).input_budget)
         self.assertIn("class Conv2d(Module):", joined)
         self.assertIn("def forward(self, input):", joined)
         self.assertIn("convolution(output, self.weight", joined)
@@ -106,6 +113,7 @@ class AF011ProductRetrievalTests(LocalTestCase):
         from agentforge.providers.llama_server import (
             _ANSWER_SYSTEM_PROMPT, _conversation_messages,
         )
+        from agentforge.providers.dialogue_protocol import _model_evidence_text
 
         large_body = "\n".join(
             f"        self.kernel_{index:02d} = configure_kernel(input, axis={index})"
@@ -144,15 +152,18 @@ class AF011ProductRetrievalTests(LocalTestCase):
                 query, [item.as_search_result() for item in selected],
                 max_candidates=5, budget=6000,
             )
+            prompt = (f"Question:\n{query}\n\nUntrusted evidence:\n"
+                      f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
+                      f"{', '.join('[' + source.source_id + ']' for source in context.evidence)}. "
+                      "Cite the applicable IDs.")
             messages = _conversation_messages(context, {
                 "conversation_id": "conversation-1", "repository_id": "repo-1", "history": (),
             }, [
                 {"role": "system", "content": _ANSWER_SYSTEM_PROMPT},
-                {"role": "user", "content": "unused by planner"},
-            ])
+                {"role": "user", "content": prompt},
+            ], descriptor=LOCAL_QWEN)
 
-        total_bytes = sum(len((item["role"] + " " + item["content"]).encode("utf-8"))
-                          for item in messages)
+        total_tokens = TokenBudgetManager().measure_messages(messages).count
         joined = "\n".join(item["content"] for item in messages)
         self.assertGreater(len(public_source.encode("utf-8")), 1400)
         self.assertEqual(
@@ -161,7 +172,8 @@ class AF011ProductRetrievalTests(LocalTestCase):
               len(public_source.splitlines()))],
             [(item.relative_path, item.start_line, item.end_line) for item in selected],
         )
-        self.assertLessEqual(total_bytes, 3325)
+        self.assertLessEqual(total_tokens, TokenBudgetManager().budget(
+            LOCAL_QWEN, requested_output_tokens=256).input_budget)
         self.assertIn("return convolution(input)", joined)
         self.assertNotIn("low_level_convolution", joined)
         self.assertNotIn("def conv2d(", joined)

@@ -1,5 +1,20 @@
 # 学习专题：模型上下文窗口与 Token Budget
 
+## 2026-11-08 补充：回答预算与能力上限是两回事
+
+本次统一后，CLI 的 `--output-budget` 和交互控制台的 `/output-budget concise|standard|long|max` 只选择请求档位，实际数字由同一个 `ContextBudgetManager` 根据当前模型能力、Provider/Adapter 限制和上下文余量解析。默认 `standard` 请求 16,384 tokens；DeepSeek 在能力信息有效且上限允许时可解析为 16,384，`long` 为 65,536，`max` 才尝试使用该模型已验证的最大能力。Qwen 本地 Adapter 当前最多允许 512，因此不会因为 DeepSeek 能生成长回答就继承其上限。
+
+要特别区分下面这些数字：
+
+| 数值 | 代表什么 | 不代表什么 |
+|---|---|---|
+| 4,096 | Planner 的结构化输出目标 | 最终回答的统一上限 |
+| 512 | 当前 Qwen Adapter 的输出上限；也是部分摘要任务的独立上限 | DeepSeek 普通回答上限 |
+| 16,384 / 65,536 | `standard` / `long` 请求档位 | 模型一定能提供的能力；它们仍受已验证能力和 Provider 限制 |
+| 2 MB 起、64 MB 封顶 | HTTP 请求/响应的字节安全限制 | Token 数；字节数不能直接换算成精确 Token 数 |
+
+DeepSeek 能力缓存过期时，应用必须先要求刷新模型能力；历史结果中的 1,048,576 上下文和 393,216 输出上限不自动视为当前有效。Thinking 与可见回答使用共享的 `max_tokens`；只有 Provider 返回独立 reasoning usage 时，统计才将其单独列出。测试与本轮覆盖率见 `AF042_TOOL_DISCOVERY_OUTPUT_BUDGET_REPORT_20261108.md`。
+
 本篇解释为什么 3,500 字节限制不能直接当成所有模型的 Token 上限，以及 AgentForge 1.2 如何按选定模型计算预算。以下是代码行为讲解；没有本地 tokenizer 文件或真实模型使用量时，估算不会标成精确值。
 
 ## 1. 上下文窗口同时容纳输入和输出

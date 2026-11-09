@@ -411,6 +411,7 @@ def _ask_worker(repository: Path, endpoint: str, model: str) -> int:
             "--max-output-tokens", "512",
             "--top-k", "3",
             "--context-budget", "4000",
+            "--mode", "repository",
         ]
         evidence = _invoke_cli(cli, store, [
             "ask",

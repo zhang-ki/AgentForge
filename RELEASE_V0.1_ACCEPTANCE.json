@@ -1,0 +1,454 @@
+{
+  "schema": "agentforge-release-v0.1-acceptance-v1",
+  "generated_at": "2026-11-09",
+  "release": "AgentForge DeepSeek Agent v0.1",
+  "decision": "RELEASE_CANDIDATE",
+  "git": {
+    "branch": "feature/1.1-core",
+    "head": "09bc079ad17b1a2560199eadd679b72c7c779224",
+    "head_unchanged": true,
+    "worktree_has_existing_changes": true,
+    "changes_preserved": true,
+    "commit_or_push": false
+  },
+  "current_turn_activity": {
+    "codex_model_requests": 0,
+    "codex_embedding_requests": 0,
+    "codex_postgresql_connections": 0,
+    "user_host_result_run_id": "0ddc7ed43968491abc918e28d14dc70f",
+    "formal_data_access": false,
+    "services_started_or_stopped": false
+  },
+  "current_changes": [
+    {
+      "file": "agentforge/agent_execution.py",
+      "status": "IMPLEMENTED_OFFLINE_ONLY",
+      "change": "Add invalid_json to the existing single bounded response-protocol correction; rerun the full parser and validators; fail closed after the correction."
+    },
+    {
+      "file": "tests/test_agent_execution.py",
+      "status": "PASS",
+      "change": "Regression tests cover correction success and second-invalid-response rejection without executing an invalid tool call."
+    },
+    {
+      "file": "agentforge/conversation_console.py",
+      "status": "IMPLEMENTED_OFFLINE_ONLY",
+      "change": "New interactive sessions default to DeepSeek Flash only after per-session consent; local Qwen is an explicit, health-checked alternative."
+    },
+    {
+      "file": "launchers/start-agentforge.ps1",
+      "status": "SYNTAX_PASS",
+      "change": "Qwen key is optional for the DeepSeek-first console; inherited Qwen environment configuration is preserved if no DPAPI key file exists."
+    },
+    {
+      "file": "tests/test_conversation_console.py",
+      "status": "PASS",
+      "change": "Regression tests cover consent, refusal/cancel, missing credentials, and explicit local selection."
+    }
+  ],
+  "offline_verification": {
+    "focused_tests": {
+      "modules": [
+        "tests.test_agent_execution",
+        "tests.test_conversation_console"
+      ],
+      "run": 107,
+      "passed": 107,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "core_release_suite_forward": {
+      "modules": [
+        "test_agent_execution",
+        "test_agent_loop",
+        "test_conversation_agent",
+        "test_conversation_console",
+        "test_planner",
+        "test_dialogue_router",
+        "test_context_assembler",
+        "test_retriever",
+        "test_presentation",
+        "test_session_service",
+        "test_conversation_context",
+        "test_quality_boundaries",
+        "test_repositories",
+        "test_store",
+        "test_multimodel",
+        "test_providers",
+        "test_af012_b2_conversations"
+      ],
+      "run": 443,
+      "passed": 443,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "core_release_suite_reverse": {
+      "run": 443,
+      "passed": 443,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    "python_compile": {
+      "files": 151,
+      "status": "PASS",
+      "note": "Compiled source and test modules in memory; intentionally malformed parser fixtures were excluded."
+    },
+    "powershell_launcher_parse": "PASS",
+    "git_diff_check": "PASS",
+    "full_regression_this_turn": "NOT_MEASURED",
+    "coverage_this_turn": "NOT_MEASURED"
+  },
+  "latest_offline_full_baseline": {
+    "evidence": "PHASE4_4_4_4_FINAL_FIX_REPORT.md",
+    "run": 957,
+    "passed": 951,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 6,
+    "skip_reason": "Windows symbolic-link, hard-link, and junction privileges unavailable; skipped tests are not counted as passed.",
+    "line_coverage_percent": 87.7462,
+    "branch_coverage_percent": 79.6241,
+    "coverage_scope": 80,
+    "coverage_exception_accepted": true
+  },
+  "historical_real_host_evidence": {
+    "full_matrix": {
+      "result": "AF042_UNIFIED_AGENT_HOST_RESULT_61a51a1240cf4630bee17e328ad71343.json",
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "scenario_counts": {
+        "pass": 10,
+        "fail": 5,
+        "partial": 0,
+        "not_measured": 0
+      },
+      "scenarios": {
+        "general_direct": "PASS",
+        "repository_auto": "PASS",
+        "hybrid_knowledge": "FAIL",
+        "single_tool": "PASS",
+        "multi_tool_dependency": "PASS",
+        "observation_replanning": "PASS",
+        "tool_failure_recovery": "PASS",
+        "approval_pause_resume": "FAIL",
+        "long_tool_output": "FAIL",
+        "long_answer": "PASS",
+        "multi_turn": "FAIL",
+        "session_process_restore": "PASS",
+        "streaming_lifecycle": "FAIL",
+        "tool_timeout": "PASS",
+        "tool_cancel": "PASS"
+      },
+      "chat_requests": {
+        "attempted": 75,
+        "sent": 75,
+        "succeeded": 75,
+        "failed": 0,
+        "retries": 0
+      },
+      "cleanup": {
+        "database": "removed",
+        "chroma_directory": "removed",
+        "synthetic_repository": "removed"
+      }
+    },
+    "latest_targeted_multiturn_before_current_fix": {
+      "result": "AF042_UNIFIED_AGENT_HOST_RESULT_20d013ef82cf4e3eba1b14524ea0122d.json",
+      "status": "FAIL",
+      "failure_stage": "multi_turn",
+      "failure_code": "invalid_json",
+      "chat_requests": {
+        "attempted": 9,
+        "sent": 9,
+        "succeeded": 9,
+        "failed": 0,
+        "retries": 0
+      },
+      "observed_before_failure": [
+        "first-turn synthetic data persisted",
+        "second-turn session history reloaded",
+        "Conversation Planner bounded correction passed",
+        "AgentExecutionEngine entered",
+        "one authorized synthetic read tool completed",
+        "one Observation received"
+      ],
+      "not_reached": [
+        "successful observation replan",
+        "final task answer",
+        "Answer Contract completion"
+      ],
+      "cleanup": {
+        "database": "removed",
+        "chroma_directory": "removed",
+        "synthetic_repository": "removed"
+      }
+    }
+  },
+  "capability_matrix": {
+    "deepseek_flash_connection": {
+      "status": "PASS",
+      "evidence": "AF042_UNIFIED_AGENT_HOST_RESULT_0ddc7ed43968491abc918e28d14dc70f.json",
+      "scope": "provider and model discovery in targeted host run"
+    },
+    "general_qa": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/general_direct"
+    },
+    "repository_qa_with_source_citation": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/repository_auto"
+    },
+    "local_repository_index_and_retrieval": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/repository_auto"
+    },
+    "authorized_read_only_tool_execution": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/single_tool"
+    },
+    "multi_tool_dependency_execution": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/multi_tool_dependency"
+    },
+    "observation_replanning": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/observation_replanning"
+    },
+    "tool_failure_fallback": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/tool_failure_recovery"
+    },
+    "basic_postgresql_session_persistence_and_restore": {
+      "status": "PASS_HISTORICAL",
+      "evidence": "61a51a1240cf4630bee17e328ad71343/session_process_restore"
+    },
+    "session_replanning_after_invalid_json": {
+      "status": "PASS",
+      "evidence": "AF042_UNIFIED_AGENT_HOST_RESULT_0ddc7ed43968491abc918e28d14dc70f.json / multi_turn",
+      "scope": "targeted current-worktree real DeepSeek run",
+      "invalid_json_responses_rejected": 2,
+      "final_task_completed": true
+    },
+    "new_session_defaults_to_deepseek_after_consent": {
+      "status": "NOT_MEASURED",
+      "offline_regression": "PASS",
+      "note": "Selection and consent path passed offline tests; no separate interactive console launch was part of the targeted host run."
+    },
+    "hybrid_complete_answer_format": {
+      "status": "DEFERRED_V0_1",
+      "historical_result": "FAIL"
+    },
+    "approval_pause_resume_workflow": {
+      "status": "DEFERRED_V0_1",
+      "historical_result": "FAIL"
+    },
+    "automatic_long_result_paging": {
+      "status": "DEFERRED_V0_1",
+      "historical_result": "FAIL"
+    },
+    "provider_native_streaming": {
+      "status": "NOT_MEASURED"
+    },
+    "qwen_host_acceptance": {
+      "status": "NOT_MEASURED_IN_THIS_RELEASE_PREPARATION"
+    },
+    "multi_turn_conversation": {
+      "status": "PASS",
+      "evidence": "AF042_UNIFIED_AGENT_HOST_RESULT_0ddc7ed43968491abc918e28d14dc70f.json / multi_turn",
+      "turns": 3,
+      "messages_restored": [
+        2,
+        4,
+        6
+      ],
+      "answer_contract_status": [
+        "limited",
+        "limited",
+        "limited"
+      ]
+    }
+  },
+  "release_package": {
+    "directory": "release/AgentForge-v0.1",
+    "status": "PREPARED_RELEASE_CANDIDATE",
+    "includes_secrets_or_credentials": false,
+    "includes_formal_database_or_chroma": false,
+    "includes_model_weights_or_virtual_environment": false,
+    "manifest": "RELEASE_V0.1_PACKAGE_MANIFEST.json"
+  },
+  "remaining_blockers": [],
+  "prior_codex_sandbox_preflight": {
+    "status": "BLOCKED",
+    "scenario": "multi_turn",
+    "user_authorized_once": true,
+    "blocked_before_credentials_or_requests": true,
+    "reasons": [
+      "CODEX_SANDBOX_NETWORK_DISABLED=1",
+      "PostgreSQL listener 127.0.0.1:5432 unavailable"
+    ],
+    "chat_requests": {
+      "attempted": 0,
+      "sent": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "retries": 0
+    },
+    "embedding_requests": {
+      "attempted": 0,
+      "sent": 0,
+      "succeeded": 0,
+      "failed": 0
+    },
+    "database_credentials_read": false,
+    "temporary_resources_created": false,
+    "services_changed": false
+  },
+  "latest_real_host_run": {
+    "run_id": "0ddc7ed43968491abc918e28d14dc70f",
+    "result_file": "AF042_UNIFIED_AGENT_HOST_RESULT_0ddc7ed43968491abc918e28d14dc70f.json",
+    "report_file": "AF042_UNIFIED_AGENT_HOST_REPORT_0ddc7ed43968491abc918e28d14dc70f.md",
+    "result_sha256": "3d37a7f3e183c34ca7fb81a84a94404a405cf0fb1a4ad2ede6dcfdbaa6abb02b",
+    "report_sha256": "bdc619cddc451253c8e8fd458b24ed299bd527395d237d18e310fd9d3e45d665",
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "provider_capabilities": {
+      "context_window": 1048576,
+      "max_output_tokens": 393216,
+      "capability_source": "DeepSeek official /models API response; Chat Completions API documents max_tokens as the generated completion limit",
+      "capability_verified_at": "2026-11-09T14:46:47.646450+00:00"
+    },
+    "runner_status": "PARTIAL",
+    "runner_scope": "targeted_scenario_only",
+    "selected_scenario": "multi_turn",
+    "selected_scenario_status": "PASS",
+    "full_15_scenario_matrix": "NOT_MEASURED",
+    "chat_requests": {
+      "attempted": 12,
+      "sent": 12,
+      "succeeded": 12,
+      "failed": 0,
+      "retries": 0
+    },
+    "embedding_requests": {
+      "status": "NOT_REPORTED_BY_RUNNER"
+    },
+    "token_usage": {
+      "requests_with_usage": 12,
+      "prompt_tokens": 6326,
+      "completion_tokens": 719,
+      "total_tokens": 7045
+    },
+    "conversation_plan": {
+      "initial_validation": "failed",
+      "correction": "accepted",
+      "final_validation": "passed_after_correction",
+      "validation_error_code": "intent_task_mismatch"
+    },
+    "agent_planner": {
+      "invalid_json_responses_rejected": 2,
+      "scenario_completed_after_valid_replans": true,
+      "invalid_plan_executed": false
+    },
+    "execution": {
+      "conversation_entry": "PASS",
+      "real_agent_engine": "PASS",
+      "turns_completed": 3,
+      "same_session_history_reloaded_each_turn": true,
+      "persisted_message_counts": [
+        2,
+        4,
+        6
+      ],
+      "tool_calls": [
+        {
+          "tool_id": "read_synthetic_fact",
+          "status": "completed"
+        }
+      ],
+      "observation_count": 1,
+      "successful_replanning_count": 1
+    },
+    "answer_contract": {
+      "observed_each_turn": true,
+      "status_by_turn": [
+        "limited",
+        "limited",
+        "limited"
+      ],
+      "failure_code_by_turn": [
+        null,
+        null,
+        null
+      ],
+      "semantic_entailment_proven": false,
+      "note": "The runner marked the scenario PASS; contract status was limited for all three turns. A valid citation/contract status does not prove semantic entailment."
+    },
+    "assertions": {
+      "first_turn_stored_label_in_session": true,
+      "second_turn_used_tool_result": true,
+      "followup_restored_session_context": true,
+      "same_session_history_restored_each_turn": true,
+      "unified_orchestrator_completed_turn": true,
+      "answer_contract_observed": true,
+      "session_messages_persisted": true
+    },
+    "checks": {
+      "postgresql_listener": "PASS",
+      "isolated_database_and_migration": "PASS",
+      "temporary_chroma_reopen": "PASS",
+      "deepseek_provider_constructed": "PASS",
+      "deepseek_model_discovery": "PASS",
+      "synthetic_sqlite_index": "PASS",
+      "request_budget_and_no_retry": "PASS",
+      "selected_scenarios": "PASS",
+      "all_scenarios": "NOT_MEASURED",
+      "conversation_entry_used": "PASS",
+      "real_agent_engine_used": "PASS"
+    },
+    "cleanup": {
+      "database": "removed",
+      "chroma_directory": "removed",
+      "synthetic_repository": "removed"
+    },
+    "temporary_resources": {
+      "disposable_database_created_and_removed": true,
+      "chroma_removed": true,
+      "synthetic_repository_removed": true
+    },
+    "status_interpretation": "One targeted scenario passed. Runner overall remains PARTIAL because other scenarios were not run; this is not a full-matrix PASS."
+  },
+  "remaining_unverified": [
+    "The full 15-scenario matrix was not rerun; only multi_turn was reaccepted on the current worktree.",
+    "Hybrid complete formatting, protected-write approval workflow, automatic long-result paging, and streaming are excluded from v0.1.",
+    "The interactive launcher/new-session consent path is offline-tested but was not separately exercised in this host run.",
+    "Qwen host acceptance and Provider-native streaming remain NOT_MEASURED.",
+    "The three multi_turn responses carried Answer Contract status limited; semantic entailment is not proven."
+  ],
+  "latest_startup_diagnostic": {
+    "status": "RESOLVED_AS_OPTIONAL_LOCAL_COMPONENT_SELECTION",
+    "evidence": "user-reported missing path ends in models/qwen3.5-4b/.runtime/llama-b11424/llama-server.exe; this is the Start-Qwen local server path",
+    "deepseek_entry_point": "Start-AgentForge.cmd",
+    "qwen_entry_point": "Start-Qwen.cmd",
+    "all_in_one_entry_point": "Start-AgentForge-All.cmd",
+    "local_runtime_and_weights_included": false,
+    "code_launch_retested": false,
+    "action": "README and Quick Start now explicitly direct DeepSeek-only users to Start-AgentForge.cmd."
+  },
+  "latest_install_diagnostic": {
+    "classification": "PACKAGE_ENVIRONMENT_NOT_PREPARED",
+    "status": "BLOCKED_FOR_RELEASE_COPY_ONLY",
+    "python_launcher": "py_not_installed",
+    "python_command": "available",
+    "python_version": "3.12.7",
+    "development_virtualenv_exists": true,
+    "release_bundle_virtualenv_exists": false,
+    "release_bundle_virtualenv_excluded_by_design": true,
+    "guidance": "Use python -m venv in the folder containing the package pyproject.toml, or run the existing development checkout launcher at D:\\agent\\AgentForge\\Start-AgentForge.cmd."
+  }
+}

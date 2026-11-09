@@ -9,11 +9,22 @@ from __future__ import annotations
 import re
 
 
-_CALL = re.compile(
-    r"(?i)\b(?:caller|callers|callee|callees|call|calls|called|invoke|invokes|invoked)\b|"
-    r"(?:调用方|调用者|被调用方|调用|执行调用)"
+_CALL_RELATION = re.compile(
+    r"(?i)\b(?:callers?|callees?|call\s+chain|call\s+graph|call\s+site|callsite|"
+    r"called\s+by|invoked\s+by|who\s+(?:calls?|invokes?)|"
+    r"which\s+(?:function|method|caller)\s+(?:calls?|invokes?)|"
+    r"what\s+(?:does|do)\s+(?:(?:the\s+)?(?:function|method)\s+)?"
+    r"[A-Za-z_]\w*\s+(?:calls?|invokes?)|"
+    r"where\b.{0,80}\b(?:called|invoked)\b)\b|"
+    r"(?:调用方|调用者|被调用方|调用链|调用图|调用关系|调用位置|被谁调用|"
+    r"谁.{0,16}(?:调用|调用了)|(?:从哪里|在哪里|在哪个文件).{0,16}(?:调用|被调用)|"
+    r"调用(?:哪些|了哪些)(?:函数|方法|目标))"
 )
-_CALLER_IDENTITY = re.compile(r"(?i)\b(?:which\s+)?callers?\b|(?:哪个调用方|调用方名称)")
+_CALLER_IDENTITY = re.compile(
+    r"(?i)\b(?:which\s+)?callers?\b|\bwho\s+(?:calls?|invokes?)\b|"
+    r"\bwhich\s+(?:function|method)\s+(?:calls?|invokes?)\b|"
+    r"(?:哪个调用方|调用方名称|谁.{0,16}(?:调用|调用了))"
+)
 _DEFINITION = re.compile(
     r"(?i)\b(?:implementation|definition|defined|implement(?:ed|ation)?)\b|"
     r"(?:实现|定义|具体代码)"
@@ -31,7 +42,11 @@ _CONFIG_USE = re.compile(
 def required_evidence_roles(question: str) -> tuple[str, ...]:
     """返回回答问题各个明确部分所需的证据角色。"""
     text = question if isinstance(question, str) else ""
-    if _CALL.search(text) and _DEFINITION.search(text):
+    # A generic request about a method's “call process” (调用过程) is usually
+    # asking how its implementation flows, not for an interprocedural caller
+    # graph. Require explicit relation language before demanding cross-file
+    # callsite/target roles; the implementation's definition remains usable.
+    if _CALL_RELATION.search(text):
         roles = ["callsite", "target_definition"]
         if _CALLER_IDENTITY.search(text):
             roles.insert(0, "caller_definition")

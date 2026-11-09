@@ -3,6 +3,7 @@
 from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
+import re
 import sys
 
 from . import cli
@@ -56,6 +57,65 @@ def render_ask_result(result: dict) -> str:
     return "\n".join(lines)
 
 
+def render_execution_failure(result: dict) -> str | None:
+    """Show safe execution metadata when ask returned a non-completed JSON result.
+
+    Tool outputs, arguments, prompts, and arbitrary exception text are deliberately
+    excluded: this view is for locating the failed phase without exposing content.
+    """
+    status = result.get("execution_status")
+    if not isinstance(status, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", status):
+        return None
+
+    execution = result.get("agent_execution")
+    if not isinstance(execution, dict):
+        return f"AgentForge 执行未完成（状态：{status}）。"
+
+    execution_status = execution.get("status")
+    execution_state = execution.get("state")
+    error_code = execution.get("error_code")
+    failure_phase = execution.get("failure_phase")
+    lines = [f"AgentForge 执行未完成（状态：{status}）。"]
+    if isinstance(execution_status, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", execution_status):
+        lines.append(f"执行结果：{execution_status}")
+    if isinstance(execution_state, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", execution_state):
+        lines.append(f"执行阶段状态：{execution_state}")
+    if isinstance(failure_phase, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", failure_phase):
+        lines.append(f"失败阶段：{failure_phase}")
+    if isinstance(error_code, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", error_code):
+        lines.append(f"错误代码：{error_code}")
+
+    failed_tools = []
+    results = execution.get("results")
+    if isinstance(results, list):
+        for item in results:
+            if not isinstance(item, dict) or item.get("status") in {"completed", "succeeded"}:
+                continue
+            tool_id = item.get("tool_id")
+            tool_status = item.get("status")
+            tool_error = item.get("error_code")
+            failure_phase = item.get("failure_phase")
+            if not isinstance(tool_id, str) or not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", tool_id):
+                tool_id = "unknown"
+            details = [tool_id]
+            if failure_phase == "plan_validation":
+                details.append("计划校验拒绝")
+            elif isinstance(tool_status, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", tool_status):
+                details.append(tool_status)
+            if isinstance(tool_error, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", tool_error):
+                details.append(tool_error)
+            failed_tools.append(" / ".join(details))
+    if failed_tools:
+        lines.append("工具结果：" + "; ".join(failed_tools[:8]))
+    if status == "waiting_approval":
+        lines.append("执行已暂停，等待审批。")
+    elif status == "waiting_user_input":
+        lines.append("执行已暂停，等待补充信息。")
+    elif status == "cancelled":
+        lines.append("执行已取消。")
+    return "\n".join(lines)
+
+
 def main(arguments=None) -> int:
     arguments = sys.argv[1:] if arguments is None else arguments
     if not arguments or arguments[0] != "ask":
@@ -80,7 +140,15 @@ def main(arguments=None) -> int:
         except SystemExit as exc:
             code = exc.code if isinstance(exc.code, int) else 1
     if code:
-        print(errors.getvalue() or "AgentForge 请求失败。", file=sys.stderr, end="")
+        error_text = errors.getvalue().strip()
+        if error_text:
+            print(error_text, file=sys.stderr)
+        else:
+            try:
+                failure = render_execution_failure(json.loads(output.getvalue()))
+            except (ValueError, TypeError):
+                failure = None
+            print(failure or "AgentForge 请求失败。", file=sys.stderr)
         return code
     try:
         result = json.loads(output.getvalue())

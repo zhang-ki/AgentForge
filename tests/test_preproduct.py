@@ -80,7 +80,9 @@ class PreproductFixtureTests(unittest.TestCase):
         self.assertTrue(all(row["label_origin"] == "synthetic_fixture_design" for row in rows))
         corpus_text = "\n".join(
             path.read_text(encoding="utf-8")
-            for path in sorted(DEFAULT_CORPUS.rglob("*")) if path.is_file()
+            for path in sorted(DEFAULT_CORPUS.rglob("*"))
+            if path.is_file() and "__pycache__" not in path.relative_to(DEFAULT_CORPUS).parts
+            and path.suffix.casefold() not in {".pyc", ".pyo"}
         ).lower()
         self.assertIn("northstar cold-chain", corpus_text)
         self.assertNotIn("lumen gallery", corpus_text)

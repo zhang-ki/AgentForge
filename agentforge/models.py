@@ -37,6 +37,8 @@ class BuiltContext:
     estimated_tokens: int
     budget: int
     estimate_kind: str = "UTF-8 byte upper-bound proxy; not a tokenizer count"
+    planned_tasks: tuple[dict, ...] = ()
+    tool_observations: tuple[dict, ...] = ()
 
 
 @dataclass(frozen=True)

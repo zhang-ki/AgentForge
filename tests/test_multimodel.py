@@ -19,7 +19,9 @@ from agentforge.conversation_store import ConversationStore
 def discovery_payload():
     return {"object": "list", "data": [{
         "id": "deepseek-flash", "object": "model", "owned_by": "deepseek",
-        "name": "Flash", "context_window": 65536, "max_output_tokens": 8192,
+        # Snapshot of the fields in DeepSeek's documented /models example;
+        # runtime registry refresh replaces this metadata with live values.
+        "name": "Flash", "context_window": 1_048_576, "max_output_tokens": 393_216,
         "input_modalities": ["text"], "output_modalities": ["text"],
         "effort": {"supported_levels": ["low", "high", "max"], "default_level": "high"},
     }]}
@@ -55,13 +57,60 @@ class Connection:
 
 class MultiModelTests(unittest.TestCase):
     def test_registry_parses_discovered_models_and_keeps_unknown_capabilities_unknown(self):
-        models = parse_deepseek_models(discovery_payload())
+        models = parse_deepseek_models(discovery_payload(), capability_verified_at="2026-11-06T00:00:00+00:00")
         self.assertEqual("deepseek-flash", models[0].model_id)
-        self.assertEqual(65536, models[0].context_window)
+        self.assertEqual(1_048_576, models[0].context_window)
         self.assertEqual(("low", "high", "max"), models[0].supported_efforts)
         self.assertTrue(models[0].supports_thinking)
         self.assertIsNone(models[0].supports_streaming)
         self.assertIsNone(models[0].supports_tool_calling)
+        self.assertEqual("2026-11-06T00:00:00+00:00", models[0].capability_verified_at)
+        self.assertIsNone(models[0].max_input_tokens)
+        self.assertIsNone(models[0].reasoning_token_limit)
+        self.assertIsNone(models[0].provider_max_output_tokens)
+        self.assertIsNone(models[0].adapter_max_output_tokens)
+
+    def test_deepseek_structured_planning_budget_is_large_and_stays_bounded(self):
+        from agentforge.providers.deepseek import DeepSeekCompletion, DeepSeekProvider
+
+        descriptor = parse_deepseek_models(discovery_payload())[0]
+        client = DeepSeekClient("synthetic-key")
+        client.chat = Mock(return_value=DeepSeekCompletion(
+            '{"action":"finish"}', "", "stop", (), {}, "synthetic-request"))
+        provider = DeepSeekProvider(client, descriptor.model_id, descriptor=descriptor)
+
+        output = provider.plan_completion(
+            [{"role": "system", "content": "Return bounded JSON."},
+             {"role": "user", "content": "Plan a synthetic multi-tool task."}],
+            max_output_tokens=4096,
+            timeout_seconds=30,
+        )
+
+        self.assertEqual('{"action":"finish"}', output)
+        self.assertEqual(4096, client.chat.call_args.kwargs["max_output_tokens"])
+        with self.assertRaisesRegex(ValueError, "between 1 and 4096"):
+            provider.plan_completion(
+                [{"role": "user", "content": "Synthetic."}],
+                max_output_tokens=4097,
+                timeout_seconds=30,
+            )
+
+    def test_deepseek_regular_answer_budget_remains_separate_from_agent_planner(self):
+        from agentforge.providers.deepseek import DeepSeekCompletion
+
+        descriptor = parse_deepseek_models(discovery_payload())[0]
+        client = DeepSeekClient("synthetic-key")
+        provider = DeepSeekProvider(client, descriptor.model_id, descriptor=descriptor,
+                                    max_output_tokens=512)
+        self.assertEqual(512, provider.max_output_tokens)
+        expanded = DeepSeekProvider(client, descriptor.model_id, descriptor=descriptor,
+                                    max_output_tokens=513)
+        self.assertEqual(513, expanded.max_output_tokens)
+        client.chat = Mock(return_value=DeepSeekCompletion(
+            "summary", None, "stop", (), {}, "synthetic-request"))
+        self.assertEqual("summary", provider.summary_text(
+            [{"role": "user", "content": "Synthetic."}], max_output_tokens=513))
+        self.assertEqual(513, client.chat.call_args.kwargs["max_output_tokens"])
 
     def test_registry_rejects_bad_or_duplicate_entries_and_empty_list_is_valid(self):
         self.assertEqual((), parse_deepseek_models({"object": "list", "data": []}))
@@ -80,6 +129,52 @@ class MultiModelTests(unittest.TestCase):
             self.assertEqual("stale", loaded.cache_status)
             self.assertEqual("llama-server", loaded.get("qwen-local").provider_id)
             self.assertEqual("deepseek-flash", loaded.get("deepseek-flash").model_id)
+            with self.assertRaisesRegex(ValueError, "stale or unavailable"):
+                loaded.get_for_request("deepseek-flash")
+
+    def test_legacy_cache_without_capability_provenance_is_display_only(self):
+        from dataclasses import asdict
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
+            path = Path(directory) / "models.json"
+            stamp = datetime.now(timezone.utc)
+            descriptor = parse_deepseek_models(discovery_payload())[0]
+            raw = asdict(descriptor)
+            raw["capability_source"] = None
+            raw["capability_verified_at"] = None
+            path.write_text(json.dumps({"version": 1, "saved_at": stamp.isoformat(),
+                                        "models": [raw]}), encoding="utf-8")
+            registry = ModelRegistry(path, now=lambda: stamp)
+            self.assertEqual("fresh", registry.cache_status)
+            self.assertEqual(1_048_576, registry.get("deepseek-flash").context_window)
+            with self.assertRaisesRegex(ValueError, "lack current verified provenance"):
+                registry.get_for_request("deepseek-flash")
+
+    def test_fresh_official_model_metadata_is_usable_for_requests(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
+            path = Path(directory) / "models.json"
+            stamp = datetime.now(timezone.utc)
+            registry = ModelRegistry(path, now=lambda: stamp)
+            registry.refresh_deepseek(Mock(list_models=Mock(return_value=discovery_payload())))
+            descriptor = registry.get_for_request("deepseek-flash")
+            self.assertEqual(1_048_576, descriptor.context_window)
+            self.assertTrue(descriptor.capability_source.startswith("DeepSeek official /models API response"))
+            self.assertEqual(stamp.isoformat(), descriptor.capability_verified_at)
+
+    def test_recently_saved_cache_cannot_refresh_an_old_capability_timestamp(self):
+        from dataclasses import asdict
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
+            path = Path(directory) / "models.json"
+            now = datetime.now(timezone.utc)
+            old = now - timedelta(days=2)
+            descriptor = parse_deepseek_models(
+                discovery_payload(), capability_verified_at=old.isoformat())[0]
+            path.write_text(json.dumps({
+                "version": 1, "saved_at": now.isoformat(), "models": [asdict(descriptor)],
+            }), encoding="utf-8")
+            registry = ModelRegistry(path, now=lambda: now)
+            self.assertEqual("fresh", registry.cache_status)
+            with self.assertRaisesRegex(ValueError, "capabilities are stale"):
+                registry.get_for_request("deepseek-flash")
 
     def test_token_budget_is_per_model_bounded_and_marks_fallback_estimate(self):
         registry = ModelRegistry(Path("missing-model-cache"))
@@ -88,12 +183,12 @@ class MultiModelTests(unittest.TestCase):
         manager = TokenBudgetManager(minimum_safety_tokens=100)
         local = manager.budget(qwen, requested_output_tokens=300)
         cloud = manager.budget(deepseek, requested_output_tokens=300)
-        self.assertEqual(4096 - 512 - 410, local.input_budget)
+        self.assertEqual(4096 - 300 - 410, local.input_budget)
         self.assertGreater(cloud.input_budget, local.input_budget)
         self.assertEqual("estimated", manager.measure_messages([
             {"role": "system", "content": "中文 source code"}]).method)
         exact = TokenBudgetManager(TokenizerAdapter(lambda text: len(text.split())))
-        self.assertEqual("exact", exact.measure_messages([
+        self.assertEqual("tokenizer_text_estimated_framing", exact.measure_messages([
             {"role": "user", "content": "hello world"}]).method)
 
     def test_token_budget_counts_nested_tool_protocol_and_schema(self):
@@ -106,7 +201,25 @@ class MultiModelTests(unittest.TestCase):
         message_only = manager.measure_request(messages)
         with_tools = manager.measure_request(messages, tools=_TOOLS)
         self.assertGreater(with_tools.count, message_only.count)
-        self.assertEqual("exact", with_tools.method)
+        self.assertEqual("tokenizer_text_estimated_framing", with_tools.method)
+
+    def test_model_specific_tokenizer_registration_and_reasoning_budget_separation(self):
+        from dataclasses import replace
+        descriptor = replace(parse_deepseek_models(discovery_payload())[0],
+                             tokenizer_id="synthetic-local-tokenizer",
+                             reasoning_token_limit=192)
+        manager = TokenBudgetManager(minimum_safety_tokens=64, safety_ratio=0)
+        manager.register_tokenizer("synthetic-local-tokenizer", lambda text: len(text.split()),
+                                   request_counter=lambda messages, tools: 77)
+        measured = manager.measure_messages([{"role": "user", "content": "alpha beta"}],
+                                           model=descriptor)
+        budget = manager.budget(descriptor, requested_output_tokens=300)
+        self.assertEqual(("exact", 77), (measured.method, measured.count))
+        self.assertEqual(300, budget.output_reserve)
+        self.assertEqual(192, budget.reasoning_token_limit)
+        self.assertEqual(1_048_576 - 300 - 64, budget.input_budget)
+        self.assertEqual("estimated", manager.measure_messages(
+            [{"role": "user", "content": "alpha beta"}]).method)
 
     def test_credential_store_prefers_environment_and_never_returns_secret_in_status(self):
         with tempfile.TemporaryDirectory(dir=DATA_ROOT) as directory:
@@ -148,7 +261,8 @@ class MultiModelTests(unittest.TestCase):
         from agentforge.providers.deepseek import _usage_metadata
         usage = {"completion_tokens": 40, "completion_tokens_details": {"reasoning_tokens": 31}}
         normalized = _usage_metadata(usage)
-        self.assertEqual({"completion_tokens": 40, "reasoning_tokens": 31}, normalized)
+        self.assertEqual({"completion_tokens": 40, "reasoning_tokens": 31,
+                          "visible_completion_tokens": 9}, normalized)
         self.assertEqual(normalized, _usage_metadata(normalized))
 
     def test_unknown_thinking_capability_omits_parameter_and_streaming_requires_confirmation(self):
@@ -479,6 +593,30 @@ class MultiModelBoundaryTests(unittest.TestCase):
                     registry.refresh_deepseek(Mock(list_models=Mock(return_value=discovery_payload())))
             self.assertEqual("deepseek-flash", registry.get("deepseek-flash").model_id)
 
+    def test_model_registry_ignores_legacy_deepseek_adapter_output_cap_in_fresh_cache(self):
+        from dataclasses import asdict, replace
+        from agentforge.token_budget import ContextBudgetManager
+
+        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory:
+            path = Path(directory) / "models.json"
+            stamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+            legacy = replace(
+                parse_deepseek_models(discovery_payload(),
+                                      capability_verified_at=stamp.isoformat())[0],
+                adapter_max_output_tokens=512,
+            )
+            path.write_text(json.dumps({
+                "version": 1, "saved_at": stamp.isoformat(), "models": [asdict(legacy)],
+            }), encoding="utf-8")
+
+            loaded = ModelRegistry(path, now=lambda: stamp)
+            descriptor = loaded.get_for_request("deepseek-flash")
+            self.assertIsNone(descriptor.adapter_max_output_tokens)
+            self.assertEqual(16_384, ContextBudgetManager().resolve_output_budget(
+                descriptor, mode="standard").effective_tokens)
+            self.assertEqual(65_536, ContextBudgetManager().resolve_output_budget(
+                descriptor, mode="long").effective_tokens)
+
     def test_tokenizer_validates_input_and_counts_protocol_fields(self):
         adapter = TokenizerAdapter()
         with self.assertRaises(ValueError):
@@ -496,8 +634,10 @@ class MultiModelBoundaryTests(unittest.TestCase):
         exact = TokenizerAdapter(lambda text: len(text))
         counted = exact.count_messages([{"role": "assistant", "content": None,
                                         "reasoning_content": "internal", "tool_calls": []}])
-        self.assertEqual("exact", counted.method)
+        self.assertEqual("tokenizer_text_estimated_framing", counted.method)
         self.assertGreater(counted.count, len("assistant"))
+        exact_request = TokenizerAdapter(request_counter=lambda _messages, _tools: 17)
+        self.assertEqual("exact", exact_request.count_request([], tools=[]).method)
 
     def test_token_budget_rejects_invalid_configuration_and_handles_output_cap(self):
         from dataclasses import replace
@@ -516,8 +656,10 @@ class MultiModelBoundaryTests(unittest.TestCase):
         too_small = replace(qwen, context_window=512, max_output_tokens=256)
         with self.assertRaisesRegex(ValueError, "too small"):
             TokenBudgetManager(minimum_safety_tokens=300, safety_ratio=0).budget(too_small)
-        capped = manager.budget(qwen, requested_output_tokens=10_000)
-        self.assertEqual(qwen.max_output_tokens, capped.output_reserve)
+        with self.assertRaisesRegex(ValueError, "exceed.*limit"):
+            manager.budget(qwen, requested_output_tokens=10_000)
+        capped = manager.budget(qwen, requested_output_tokens=256)
+        self.assertEqual(256, capped.output_reserve)
         self.assertGreater(manager.require_fit([{"role": "user", "content": "short"}], capped).count, 0)
         with self.assertRaisesRegex(ValueError, "over the selected model"):
             manager.require_fit([{"role": "user", "content": "x" * 5000}], capped)
@@ -626,7 +768,7 @@ class MultiModelBoundaryTests(unittest.TestCase):
                     store.get()
 
     def test_model_registry_qwen_identity_health_and_error_boundaries_are_offline(self):
-        from agentforge.model_registry import check_qwen_identity
+        from agentforge.providers.local_health import check_qwen_identity
         class FakeHTTPConnection:
             replies = []
             def __init__(self, host, port=None, timeout=0, **_kwargs):
@@ -1018,8 +1160,13 @@ class DeepSeekProtocolBoundaryTests(unittest.TestCase):
             _read_sse(Response(body=b"data: [DONE]\n\n"), max_bytes=2)
         self.assertEqual("stream_too_large", caught.exception.code)
         with self.assertRaises(_DeepSeekFailure) as caught:
-            _read_sse(Response(body=b"data: x" * 10_000), max_bytes=100_000)
+            _read_sse(Response(body=b"data: x" * 10_000), max_bytes=65_000)
         self.assertEqual("stream_too_large", caught.exception.code)
+        large_content = "x" * 70_000
+        large_event = ("data: " + json.dumps({"choices": [{"delta": {"content": large_content},
+                        "finish_reason": "stop"}]}) + "\n\ndata: [DONE]\n\n").encode()
+        large_result = _read_sse(Response(body=large_event), max_bytes=150_000)
+        self.assertEqual(70_000, len(large_result["choices"][0]["message"]["content"]))
         with self.assertRaises(_DeepSeekFailure) as caught:
             _read_sse(Response(body=b"data: {\"choices\":[]}\n\n"))
         self.assertEqual("incomplete_stream", caught.exception.code)
@@ -1090,16 +1237,21 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
         from agentforge.providers.deepseek import DeepSeekProvider
         provider = self.provider(thinking=True, effort="high", stream=True, max_output_tokens=32)
         self.assertTrue(provider.thinking_request)
-        self.assertEqual(provider.request_stats(), self.client.request_stats())
+        provider_stats = provider.request_stats()
+        self.assertEqual(self.client.request_stats(), {
+            key: provider_stats[key] for key in self.client.request_stats()
+        })
         self.client.chat = Mock(return_value=self.completion("compact summary"))
-        self.assertEqual("compact summary", provider.summary_text([], max_output_tokens=20))
+        summary_messages = [{"role": "system", "content": "Summarize this conversation."},
+                            {"role": "user", "content": "A bounded synthetic summary input."}]
+        self.assertEqual("compact summary", provider.summary_text(summary_messages, max_output_tokens=20))
         self.assertEqual(20, self.client.chat.call_args.kwargs["max_output_tokens"])
         self.client.chat = Mock(return_value=self.completion("", tools=({"id": "c"},)))
         with self.assertRaisesRegex(ProviderError, "plain summary"):
-            provider.summary_text([], max_output_tokens=20)
+            provider.summary_text(summary_messages, max_output_tokens=20)
         self.client.chat = Mock(return_value=self.completion(" "))
         with self.assertRaisesRegex(ProviderError, "plain summary"):
-            provider.summary_text([], max_output_tokens=20)
+            provider.summary_text(summary_messages, max_output_tokens=20)
         with self.assertRaisesRegex(ValueError, "client is required"):
             DeepSeekProvider(object(), self.descriptor.model_id, descriptor=self.descriptor)
         with self.assertRaisesRegex(ValueError, "thinking must be a boolean"):
@@ -1113,8 +1265,8 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
             DeepSeekProvider(self.client, self.descriptor.model_id, thinking=True, effort="high",
                              descriptor=replace(self.descriptor, supported_efforts=()))
 
-    def test_provider_answer_validates_capabilities_response_and_citations(self):
-        from agentforge.errors import CitationValidationError, ProviderError
+    def test_provider_answer_validates_capabilities_and_response_only(self):
+        from agentforge.errors import ProviderError
         from agentforge.context import build_context
         from agentforge.providers.deepseek import DeepSeekProvider
         provider = self.provider(thinking=True, effort="high", stream=True)
@@ -1133,8 +1285,8 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
         self.client.chat.assert_not_called()
         no_evidence = build_context("unknown", [])
         self.client.chat = Mock()
-        refused = unsupported.answer(no_evidence)
-        self.assertFalse(refused.citations)
+        with self.assertRaisesRegex(ProviderError, "requires request-local evidence"):
+            unsupported.answer(no_evidence)
         self.client.chat.assert_not_called()
         for result, expected, code in (
             (self.completion(finish="length"), "output limit", "truncated_final_content"),
@@ -1147,9 +1299,12 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
                 unsupported.answer(self.context)
             self.assertEqual(code, self.client.request_stats()["last_application_error_code"])
         self.client.chat = Mock(return_value=self.completion("Fabricated [E99]."))
-        with self.assertRaises(CitationValidationError):
-            unsupported.answer(self.context)
-        self.assertEqual("citation_validation", self.client.request_stats()["last_application_failure_phase"])
+        prior_failure_phase = self.client.request_stats()["last_application_failure_phase"]
+        answer = unsupported.answer(self.context)
+        self.assertEqual("Fabricated [E99].", answer.text)
+        self.assertEqual((), answer.citations)
+        self.assertEqual(prior_failure_phase,
+                         self.client.request_stats()["last_application_failure_phase"])
 
     def test_provider_stream_and_thinking_settings_must_be_confirmed(self):
         from dataclasses import replace
@@ -1180,12 +1335,51 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
             provider.answer(self.context)
         self.client.chat.assert_not_called()
 
-    def test_provider_summary_uses_safe_fallback_when_model_maximum_is_unknown(self):
+    def test_provider_requires_verified_output_capability_when_model_maximum_is_unknown(self):
         from dataclasses import replace
-        provider = self.provider(descriptor=replace(self.descriptor, max_output_tokens=None))
-        self.client.chat = Mock(return_value=self.completion("summary"))
-        self.assertEqual("summary", provider.summary_text([], max_output_tokens=30))
-        self.assertEqual(30, self.client.chat.call_args.kwargs["max_output_tokens"])
+        descriptor = replace(self.descriptor, max_output_tokens=None,
+                             provider_max_output_tokens=None, adapter_max_output_tokens=None)
+        self.client.chat = Mock()
+        with self.assertRaisesRegex(ValueError, "no verified output limit"):
+            self.provider(descriptor=descriptor)
+        self.client.chat.assert_not_called()
+
+    def test_summary_output_above_verified_model_limit_fails_before_request(self):
+        from dataclasses import replace
+        descriptor = replace(self.descriptor, max_output_tokens=32)
+        provider = self.provider(descriptor=descriptor)
+        self.client.chat = Mock()
+        with self.assertRaisesRegex(ValueError, "exceed.*limit"):
+            provider.summary_text(
+                [{"role": "system", "content": "Summarize."},
+                 {"role": "user", "content": "Synthetic input."}], max_output_tokens=64)
+        self.client.chat.assert_not_called()
+
+    def test_switching_bound_model_preserves_persisted_conversation_messages(self):
+        from sqlalchemy import create_engine
+        from agentforge.af012_schema import Base
+        from agentforge.conversation_store import ConversationStore
+
+        engine = create_engine("sqlite+pysqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        try:
+            store = ConversationStore(engine)
+            conversation = store.create_conversation("repo-switch", "model switch")
+            cid = conversation["id"]
+            store.append_turn(cid, "repo-switch", "early fact", "early answer")
+            before = store.get_messages(cid, "repo-switch")
+            consent = datetime.now(timezone.utc)
+            store.update_model_binding(cid, "repo-switch", provider_id="deepseek",
+                model_id="deepseek-flash", cloud_consent_at=consent)
+            store.update_model_binding(cid, "repo-switch", provider_id="llama-server",
+                model_id="qwen3.5-4b")
+            after = store.get_messages(cid, "repo-switch")
+            self.assertEqual([(row["id"], row["sequence"], row["role"], row["content"])
+                              for row in before],
+                             [(row["id"], row["sequence"], row["role"], row["content"])
+                              for row in after])
+        finally:
+            engine.dispose()
 
 
 class DeepSeekAgentPlannerBoundaryTests(unittest.TestCase):
@@ -1203,7 +1397,8 @@ class DeepSeekAgentPlannerBoundaryTests(unittest.TestCase):
 
     def _completion(self, *, content="answer", tools=(), finish="stop", reasoning=None):
         return self.SimpleNamespace(content=content, tool_calls=tuple(tools),
-                                    finish_reason=finish, reasoning_content=reasoning)
+                                    finish_reason=finish, reasoning_content=reasoning,
+                                    usage=None)
 
     def _planner(self, client=None, **kwargs):
         from agentforge.providers.deepseek_agent import DeepSeekAgentPlanner
@@ -1263,6 +1458,8 @@ class DeepSeekAgentPlannerBoundaryTests(unittest.TestCase):
         self.assertIsNone(planner.next_call("inspect", [audit1, audit2]))
         self.assertEqual("Found the definition.", planner.final_answer)
         self.assertEqual(2, planner.request_count)
+        self.assertIsNone(planner.last_token_budget_diagnostics["usage"])
+        self.assertIsNone(planner.last_token_budget_diagnostics["usage"])
         followup = client.chat.call_args_list[1].args[0]
         self.assertEqual("internal", followup[-3]["reasoning_content"])
         self.assertEqual(["tool", "tool"], [item["role"] for item in followup[-2:]])

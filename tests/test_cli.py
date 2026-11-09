@@ -1,13 +1,18 @@
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import nullcontext, redirect_stderr, redirect_stdout
 import io
 import json
 import sqlite3
+from dataclasses import replace
 from unittest.mock import MagicMock, Mock, patch
 
-from agentforge.cli import create_provider, main, parser, _provider_failure_diagnostic
+from agentforge.cli import (create_provider, main, parser, _provider_failure_diagnostic,
+                            _planner_failure_diagnostic, _validate_persisted_model_selection)
 from agentforge.errors import ProviderError
+from agentforge.models import Answer
+from agentforge.model_registry import LOCAL_QWEN
 from agentforge.providers.llama_server import LlamaServerProvider
 from agentforge.providers.offline import OfflineProvider
+from agentforge.planner import PlanningError
 from agentforge.product_retrieval import ProductCandidate, ProductRetrievalOutcome
 from agentforge.query_routing import RouteDecision
 from agentforge.store import IndexStore
@@ -15,14 +20,211 @@ from tests.support import LocalTestCase
 from tests.test_context import result
 
 
-def invoke(arguments):
+def invoke(arguments, **kwargs):
     output, errors = io.StringIO(), io.StringIO()
     with redirect_stdout(output), redirect_stderr(errors):
-        code = main(arguments)
+        code = main(arguments, **kwargs)
     return code, output.getvalue(), errors.getvalue()
 
 
 class CliTests(LocalTestCase):
+    def test_ask_defaults_to_planner_routing_and_keeps_explicit_debug_override(self):
+        default_args = parser().parse_args(["ask", "explain this project question"])
+        repository_override = parser().parse_args([
+            "ask", "inspect this source", "--mode", "repository",
+        ])
+
+        self.assertEqual("auto", default_args.mode)
+        self.assertEqual("repository", repository_override.mode)
+
+    def test_agent_memory_flag_requires_an_explicit_model_provider(self):
+        from agentforge.cli import _run_selected_agent
+        arguments = parser().parse_args([
+            "agent", "inspect the repository", "--repo", "D:\\synthetic-repo", "--use-memory",
+        ])
+        self.assertTrue(arguments.use_memory)
+        with self.assertRaisesRegex(ValueError, "explicit model provider"):
+            _run_selected_agent(arguments, Mock())
+
+    def test_deepseek_agent_consent_covers_selected_memory(self):
+        from agentforge.cli import _run_selected_agent
+        arguments = parser().parse_args([
+            "agent", "inspect the repository", "--repo", "D:\\synthetic-repo",
+            "--provider", "deepseek", "--model", "deepseek-chat", "--use-memory",
+        ])
+        with self.assertRaisesRegex(ValueError, "selected Memory"):
+            _run_selected_agent(arguments, Mock())
+
+    def test_agent_cli_streaming_tracks_execution_and_suspends_approval(self):
+        from agentforge.agent_loop import AgentRunReport
+
+        def report(status):
+            return AgentRunReport(
+                objective="inspect the synthetic repository", status=status,
+                max_steps=4, completed_steps=1, elapsed_seconds=0.01,
+                tool_timeout_seconds=30, run_timeout_seconds=120,
+                allowed_tools=("read",), audit=(), answer="validated answer",
+                citations=(), offline=False,
+            )
+
+        def run_with_agent_event(_arguments, _store, *, on_event, cancel_event):
+            self.assertIsNone(cancel_event)
+            on_event.publish_agent_event({
+                "type": "STATE_CHANGED", "execution_id": "execution-1",
+                "task_id": "task-1", "sequence": 1, "state": "PLANNING",
+            })
+            return report("completed"), None
+
+        events = []
+        with (
+            patch("agentforge.repositories.open_index_for_repository",
+                  return_value=nullcontext(Mock())),
+            patch("agentforge.cli._run_selected_agent", side_effect=run_with_agent_event),
+        ):
+            code, _output, errors = invoke(
+                ["agent", "inspect the synthetic repository", "--repo", str(self.root)],
+                event_callback=events.append,
+            )
+
+        self.assertEqual((code, errors), (0, ""))
+        self.assertEqual("execution-1", next(
+            event.execution_id for event in events if event.type.value == "STATE_CHANGED"))
+        self.assertIn("CONTENT_DELTA", [event.type.value for event in events])
+        self.assertIn("COMPLETED", [event.type.value for event in events])
+
+        events.clear()
+        with (
+            patch("agentforge.repositories.open_index_for_repository",
+                  return_value=nullcontext(Mock())),
+            patch("agentforge.cli._run_selected_agent", return_value=(report("waiting_approval"), None)),
+        ):
+            code, _output, errors = invoke(
+                ["agent", "inspect the synthetic repository", "--repo", str(self.root)],
+                event_callback=events.append,
+            )
+
+        types = [event.type.value for event in events]
+        self.assertEqual((code, errors), (1, ""))
+        self.assertIn("WAITING_APPROVAL", types)
+        self.assertNotIn("COMPLETED", types)
+
+    def test_deepseek_binding_rejects_stale_capability_metadata(self):
+        from types import SimpleNamespace
+        args = SimpleNamespace(
+            provider_id="deepseek", model_id="deepseek-flash", cloud_consent=True,
+            thinking="off", effort=None,
+        )
+        with patch("agentforge.model_registry.ModelRegistry") as registry_type:
+            registry_type.return_value.get_for_request.side_effect = ValueError(
+                "DeepSeek capability metadata is stale or unavailable.")
+            with self.assertRaisesRegex(ValueError, "stale or unavailable"):
+                _validate_persisted_model_selection(args)
+            registry_type.return_value.get_for_request.assert_called_once_with("deepseek-flash")
+            registry_type.return_value.get.assert_not_called()
+
+    def test_general_and_auto_general_do_not_open_repository_index(self):
+        class GeneralProvider:
+            provider_id = "llama-server"
+            model = "qwen3.5-4b"
+            descriptor = LOCAL_QWEN
+
+            def plan_completion(self, messages, **kwargs):
+                return json.dumps({
+                    "intent": "general",
+                    "tasks": [{"task_id": "g1", "task_type": "general",
+                               "question": "Explain attention", "requires_retrieval": False,
+                               "search_queries": [], "dependencies": []}],
+                    "requires_repository": False, "requires_external_data": False,
+                    "requires_agent_execution": False,
+                    "answer_strategy": "direct", "clarification_required": False,
+                    "confidence": 0.9, "reason": "General question.",
+                })
+
+            def answer_general(self, context, **kwargs):
+                self.context = context
+                return Answer("Attention relates token representations.", (), False)
+
+        for mode in ("general", "auto"):
+            with self.subTest(mode=mode):
+                provider = GeneralProvider()
+                with (
+                    patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
+                    patch("agentforge.cli.create_provider", return_value=provider),
+                    patch("agentforge.cli._open_current_index") as open_index,
+                ):
+                    code, output, errors = invoke([
+                        "ask", "Explain attention in a transformer.", "--mode", mode,
+                        "--provider", "llama-server", "--base-url", "http://127.0.0.1:32123",
+                        "--model", "qwen3.5-4b",
+                    ])
+                self.assertEqual((code, errors), (0, ""))
+                self.assertEqual("limited", json.loads(output)["answer_contract"]["status"])
+                self.assertEqual("general", json.loads(output)["retrieval"]["mode"])
+                self.assertEqual((), provider.context.evidence)
+                open_index.assert_not_called()
+
+    def test_hybrid_cli_keeps_general_answer_when_repository_evidence_exists(self):
+        store = Mock()
+        store.metadata.return_value = {"repository": str(self.root)}
+        scope = MagicMock()
+        scope.__enter__.return_value = store
+        scope.__exit__.return_value = False
+        product_retriever = self._mock_product_retriever()
+        candidate = replace(
+            product_retriever.search.return_value.candidates[0],
+            text="def fifo_pop(queue):\n    return queue.pop(0)  # FIFO removes the first entry",
+        )
+
+        class HybridProvider:
+            provider_id = "llama-server"
+            model = "qwen3.5-4b"
+            descriptor = LOCAL_QWEN
+
+            def plan_completion(self, messages, **kwargs):
+                return json.dumps({
+                    "intent": "hybrid",
+                    "tasks": [
+                        {"task_id": "g1", "task_type": "general", "question": "Explain FIFO",
+                         "requires_retrieval": False, "search_queries": [], "dependencies": []},
+                        {"task_id": "r1", "task_type": "repository",
+                         "question": "Find FIFO implementation", "requires_retrieval": True,
+                         "search_queries": ["FIFO implementation"], "dependencies": ["g1"]},
+                    ],
+                    "requires_repository": True, "requires_external_data": False,
+                    "requires_agent_execution": False,
+                    "answer_strategy": "compose", "clarification_required": False,
+                    "confidence": 0.9, "reason": "Combined general and repository question.",
+                })
+
+            def answer_hybrid(self, context, **kwargs):
+                self.context = context
+                return Answer(
+                    "General knowledge:\nFIFO removes the oldest item first.\n"
+                    "Repository evidence:\nThe current source handles the requested symbol [E1].",
+                    tuple(item.citation for item in context.evidence), False,
+                )
+
+        provider = HybridProvider()
+        with (
+            patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
+            patch("agentforge.cli.create_provider", return_value=provider),
+            patch("agentforge.cli._open_current_index", return_value=scope),
+            patch("agentforge.cli.ProductRetriever", return_value=product_retriever),
+            patch("agentforge.cli._context_candidates", return_value=(candidate,)),
+        ):
+            code, output, errors = invoke([
+                "ask", "Explain FIFO generally and how this project implements it.",
+                "--mode", "hybrid", "--provider", "llama-server",
+                "--base-url", "http://127.0.0.1:32123", "--model", "qwen3.5-4b",
+            ])
+        self.assertEqual((code, errors), (0, ""))
+        payload = json.loads(output)
+        self.assertEqual("hybrid", payload["retrieval"]["mode"])
+        self.assertEqual("limited", payload["answer_contract"]["status"])
+        self.assertEqual(["general", "repository"],
+                         [item["origin"] for item in payload["answer_contract"]["claims"]])
+        self.assertTrue(provider.context.evidence)
+
     def test_provider_failure_diagnostic_is_bounded_to_codes_and_request_counts(self):
         provider = Mock()
         provider.request_stats.return_value = {
@@ -51,8 +253,73 @@ class CliTests(LocalTestCase):
         self.assertNotIn("private model output", encoded)
         self.assertNotIn("never-copy-this", encoded)
 
+    def test_planner_failure_diagnostic_contains_shape_counts_not_query_text(self):
+        error = PlanningError(
+            "LLM Planner returned invalid bounded search queries.",
+            diagnostic_code="invalid_bounded_search_queries",
+            diagnostic_details={
+                "query_count": 4, "empty_query_count": 0, "non_string_count": 0,
+                "oversized_query_count": 0, "max_query_chars": 17,
+                "planner_request_count": 2, "correction_attempted": True,
+                "correction_status": "rejected",
+                "initial_query_shape": {"query_count": 4, "max_query_chars": 17},
+                "query": "PRIVATE_QUERY_MUST_NOT_BE_LOGGED",
+            },
+        )
+
+        diagnostic = _planner_failure_diagnostic(error)
+        encoded = json.dumps(diagnostic)
+
+        self.assertEqual("invalid_bounded_search_queries", diagnostic["failure_code"])
+        self.assertEqual(2, diagnostic["planner_request_count"])
+        self.assertEqual("rejected", diagnostic["correction_status"])
+        self.assertEqual(4, diagnostic["final_query_shape"]["query_count"])
+        self.assertNotIn("PRIVATE_QUERY_MUST_NOT_BE_LOGGED", encoded)
+
+    def test_planner_schema_rejection_is_not_reported_as_invalid_configuration(self):
+        class InvalidPlannerProvider:
+            descriptor = LOCAL_QWEN
+            provider_id = "llama-server"
+            model = "synthetic-qwen"
+
+            def __init__(self):
+                self.calls = 0
+
+            def plan_completion(self, _messages, **_kwargs):
+                self.calls += 1
+                payload = {
+                    "intent": "repository",
+                    "tasks": [{
+                        "task_id": "r1", "task_type": "repository",
+                        "question": "Find the requested implementation",
+                        "requires_retrieval": True,
+                        "search_queries": ["PRIVATE_INTERNAL_SEARCH_PHRASE"] * 4,
+                        "dependencies": [],
+                    }],
+                    "requires_repository": True, "requires_external_data": False,
+                    "requires_agent_execution": False, "answer_strategy": "evidence_based",
+                    "clarification_required": False, "confidence": 0.9,
+                    "reason": "Synthetic invalid search query shape.",
+                }
+                return json.dumps(payload)
+
+        provider = InvalidPlannerProvider()
+        with patch("agentforge.cli.create_provider", return_value=provider):
+            code, output, errors = invoke([
+                "ask", "what does conv2d do", "--provider", "llama-server",
+                "--base-url", "http://127.0.0.1:32123", "--model", "synthetic-qwen",
+            ])
+
+        self.assertEqual(1, code)
+        self.assertEqual("", output)
+        self.assertIn("AgentForge planning failed:", errors)
+        self.assertNotIn("Invalid configuration:", errors)
+        self.assertIn("AF_PLANNER_DIAGNOSTIC=", errors)
+        self.assertEqual(2, provider.calls)
+        self.assertNotIn("PRIVATE_INTERNAL_SEARCH_PHRASE", errors)
+
     def test_conversation_budget_failure_is_not_mislabeled_as_configuration_error(self):
-        source = result(text="PRIVATE_SYNTHETIC_SOURCE_" + "x" * 5000)
+        source = result(text="Explain this symbol\nPRIVATE_SYNTHETIC_SOURCE_" + "x" * 5000)
         candidate = ProductCandidate(
             source.repository, source.relative_path, source.start_line, source.end_line,
             source.text, source.content_hash, source.score, ("symbols",),
@@ -90,7 +357,7 @@ class CliTests(LocalTestCase):
             code, output, errors = invoke([
                 "ask", "Explain this symbol", "--provider", "llama-server",
                 "--base-url", "http://127.0.0.1:32123", "--model", "synthetic",
-                "--conversation-id", "conversation-id",
+                "--conversation-id", "conversation-id", "--mode", "repository",
             ])
         self.assertEqual(1, code)
         self.assertEqual("", output)
@@ -144,7 +411,7 @@ class CliTests(LocalTestCase):
         self.assertEqual(provider.client.connect_timeout, 2.0)
         self.assertEqual(provider.client.read_timeout, 60.0)
         self.assertEqual(provider.client.total_timeout, 180.0)
-        self.assertEqual(provider.client.max_output_tokens, 256)
+        self.assertEqual(provider.client.max_output_tokens, 512)
 
     def test_llama_timeout_options_are_independent_and_passed_to_client(self):
         store = Mock()
@@ -164,6 +431,7 @@ class CliTests(LocalTestCase):
             code, _, errors = invoke([
                 "ask", "example", "--provider", "llama-server",
                 "--base-url", "http://127.0.0.1:32123", "--model", "synthetic-model",
+                "--mode", "repository",
                 "--connect-timeout", "3.5", "--read-timeout", "75",
                 "--total-timeout", "210", "--max-output-tokens", "128",
             ])
@@ -185,7 +453,7 @@ class CliTests(LocalTestCase):
                 self.assertIn("read-timeout", errors.getvalue())
         for option, values in (
             ("--total-timeout", ("invalid", "9.999", "300.001", "nan", "inf")),
-            ("--max-output-tokens", ("invalid", "0", "513", "1.5")),
+            ("--max-output-tokens", ("invalid", "0", "1.5")),
         ):
             for value in values:
                 with self.subTest(option=option, value=value):
@@ -242,7 +510,7 @@ class CliTests(LocalTestCase):
             code, output, errors = invoke([
                 "ask", "example", "--provider", "llama-server",
                 "--base-url", "http://127.0.0.1:32123/v1/chat/completions",
-                "--model", "synthetic-model",
+                "--model", "synthetic-model", "--mode", "repository",
             ])
         self.assertEqual((code, errors), (0, ""))
         payload = json.loads(output)
@@ -253,13 +521,13 @@ class CliTests(LocalTestCase):
         client_factory.assert_called_once_with(
             "http://127.0.0.1:32123/v1/chat/completions", api_key="test-only-key",
             connect_timeout=2.0, read_timeout=60.0,
-            total_timeout=180.0, max_output_tokens=256,
+            total_timeout=180.0, max_output_tokens=512,
         )
         messages = fake_client.chat.call_args.args[0]
         self.assertIn("Question:\nexample", messages[1]["content"])
         self.assertIn("[E1]", messages[1]["content"])
         self.assertNotIn("src/example.py:4-5", messages[1]["content"])
-        self.assertIn("Cite only supplied IDs", messages[0]["content"])
+        self.assertIn("applicable current evidence ID", messages[0]["content"])
         self.assertEqual(fake_client.chat.call_args.kwargs["model"], "synthetic-model")
 
     def test_low_confidence_missing_symbol_is_refused_before_model_request(self):
@@ -292,6 +560,7 @@ class CliTests(LocalTestCase):
             code, output, errors = invoke([
                 "ask", "missing_symbol", "--provider", "llama-server",
                 "--base-url", "http://127.0.0.1:32123", "--model", "synthetic-model",
+                "--mode", "repository",
             ])
         self.assertEqual((code, errors), (0, ""))
         payload = json.loads(output)
@@ -318,6 +587,7 @@ class CliTests(LocalTestCase):
             code, output, errors = invoke([
                 "ask", "example", "--provider", "llama-server",
                 "--base-url", "http://127.0.0.1:32123", "--model", "synthetic-model",
+                "--mode", "repository",
             ])
         self.assertEqual(code, 1)
         self.assertEqual(output, "")

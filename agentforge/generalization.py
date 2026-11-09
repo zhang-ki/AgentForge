@@ -65,6 +65,9 @@ def corpus_manifest(root: Path = DEFAULT_CORPUS) -> dict:
             resolved = child.resolve(strict=True)
             if not resolved.is_relative_to(root):
                 raise ValueError("Generalization corpus contains a directory outside its root.")
+            # Runtime bytecode is neither frozen source nor evaluation evidence.
+            if name.casefold() == "__pycache__":
+                continue
             kept_directories.append(name)
         directories[:] = kept_directories
         for name in sorted(filenames, key=str.casefold):
@@ -75,6 +78,8 @@ def corpus_manifest(root: Path = DEFAULT_CORPUS) -> dict:
             resolved = path.resolve(strict=True)
             if not resolved.is_relative_to(root) or not resolved.is_file():
                 raise ValueError("Generalization corpus contains a file outside its root.")
+            if path.suffix.casefold() in {".pyc", ".pyo"}:
+                continue
             data = path.read_bytes()
             entries.append({
                 "path": path.relative_to(root).as_posix(),

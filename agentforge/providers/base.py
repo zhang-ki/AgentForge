@@ -5,6 +5,6 @@ from ..models import Answer, BuiltContext
 
 class Provider(Protocol):
     def answer(self, context: BuiltContext) -> Answer:
-        """返回结构化引用属于当前上下文的回答。"""
+        """返回不可信模型文本；来源引用由应用层 Answer Contract 解析和验证。"""
         ...
 

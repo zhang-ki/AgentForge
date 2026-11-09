@@ -12,19 +12,21 @@ import sqlite3
 import sys
 
 from .agent_loop import AgentLoop, OfflineAgentPlanner, ReadOnlyToolbox
-from .answer_contract import (
-    build_offline_contract, validate_answer_contract, verify_generated_answer,
-)
 from .config import DATABASE_PATH, REPOSITORY_CATALOG_PATH
-from .context import build_context
 from .conversation_context import ContextBudgetExceeded
-from .errors import AgentForgeError, ProviderError
+from .errors import AgentForgeError
 from .indexer import index_repository
+from .planner import PlanningError
 from .providers.llama_server import (
     LlamaServerClient, LlamaServerProvider, validate_output_tokens, validate_timeout,
 )
 from .providers.offline import OfflineProvider
 from .product_retrieval import ProductRetriever
+from .dialogue_retrieval import (
+    _context_candidates, _conversation_retrieval, _followup_symbol,
+    _is_followup, _narrow_explicit_symbol_candidates,
+    _prioritize_required_evidence, _unique_mentioned_symbol,
+)
 from .retriever import search
 from .store import IndexStore
 
@@ -52,27 +54,38 @@ def _positive_timeout_argument(value: str) -> float:
     return _timeout_argument(value, "tool-timeout", 0, 120, inclusive_minimum=False)
 
 
-def _model_input_budget(provider, requested_output_tokens, requested_byte_cap=None,
+def _model_input_budget(provider, requested_output_tokens, requested_input_token_cap=None,
                         *, provider_id=None, model_id=None):
     if isinstance(provider, OfflineProvider) or provider_id == "offline":
-        return {"input_budget": requested_byte_cap or 6000, "output_reserve": 0,
-                "safety_margin": 0, "context_window": None, "estimate_kind": "UTF-8 bytes; offline provider"}
+        return {"input_budget": requested_input_token_cap or 6000, "output_reserve": 0,
+                "safety_margin": 0, "context_window": None, "estimate_kind": "UTF-8 bytes; offline provider",
+                "budget_unit": "bytes"}
     from .model_registry import ModelRegistry
-    from .token_budget import TokenBudgetManager
+    from .context_assembler import ContextAssembler
     descriptor = getattr(provider, "descriptor", None)
     if descriptor is None:
         registry = ModelRegistry()
         if provider_id == "deepseek":
-            descriptor = registry.get(model_id)
+            descriptor = registry.get_for_request(model_id)
         else:
             descriptor = registry.get("qwen-local")
-    budget = TokenBudgetManager().budget(descriptor, requested_output_tokens=requested_output_tokens)
-    input_budget = budget.input_budget if requested_byte_cap is None else min(budget.input_budget, requested_byte_cap)
+    assembler = getattr(provider, "context_assembler", None)
+    if not isinstance(assembler, ContextAssembler):
+        assembler = ContextAssembler()
+    budget = assembler.budget(descriptor, requested_output_tokens=requested_output_tokens)
+    input_budget = (budget.input_budget if requested_input_token_cap is None
+                    else min(budget.input_budget, requested_input_token_cap))
     if input_budget < 1:
-        raise ValueError("Requested byte cap leaves no input budget for the selected model.")
+        raise ValueError("Requested token cap leaves no input budget for the selected model.")
     return {"input_budget": input_budget, "output_reserve": budget.output_reserve,
             "safety_margin": budget.safety_margin, "context_window": budget.context_window,
-            "estimate_kind": budget.estimate_kind}
+            "estimate_kind": budget.estimate_kind,
+            "estimate_description": budget.estimate_description,
+            "max_input_tokens": budget.max_input_tokens,
+            "max_output_tokens": budget.max_output_tokens,
+            "reasoning_token_limit": budget.reasoning_token_limit,
+            "capability_source": budget.capability_source,
+            "capability_verified_at": budget.capability_verified_at}
 
 
 def create_provider(
@@ -81,14 +94,17 @@ def create_provider(
     model: str | None = None,
     api_key: str | None = None,
     connect_timeout: float = 2.0, read_timeout: float = 60.0,
-    total_timeout: float = 180.0, max_output_tokens: int = 256,
+    total_timeout: float = 180.0, max_output_tokens: int | None = None,
+    output_budget_mode: str = "standard",
     deepseek_api_key: str | None = None, thinking: bool = False,
     effort: str | None = None, stream: bool = False,
+    context_assembler=None,
 ):
     """创建用户明确选择的 ask Provider；构造客户端本身不会发起请求。"""
     if provider_name == "offline":
         if (base_url is not None or model is not None or connect_timeout != 2.0
-                or read_timeout != 60.0 or total_timeout != 180.0 or max_output_tokens != 256
+                or read_timeout != 60.0 or total_timeout != 180.0 or max_output_tokens is not None
+                or output_budget_mode != "standard"
                 or thinking or effort is not None or stream):
             raise ValueError(
                 "Model, thinking, timeout and output options require an explicit model provider."
@@ -106,11 +122,17 @@ def create_provider(
         if model is None:
             raise ValueError("--model is required for --provider deepseek.")
         from .model_registry import ModelRegistry
-        descriptor = ModelRegistry().get(model)
+        descriptor = ModelRegistry().get_for_request(model)
         if descriptor.provider_id != "deepseek" or descriptor.model_id != model:
             raise ValueError("The requested model is not a discovered DeepSeek model ID.")
         if descriptor.context_window is None or descriptor.max_output_tokens is None:
             raise ValueError("The discovered model lacks verified context-window metadata; refresh model information.")
+        from .token_budget import ContextBudgetManager
+        budget_manager = getattr(context_assembler, "budgets", None) or ContextBudgetManager()
+        resolved_output = budget_manager.resolve_output_budget(
+            descriptor, mode=output_budget_mode,
+            explicit_output_tokens=max_output_tokens,
+        )
         if thinking and descriptor.supports_thinking is not True:
             raise ValueError("Thinking capability is unknown or unsupported for this model.")
         if stream and descriptor.supports_streaming is not True:
@@ -121,8 +143,10 @@ def create_provider(
         client = DeepSeekClient(key, connect_timeout=connect_timeout,
                                 read_timeout=read_timeout, total_timeout=total_timeout)
         client.set_credential_source(source)
-        return DeepSeekProvider(client, model, max_output_tokens=min(max_output_tokens, descriptor.max_output_tokens),
-                                thinking=thinking, effort=effort, stream=stream, descriptor=descriptor)
+        return DeepSeekProvider(client, model, max_output_tokens=max_output_tokens,
+                                output_budget_mode=output_budget_mode,
+                                thinking=thinking, effort=effort, stream=stream, descriptor=descriptor,
+                                context_assembler=context_assembler)
     if provider_name != "llama-server":
         raise ValueError("Provider must be offline, llama-server or deepseek.")
     if thinking or effort is not None or stream:
@@ -133,20 +157,27 @@ def create_provider(
         raise ValueError("--model is required for --provider llama-server.")
     if api_key is None or not api_key.strip():
         raise ValueError("AGENTFORGE_LLAMA_API_KEY is required for --provider llama-server.")
+    from .model_registry import ModelRegistry
+    descriptor = ModelRegistry().get("qwen-local")
+    from .token_budget import ContextBudgetManager
+    budget_manager = getattr(context_assembler, "budgets", None) or ContextBudgetManager()
+    resolved_output = budget_manager.resolve_output_budget(
+        descriptor, mode=output_budget_mode,
+        explicit_output_tokens=max_output_tokens,
+    )
     try:
         client = LlamaServerClient(base_url, api_key=api_key, connect_timeout=connect_timeout,
                                    read_timeout=read_timeout, total_timeout=total_timeout,
-                                   max_output_tokens=max_output_tokens)
+                                   max_output_tokens=resolved_output.effective_tokens)
     except ValueError as exc:
         if "API key" in str(exc):
             raise ValueError(f"Invalid AGENTFORGE_LLAMA_API_KEY: {exc}") from None
         if "timeout" in str(exc).lower():
             raise ValueError(str(exc)) from None
         raise ValueError(f"Invalid --base-url for llama-server: {exc}") from None
-    provider = LlamaServerProvider(client, model.strip())
-    from .model_registry import ModelRegistry
-    provider.descriptor = ModelRegistry().get("qwen-local")
-    return provider
+    return LlamaServerProvider(client, model.strip(), descriptor=descriptor,
+                               output_budget_mode=output_budget_mode,
+                               context_assembler=context_assembler)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -166,10 +197,15 @@ def parser() -> argparse.ArgumentParser:
         command.add_argument("--top-k", type=int, default=5)
         if name == "ask":
             command.add_argument("--conversation-id", help="Persist and use this repository-scoped conversation UUID.")
+            command.add_argument(
+                "--mode", choices=("general", "repository", "hybrid", "auto"),
+                default="auto",
+                help="Advanced routing override for development and acceptance; default: LLM-planned auto routing.",
+            )
             command.add_argument("--use-chroma", action="store_true",
                                  help="Use the persistent local Chroma code and approved-memory candidates.")
             command.add_argument("--context-budget", type=int, default=None,
-                                 help="Optional UTF-8-byte evidence cap; default derives from the selected model's token window.")
+                                 help="Optional maximum input-token cap; the selected model's verified limits still apply.")
             command.add_argument(
                 "--provider", choices=("offline", "llama-server", "deepseek"), default=None,
                 help="offline (default), llama-server (local Qwen), or deepseek (explicit cloud API).",
@@ -222,14 +258,23 @@ def parser() -> argparse.ArgumentParser:
     agent.add_argument("query")
     agent.add_argument("--repo", required=True, help="Explicit repository root; no default scan path.")
     agent.add_argument("--top-k", type=int, default=5)
-    agent.add_argument("--provider", dest="agent_provider", choices=("offline", "deepseek"), default="offline",
-                       help="Use the deterministic offline planner or an explicitly authorized DeepSeek tool planner.")
-    agent.add_argument("--model", dest="agent_model", help="Previously discovered DeepSeek model ID.")
+    agent.add_argument("--provider", dest="agent_provider", choices=("offline", "llama-server", "deepseek"), default="offline",
+                       help="Use the offline planner, local Qwen structured planner, or explicitly authorized DeepSeek planner.")
+    agent.add_argument("--base-url", help="Explicit loopback llama-server chat-completions URL for local Qwen.")
+    agent.add_argument("--model", dest="agent_model", help="Explicit local Qwen model ID or previously discovered DeepSeek model ID.")
+    agent.add_argument("--conversation-id", help="Persist this Agent execution under an existing repository-scoped conversation.")
+    agent.add_argument("--use-memory", action="store_true",
+                       help="Retrieve up to four relevant approved memories for the selected repository from PostgreSQL and local Chroma.")
+    agent.add_argument("--execution-id", help="Resume a saved execution; requires --conversation-id.")
+    agent.add_argument("--user-input", help="Provide the requested user input when resuming a WAITING_USER_INPUT execution.")
+    agent.add_argument("--approve-pending", action="store_true",
+                       help="Approve the exact pending tool call shown by a prior execution result; requires --execution-id.")
     agent.add_argument("--thinking", choices=("on", "off"), default="off")
     agent.add_argument("--effort", choices=("low", "high", "max"))
-    agent.add_argument("--stream", action="store_true", help="Use the bounded DeepSeek SSE protocol.")
+    agent.add_argument("--stream", action="store_true",
+                       help="Reserved for model content streaming; the Agent JSON planner currently does not stream.")
     agent.add_argument("--allow-cloud-data", action="store_true",
-                       help="Explicitly allow sending this objective and read-only tool results to DeepSeek.")
+                       help="Explicitly allow sending this objective and read-only tool results (and selected Memory when enabled) to DeepSeek.")
     agent.add_argument("--connect-timeout", type=_connect_timeout_argument, default=2.0, metavar="SECONDS")
     agent.add_argument("--read-timeout", type=_read_timeout_argument, default=60.0, metavar="SECONDS")
     _add_chat_limits(agent)
@@ -285,10 +330,58 @@ def _provider_failure_diagnostic(provider):
     return diagnostic
 
 
-def main(argv=None, *, stream_callback=None) -> int:
+def _planner_failure_diagnostic(error):
+    """Return bounded planner status and query-shape counts, never query text."""
+    details = getattr(error, "diagnostic_details", None)
+    details = details if isinstance(details, dict) else {}
+    planner = details.get("planner_diagnostics")
+    planner = planner if isinstance(planner, dict) else {}
+
+    def query_shape(value):
+        if not isinstance(value, dict):
+            return None
+        result = {}
+        value_type = value.get("value_type")
+        if isinstance(value_type, str) and value_type in {
+            "str", "list", "dict", "int", "float", "bool", "NoneType",
+        }:
+            result["value_type"] = value_type
+        for key in ("query_count", "non_string_count", "empty_query_count",
+                    "oversized_query_count", "max_query_chars"):
+            count = value.get(key)
+            if isinstance(count, int) and not isinstance(count, bool) and count >= 0:
+                result[key] = count
+        return result or None
+
+    request_count = details.get("planner_request_count", planner.get("planner_request_count"))
+    if isinstance(request_count, bool) or not isinstance(request_count, int):
+        request_count = None
+    diagnostic = {
+        "failure_phase": "planning",
+        "failure_code": getattr(error, "diagnostic_code", None) or "planning_failed",
+        "planner_request_count": request_count,
+        "correction_attempted": details.get(
+            "correction_attempted", planner.get("correction_attempted", False),
+        ) is True,
+    }
+    correction_status = details.get("correction_status", planner.get("correction_status"))
+    if correction_status in {"response_received", "accepted", "rejected", "request_failed"}:
+        diagnostic["correction_status"] = correction_status
+    initial_shape = query_shape(details.get("initial_query_shape")
+                                or planner.get("initial_query_shape"))
+    final_shape = query_shape(details)
+    if initial_shape:
+        diagnostic["initial_query_shape"] = initial_shape
+    if final_shape:
+        diagnostic["final_query_shape"] = final_shape
+    return diagnostic
+
+
+def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=None) -> int:
     arguments = parser().parse_args(argv)
     engine = None
     provider = None
+    planned_dialogue_plan = None
     try:
         if arguments.command == "session":
             _print_json(_session_command(arguments))
@@ -308,7 +401,37 @@ def main(argv=None, *, stream_callback=None) -> int:
         if arguments.command == "agent":
             from .repositories import open_index_for_repository
             with open_index_for_repository(arguments.repo, readonly=False) as store:
-                report, agent_provider = _run_selected_agent(arguments, store)
+                streaming = None
+                if event_callback is not None or stream_callback is not None:
+                    from .streaming import StreamingManager
+                    streaming = StreamingManager(
+                        on_event=event_callback, on_content=stream_callback,
+                        enabled=event_callback is not None or stream_callback is not None,
+                        cancel_event=cancel_event,
+                    )
+                    streaming.start()
+                try:
+                    report, agent_provider = _run_selected_agent(
+                        arguments, store, on_event=streaming, cancel_event=cancel_event,
+                    )
+                    if streaming is not None:
+                        if report.status == "completed":
+                            stats = (agent_provider.request_stats()
+                                     if callable(getattr(agent_provider, "request_stats", None)) else {})
+                            streaming.complete_validated(
+                                report.answer,
+                                usage=stats.get("last_usage") if isinstance(stats, dict) else None,
+                            )
+                        elif report.status in {"waiting_approval", "waiting_user_input"}:
+                            streaming.suspend(report.status)
+                        elif report.status == "cancelled":
+                            streaming.cancel()
+                        else:
+                            streaming.fail(report.execution_state or report.status)
+                except Exception as exc:
+                    if streaming is not None:
+                        streaming.fail(type(exc).__name__)
+                    raise
                 provider = agent_provider
                 payload = asdict(report)
                 if agent_provider is not None:
@@ -322,15 +445,70 @@ def main(argv=None, *, stream_callback=None) -> int:
                     arguments.base_url is not None or arguments.model is not None
                     or arguments.read_timeout != 60.0 or arguments.connect_timeout != 2.0
                     or arguments.total_timeout != 180.0 or arguments.thinking == "on"
-                    or arguments.effort is not None or arguments.stream):
+                    or arguments.effort is not None or arguments.stream
+                    or arguments.output_budget != "standard"
+                    or arguments.max_output_tokens is not None):
                 raise ValueError("Model options require --provider llama-server or --provider deepseek.")
             arguments.provider = arguments.provider or "offline"
             provider = create_provider(arguments.provider, arguments.base_url, arguments.model,
                 api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
                 connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
                 total_timeout=arguments.total_timeout, max_output_tokens=arguments.max_output_tokens,
+                output_budget_mode=arguments.output_budget,
                 thinking=arguments.thinking == "on", effort=arguments.effort,
                 stream=arguments.stream)
+            from .dialogue_router import DialogueMode
+            from .conversation_orchestrator import (
+                ConversationDependencies, ConversationOrchestrator,
+                ConversationRequest, ConversationSession,
+            )
+            from .session_service import SessionService
+            from .conversation_agent import ConversationAgentExecutor
+
+            if arguments.provider == "deepseek" and not arguments.allow_cloud_data:
+                raise ValueError("Cloud use requires --allow-cloud-data for this stateless request.")
+
+            def build_selected_provider(*factory_args, **factory_kwargs):
+                nonlocal provider
+                provider = create_provider(
+                    *factory_args, api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
+                    **factory_kwargs,
+                )
+                return provider
+
+            request = ConversationRequest(
+                query=arguments.query, repository="stateless", provider_id=arguments.provider,
+                model_id=arguments.model, base_url=arguments.base_url, top_k=arguments.top_k,
+                context_budget=arguments.context_budget,
+                max_output_tokens=arguments.max_output_tokens,
+                output_budget_mode=arguments.output_budget,
+                connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
+                total_timeout=arguments.total_timeout, thinking=arguments.thinking == "on",
+                effort=arguments.effort, stream=arguments.stream,
+                use_chroma=False, mode=arguments.mode,
+                cloud_data_authorized=arguments.allow_cloud_data,
+            )
+            dependencies = ConversationDependencies(
+                provider_factory=build_selected_provider,
+                model_budget_resolver=_model_input_budget,
+                summary_callback_factory=_semantic_summary_callback,
+                session_service=SessionService(),
+                agent_executor=ConversationAgentExecutor(engine=engine),
+            )
+            orchestrator = ConversationOrchestrator(dependencies)
+            stateless_session = ConversationSession(provider=provider)
+            dialogue_plan = orchestrator.plan(request, session=stateless_session)
+            if dialogue_plan.mode is DialogueMode.GENERAL:
+                result = orchestrator.run(
+                    request, index_store=None,
+                    session=stateless_session, on_content=stream_callback,
+                    on_event=event_callback, cancel_event=cancel_event,
+                    planned_plan=dialogue_plan,
+                )
+                provider = result.provider_instance or provider
+                _print_json(result.to_payload())
+                return 0
+            planned_dialogue_plan = dialogue_plan
         if arguments.command == "status" and not DATABASE_PATH.exists() and not REPOSITORY_CATALOG_PATH.exists():
             _print_json({"database": str(DATABASE_PATH), "exists": False, "files": 0, "chunks": 0, "indexed_at": None})
             return 0
@@ -363,245 +541,165 @@ def main(argv=None, *, stream_callback=None) -> int:
                 return 0 if report.status == "completed" else 1
             elif arguments.command == "ask":
                 repository = store.metadata().get("repository")
-                if not repository: raise ValueError("No repository is indexed; run index --repo PATH first.")
-                conversation_store = engine = conversation = None
+                if not repository:
+                    raise ValueError("No repository is indexed; run index --repo PATH first.")
+                conversation_store = None
+                repo_id = _repository_id(repository)
+                rows = ()
+                conversation = None
                 memory_count = 0
+                embedding_readiness_seconds = None
                 if arguments.conversation_id:
                     engine = _conversation_engine()
-                    conversation_store, repo_id, rows, conversation = _load_conversation(engine, arguments.conversation_id, repository)
-                    bound_provider = conversation.get("provider_id")
-                    bound_model = conversation.get("model_id")
-                    if bound_provider is None:
-                        bound_provider = arguments.provider or "llama-server"
-                    if bound_model is None:
-                        bound_model = arguments.model or "qwen3.5-4b"
+                    conversation_store, repo_id, rows, conversation = _load_conversation(
+                        engine, arguments.conversation_id, repository,
+                    )
+                    bound_provider = conversation.get("provider_id") or arguments.provider or "llama-server"
+                    bound_model = conversation.get("model_id") or arguments.model or "qwen3.5-4b"
                     if arguments.provider is None:
                         arguments.provider, arguments.model = bound_provider, bound_model
                     if arguments.provider == "deepseek" and not conversation.get("cloud_consent_at"):
-                        raise ValueError("This conversation has no cloud-data consent. Switch models and explicitly approve cloud sharing first.")
-                    if provider is None:
+                        raise ValueError(
+                            "This conversation has no cloud-data consent. Switch models and explicitly approve cloud sharing first."
+                        )
+                    if provider is None and arguments.provider == "offline":
+                        provider = OfflineProvider()
+                    elif provider is None:
                         arguments.provider, arguments.model = bound_provider, bound_model
                         arguments.thinking = "on" if conversation.get("thinking_enabled") else "off"
                         arguments.effort = conversation.get("reasoning_effort")
-                        if arguments.provider == "offline":
-                            provider = OfflineProvider()
                     elif arguments.provider != bound_provider or (
                             arguments.provider != "offline" and arguments.model != bound_model):
-                        raise ValueError("This session uses its persisted model. Switch it with /model before asking another provider.")
+                        raise ValueError(
+                            "This session uses its persisted model. Switch it with /model before asking another provider."
+                        )
                     if arguments.provider == "deepseek":
                         if (conversation.get("provider_id") not in (None, "deepseek")
                                 or conversation.get("model_id") not in (None, arguments.model)):
-                            raise ValueError("The selected model differs from this session's saved binding; use /model to switch it first.")
+                            raise ValueError(
+                                "The selected model differs from this session's saved binding; use /model to switch it first."
+                            )
                         conversation["thinking_enabled"] = arguments.thinking == "on"
                         conversation["reasoning_effort"] = arguments.effort
                     elif conversation.get("provider_id") == "deepseek":
-                        raise ValueError("This session is bound to DeepSeek; use its saved model or switch the session back to Qwen.")
+                        raise ValueError(
+                            "This session is bound to DeepSeek; use its saved model or switch the session back to Qwen."
+                        )
                 elif arguments.provider == "deepseek" and not arguments.allow_cloud_data:
                     raise ValueError("Cloud use requires --allow-cloud-data for this stateless request.")
+
                 vector_retriever = None
-                chroma_client = None
                 if arguments.use_chroma:
-                    from .af012_runtime import create_persistent_chroma, embedding_provider_from_environment, collection_for_model
+                    from .af012_runtime import (
+                        create_persistent_chroma, embedding_provider_from_environment,
+                        collection_for_model,
+                    )
                     from .embeddings.chroma_index import ChromaCodeIndex
                     embedding_provider = embedding_provider_from_environment()
                     embedding_readiness_seconds = embedding_provider.wait_ready()
                     chroma_client = create_persistent_chroma()
-                    collection = collection_for_model(chroma_client, embedding_provider.model_id,
-                                                       embedding_provider.dimension)
+                    collection = collection_for_model(
+                        chroma_client, embedding_provider.model_id, embedding_provider.dimension,
+                    )
                     vector_retriever = ChromaCodeIndex(store, collection, embedding_provider)
                     if conversation is not None:
                         from .memory_retrieval import ChromaMemoryRetriever
                         from .memory_store import MemoryStore
-                        memory_store = MemoryStore(engine)
+                        from .memory_service import MemoryService
                         conversation = dict(conversation)
-                        conversation["memories"] = tuple(ChromaMemoryRetriever(
-                            collection, embedding_provider, memory_store).search(
-                                arguments.query, repository_id=repo_id))
-                        memory_count = len(conversation["memories"])
-                retriever = ProductRetriever(store, repository, vector_retriever=vector_retriever)
-                outcome = retriever.search(arguments.query, top_k=arguments.top_k)
-                outcome, followup_symbol = _conversation_retrieval(outcome, retriever, conversation, arguments, store, rows if conversation else ())
-                selected = _context_candidates(outcome, conversation, store=store, retriever=retriever)
-                results = [item.as_search_result() for item in selected]
-                model_budget = _model_input_budget(
-                    provider, arguments.max_output_tokens, arguments.context_budget,
-                    provider_id=arguments.provider, model_id=arguments.model)
-                from .evidence_roles import required_evidence_roles, role_coverage
-                required_roles = required_evidence_roles(arguments.query)
-                context = build_context(
-                    arguments.query, results,
-                    max_candidates=max(arguments.top_k, len(required_roles)),
-                    budget=model_budget["input_budget"],
-                )
-                if results and not context.evidence:
-                    required_bytes = sum(len(item.text.encode("utf-8")) for item in results)
-                    raise ContextBudgetExceeded({
-                        "failure_code": "required_evidence_exceeds_model_input_budget",
-                        "required_bytes": required_bytes,
-                        "budget_bytes": model_budget["input_budget"],
-                        "components_bytes": {"question": len(arguments.query.encode("utf-8")),
-                                             "evidence": required_bytes,
-                                             "system": 0, "framing": 0},
-                        "content_saved": False,
-                        "estimate_kind": "UTF-8 bytes; model Tokenizer budget is separately marked",
-                    })
-                candidate_map = {item.citation: item for item in selected}
-                evidence_uncertainty = outcome.uncertainty or (
-                    "The static configuration import is not proven as a runtime binding."
-                    if any(item.resolution_status in {"uncertain", "unresolved", "ambiguous"}
-                           for item in selected) else None)
-                role_audit = role_coverage(
-                    arguments.query,
-                    (role for source in context.evidence for role in source.result.evidence_roles),
-                )
-                role_gate_failure = bool(role_audit["missing_available_roles"])
-                if role_gate_failure:
-                    evidence_uncertainty = (
-                        "The available evidence does not cover required source roles: "
-                        + ", ".join(role_audit["missing_available_roles"])
-                        + ". No model answer was requested."
-                    )
-                evidence_gate_refusal = bool(
-                    not context.evidence or role_gate_failure
-                    or (outcome.decision.confidence == "low" and evidence_uncertainty)
-                )
-                # A request-local evidence refusal must not require a model
-                # endpoint or credentials: nothing is sent to a provider.
-                # Construct the selected provider only after the evidence gate.
-                if context.evidence and not evidence_gate_refusal and provider is None:
-                    provider = create_provider(arguments.provider, arguments.base_url, arguments.model,
-                        api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
-                        connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
-                        total_timeout=arguments.total_timeout, max_output_tokens=arguments.max_output_tokens,
-                        thinking=arguments.thinking == "on", effort=arguments.effort,
-                        stream=arguments.stream)
-                if conversation_store is not None and context.evidence and not evidence_gate_refusal:
-                    summarizer = (_semantic_summary_callback(provider)
-                                  if (context.evidence and not evidence_gate_refusal
-                                      and callable(getattr(provider, "summary_text", None))) else None)
-                    rows, summary = conversation_store.prepare_history(
-                        arguments.conversation_id, repo_id, summarizer=summarizer,
-                        summary_model=provider.model if summarizer is not None else None,
-                    )
-                    covered = summary["covered_through"] if summary else 0
-                    from .conversation_context import ConversationTurn
-                    from .conversation_facts import extract_message_facts, merge_fact_ledgers
-                    conversation["history"] = tuple(ConversationTurn(
-                        arguments.conversation_id, repo_id, row["sequence"], row["role"],
-                        row["content"], row["status"])
-                        for row in rows if row["sequence"] > covered)
-                    conversation["summary"] = summary["content"] if summary else None
-                    conversation["summary_covered_through"] = covered
-                    conversation["context_fact_ledger"] = tuple(merge_fact_ledgers(
-                        summary.get("fact_ledger", []) if summary else [],
-                        extract_message_facts(rows),
-                    ))
-                if evidence_gate_refusal:
-                    answer = OfflineProvider().answer(context)
-                    contract = build_offline_contract(
-                        answer, context, route=outcome.decision.route,
-                        route_confidence=outcome.decision.confidence,
-                        candidate_by_citation=candidate_map, uncertainty=evidence_uncertainty,
-                        force_refusal_reason=evidence_uncertainty if role_gate_failure else None,
-                    )
-                    provider_mode = "evidence_gate_refusal"
-                else:
-                    if isinstance(provider, OfflineProvider):
-                        answer = provider.answer(context)
-                    else:
-                        if stream_callback is None:
-                            answer = provider.answer(context, conversation=conversation, settings=conversation)
-                        else:
-                            answer = provider.answer(context, conversation=conversation, settings=conversation,
-                                                     on_content=stream_callback)
-                    if answer.offline:
-                        contract = build_offline_contract(
-                            answer, context, route=outcome.decision.route,
-                            route_confidence=outcome.decision.confidence,
-                            candidate_by_citation=candidate_map, uncertainty=evidence_uncertainty,
-                        )
-                        provider_mode = (
-                            "offline" if arguments.provider == "offline"
-                            else "offline_no_evidence"
-                        )
-                    else:
+                        memory_repository = MemoryStore(engine)
                         try:
-                            contract = verify_generated_answer(
-                                answer, context, route=outcome.decision.route,
-                                route_confidence=outcome.decision.confidence,
-                                candidate_by_citation=candidate_map, uncertainty=evidence_uncertainty,
+                            conversation["memories"] = MemoryService(memory_repository).retrieve_approved(
+                                ChromaMemoryRetriever(collection, embedding_provider, memory_repository),
+                                arguments.query, repo_id, limit=4,
                             )
-                        except ProviderError as exc:
-                            provider.client.record_application_failure(
-                                "answer_contract", getattr(exc, "code", "answer_contract_failed"),
-                                getattr(exc, "diagnostic", None),
-                            )
-                            raise
-                        provider_mode = getattr(provider, "provider_id", "unknown")
-                validate_answer_contract(contract, context)
-                if conversation_store is not None:
-                    _persist_conversation(conversation_store, arguments, repo_id, answer, provider)
-                request_stats = (provider.request_stats()
-                                 if callable(getattr(provider, "request_stats", None)) else None)
-                injected_memories = _injected_memory_metadata(conversation)
-                cited_citations = tuple(citation for claim in contract.claims
-                                        for citation in claim.citations)
-                cited_roles = {role for item in contract.evidence
-                               if item.citation in cited_citations
-                               for role in item.evidence_roles}
-                role_audit = role_coverage(
-                    arguments.query,
-                    (role for item in contract.evidence for role in item.evidence_roles),
-                    cited_roles,
+                            memory_count = len(conversation["memories"])
+                            conversation["memory_retrieval"] = {
+                                "status": "available", "candidate_count": memory_count,
+                            }
+                        except Exception as exc:
+                            # Long-term memory is optional context. Keep repository
+                            # retrieval active, but make the degradation observable.
+                            conversation["memories"] = ()
+                            conversation["memory_retrieval"] = {
+                                "status": "unavailable", "candidate_count": 0,
+                                "error_type": type(exc).__name__,
+                            }
+
+                from .conversation_orchestrator import (
+                    ConversationDependencies, ConversationOrchestrator,
+                    ConversationRequest, ConversationSession,
                 )
-                _print_json({
-                    "provider": provider_mode,
-                    "answer": answer.text if contract.status != "refused" else None,
-                    "refused_output": answer.text if contract.status == "refused" else None,
-                    "answer_contract": asdict(contract),
-                    "retrieval": {
-                        "route": outcome.decision.route,
-                        "rule": outcome.decision.rule,
-                        "reason": outcome.decision.reason,
-                        "confidence": outcome.decision.confidence,
-                        "uncertainty": evidence_uncertainty,
-                        "unavailable_channels": list(outcome.unavailable_channels),
-                        "conversation_lookup_symbol": followup_symbol,
-                    },
-                    "context_budget": {
-                        "estimated_units": context.estimated_tokens,
-                        "limit": context.budget,
-                        "estimate_kind": context.estimate_kind,
-                        "model_context_window": model_budget["context_window"],
-                        "reserved_output_tokens": model_budget["output_reserve"],
-                        "safety_margin_tokens": model_budget["safety_margin"],
-                        "token_estimate_kind": model_budget["estimate_kind"],
-                    },
-                    "evidence_role_coverage": role_audit,
-                    "conversation_context": (
-                        ({**conversation.get("context_diagnostics", {}),
-                          "token_estimate": conversation.get("token_budget_diagnostics")}
-                         if conversation else None)
-                    ),
-                    "summary_diagnostics": (
-                        list(getattr(conversation_store, "last_summary_diagnostics", ()))
-                        if conversation_store is not None and isinstance(
-                            getattr(conversation_store, "last_summary_diagnostics", ()), (list, tuple)
-                        ) else []
-                    ),
-                    "persistent_chroma": {"enabled": bool(arguments.use_chroma),
-                                          "memory_retrieved_count": memory_count,
-                                          "memory_context_count": len(injected_memories),
-                                          "memory_context": injected_memories,
-                                          "embedding_model_ready_seconds": (
-                                              embedding_readiness_seconds if arguments.use_chroma else None)},
-                    "provider_request_stats": request_stats,
-                })
+                from .session_service import SessionService
+                from .conversation_agent import ConversationAgentExecutor
+
+                def build_provider(*factory_args, **factory_kwargs):
+                    nonlocal provider
+                    provider = create_provider(
+                        *factory_args, api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
+                        **factory_kwargs,
+                    )
+                    return provider
+
+                request = ConversationRequest(
+                    query=arguments.query, repository=repository,
+                    provider_id=arguments.provider or "offline", model_id=arguments.model,
+                    base_url=arguments.base_url, top_k=arguments.top_k,
+                    context_budget=arguments.context_budget,
+                    max_output_tokens=arguments.max_output_tokens,
+                    output_budget_mode=arguments.output_budget,
+                    connect_timeout=arguments.connect_timeout,
+                    read_timeout=arguments.read_timeout,
+                    total_timeout=arguments.total_timeout,
+                    thinking=arguments.thinking == "on", effort=arguments.effort,
+                    stream=arguments.stream, conversation_id=arguments.conversation_id,
+                    use_chroma=arguments.use_chroma, mode=arguments.mode,
+                    cloud_data_authorized=(arguments.allow_cloud_data
+                                           or bool((conversation or {}).get("cloud_consent_at"))),
+                )
+                session = ConversationSession(
+                    provider=provider, store=conversation_store, repository_id=repo_id,
+                    rows=tuple(rows), conversation=conversation,
+                    memory_retrieved_count=memory_count,
+                    embedding_readiness_seconds=embedding_readiness_seconds,
+                )
+                dependencies = ConversationDependencies(
+                    provider_factory=build_provider,
+                    model_budget_resolver=_model_input_budget,
+                    retriever_factory=ProductRetriever,
+                    candidate_selector=_context_candidates,
+                    retrieval_refiner=_conversation_retrieval,
+                    summary_callback_factory=_semantic_summary_callback,
+                    session_service=SessionService(),
+                    agent_executor=ConversationAgentExecutor(engine=engine),
+                )
+                result = ConversationOrchestrator(dependencies).run(
+                    request, index_store=store, vector_retriever=vector_retriever,
+                    session=session, on_content=stream_callback,
+                    on_event=event_callback, cancel_event=cancel_event,
+                    planned_plan=planned_dialogue_plan,
+                )
+                provider = result.provider_instance or provider
+                _print_json(result.to_payload())
+                if result.execution_status != "completed":
+                    return 1
         return 0
     except ContextBudgetExceeded as exc:
         print(f"Context budget exceeded: {exc}", file=sys.stderr)
         print("AF_CONTEXT_BUDGET_DIAGNOSTIC=" + json.dumps(
             exc.diagnostics, ensure_ascii=True, sort_keys=True,
+        ), file=sys.stderr)
+        return 1
+    except PlanningError as exc:
+        diagnostic = _planner_failure_diagnostic(exc)
+        if diagnostic["planner_request_count"] is None and not diagnostic["correction_attempted"]:
+            # Capability/configuration checks can also use PlanningError, but no
+            # model planning request has started in that case.
+            print(f"Invalid configuration: {exc}", file=sys.stderr)
+            return 2
+        print(f"AgentForge planning failed: {exc}", file=sys.stderr)
+        print("AF_PLANNER_DIAGNOSTIC=" + json.dumps(
+            diagnostic, ensure_ascii=True, sort_keys=True,
         ), file=sys.stderr)
         return 1
     except ValueError as exc:
@@ -616,6 +714,12 @@ def main(argv=None, *, stream_callback=None) -> int:
                 diagnostic, ensure_ascii=True, sort_keys=True,
             ), file=sys.stderr)
         return 1
+    except Exception as exc:
+        # Keep database-driver details and connection strings out of terminal output.
+        if type(exc).__module__.startswith("sqlalchemy"):
+            print("AgentForge error: PostgreSQL conversation storage is unavailable.", file=sys.stderr)
+            return 1
+        raise
     finally:
         if engine is not None:
             engine.dispose()
@@ -630,7 +734,7 @@ def _output_tokens_argument(value: str) -> int:
         return validate_output_tokens(int(value))
     except (ValueError, TypeError):
         raise argparse.ArgumentTypeError(
-            "max-output-tokens must be an integer between 1 and 512."
+            "max-output-tokens must be a positive integer; the selected model's verified limit is checked before use."
         ) from None
 
 
@@ -640,8 +744,12 @@ def _add_chat_limits(command) -> None:
         help="Whole local generation deadline (default: 180; range: 10–300).",
     )
     command.add_argument(
-        "--max-output-tokens", type=_output_tokens_argument, default=256, metavar="TOKENS",
-        help="Maximum generated tokens (default: 256; range: 1–512).",
+        "--output-budget", choices=("concise", "standard", "long", "max"), default="standard",
+        help="Request output allowance (default: standard); constrained by the selected model metadata.",
+    )
+    command.add_argument(
+        "--max-output-tokens", type=_output_tokens_argument, default=None, metavar="TOKENS",
+        help="Explicit request-level output override; it cannot exceed the selected model or provider limit.",
     )
 
 
@@ -898,320 +1006,272 @@ def _seed_legacy_repository(registry):
         return None
 
 
-def _run_offline_agent(arguments, store):
-    toolbox = ReadOnlyToolbox(arguments.repo, store)
-    planner = OfflineAgentPlanner(toolbox.repository, top_k=arguments.top_k,
-                                 replace_repository=arguments.replace_repository)
-    return AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
-        tool_timeout_seconds=arguments.tool_timeout,
-        run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps))).run(arguments.query)
+def _run_offline_agent(arguments, store, *, on_event=None, cancel_event=None):
+    state_engine, state_store, result_store, repository_id, conversation_store, _context = _agent_persistence(arguments)
+    try:
+        toolbox = ReadOnlyToolbox(arguments.repo, store)
+        planner = OfflineAgentPlanner(toolbox.repository, top_k=arguments.top_k,
+                                     replace_repository=arguments.replace_repository)
+        report = AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
+            tool_timeout_seconds=arguments.tool_timeout,
+            run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps)),
+            state_store=state_store, result_store=result_store,
+            authorization=_agent_authorization(arguments, {"repository:index", "repository:read"}),
+            on_event=on_event, cancel_event=cancel_event,
+            repository_id=repository_id,
+            conversation_id=arguments.conversation_id).run(
+                arguments.query, execution_id=arguments.execution_id, user_input=arguments.user_input)
+        _persist_agent_conversation_turn(
+            arguments, report, None, state_engine, repository_id, conversation_store,
+        )
+        return report
+    finally:
+        if state_engine is not None:
+            state_engine.dispose()
 
 
-def _run_selected_agent(arguments, store):
+def _run_selected_agent(arguments, store, *, on_event=None, cancel_event=None):
     if arguments.agent_provider == "offline":
-        if arguments.agent_model or arguments.thinking == "on" or arguments.effort or arguments.stream:
-            raise ValueError("Model-specific Agent options require --provider deepseek.")
-        return _run_offline_agent(arguments, store), None
-    if not arguments.allow_cloud_data:
-        raise ValueError("DeepSeek Agent requires --allow-cloud-data; no cloud request was sent.")
+        if (arguments.agent_model or arguments.base_url or arguments.thinking == "on"
+                or arguments.effort or arguments.stream or arguments.allow_cloud_data
+                or arguments.use_memory or arguments.output_budget != "standard"
+                or arguments.max_output_tokens is not None):
+            raise ValueError("Model-specific Agent options require an explicit model provider.")
+        return _run_offline_agent(
+            arguments, store, on_event=on_event, cancel_event=cancel_event,
+        ), None
+    provider_name = arguments.agent_provider
+    if provider_name == "deepseek" and not arguments.allow_cloud_data:
+        raise ValueError("DeepSeek Agent requires --allow-cloud-data for the objective, tool results, and selected Memory; no cloud request was sent.")
+    if provider_name == "llama-server" and arguments.allow_cloud_data:
+        raise ValueError("--allow-cloud-data applies only to DeepSeek; no request was sent.")
     if not arguments.agent_model:
-        raise ValueError("DeepSeek Agent requires a model ID from /model refresh.")
+        raise ValueError("An explicit model ID is required for the selected Agent provider.")
+    if provider_name == "deepseek" and arguments.base_url is not None:
+        raise ValueError("DeepSeek uses its configured official endpoint; --base-url is local Qwen only.")
+    if provider_name == "llama-server" and (arguments.thinking == "on" or arguments.effort or arguments.stream):
+        raise ValueError("The local Agent planner uses bounded non-streaming JSON requests.")
+    if provider_name == "deepseek" and (arguments.thinking == "on" or arguments.effort or arguments.stream):
+        raise ValueError("The shared Agent planner uses bounded non-thinking, non-streaming JSON requests.")
     provider = create_provider(
-        "deepseek", model=arguments.agent_model,
+        provider_name, base_url=arguments.base_url, model=arguments.agent_model,
+        api_key=os.environ.get("AGENTFORGE_LLAMA_API_KEY"),
         connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
         total_timeout=min(arguments.total_timeout, 120.0),
         max_output_tokens=arguments.max_output_tokens,
-        thinking=arguments.thinking == "on", effort=arguments.effort,
-        stream=arguments.stream,
+        output_budget_mode=arguments.output_budget,
+        thinking=(arguments.thinking == "on" if provider_name == "deepseek" else False),
+        effort=(arguments.effort if provider_name == "deepseek" else None),
+        stream=(arguments.stream if provider_name == "deepseek" else False),
     )
-    if provider.descriptor.supports_tool_calling is not True:
-        raise ValueError("DeepSeek model metadata does not confirm tool-calling support; no request was sent.")
-    from .providers.deepseek_agent import DeepSeekAgentPlanner
-    toolbox = ReadOnlyToolbox(arguments.repo, store)
-    planner = DeepSeekAgentPlanner(
-        provider.client, provider.model, provider.descriptor,
-        max_output_tokens=provider.max_output_tokens,
-        thinking=provider.thinking_request, effort=provider.effort, stream=provider.stream,
-        run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps)),
+    state_engine, state_store, result_store, repository_id, conversation_store, conversation_context = _agent_persistence(
+        arguments, provider=provider,
     )
-    report = AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
-        tool_timeout_seconds=arguments.tool_timeout,
-        run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps))).run(arguments.query)
-    return report, provider
-
-
-def _conversation_retrieval(outcome, retriever, conversation, arguments, store, rows):
-    symbol = None
-    missing_named_symbol = False
-    if conversation is not None and outcome.decision.route == "exact_symbol" and _is_followup(arguments.query):
-        named = retriever._symbol_name(arguments.query)
-        missing_named_symbol = bool(named and not store.search_symbols(name=named, limit=1))
-    if conversation is not None and (outcome.decision.confidence == "low" or missing_named_symbol):
-        symbol = _unique_mentioned_symbol(arguments.query, store) or _followup_symbol(arguments.query, rows, store)
-        if symbol:
-            outcome = retriever.search(symbol, top_k=arguments.top_k)
-    return outcome, symbol
-
-
-def _focus_large_class_symbol(question, symbol, store, retriever):
-    """按行为查询过大的类时，使用精确的类头和成员源码范围。"""
-    if len(symbol.text.encode("utf-8")) <= 1_400 or not symbol.symbol_ids:
-        return None
+    memory_query = None
+    close_memory = None
     try:
-        tree = ast.parse(symbol.text)
-    except (SyntaxError, ValueError):
-        return None
-    classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
-    if len(classes) != 1:
-        return None
-
-    parameter_intent = bool(re.search(
-        r"\b(?:parameter|parameters|argument|arguments|initialize|initialization)\b|参数|初始化",
-        question, re.IGNORECASE,
-    ))
-    behavior_intent = bool(re.search(
-        r"\b(?:what|how)\b.*\b(?:do|does|work|perform|function)\b|作用|做什么|功能",
-        question, re.IGNORECASE,
-    ))
-    if not parameter_intent and not behavior_intent:
-        return None
-
-    try:
-        methods = [row for row in store.search_symbols(
-            kind="method", relative_path=symbol.relative_path, limit=500,
-        ) if row.get("parent_symbol_id") == symbol.symbol_ids[0]]
-    except (ValueError, AgentForgeError):
-        return None
-    if not methods:
-        return None
-
-    by_name = {str(row.get("name", "")).casefold(): row for row in methods}
-    priorities = (("__init__",) if parameter_intent else
-                  ("forward", "__call__", "run", "execute", "compute", "apply", "transform", "predict"))
-    selected = next((by_name[name] for name in priorities if name in by_name), None)
-    if selected is None:
-        public_methods = [row for row in methods
-                          if isinstance(row.get("name"), str)
-                          and not row["name"].startswith("_")]
-        if len(public_methods) == 1:
-            selected = public_methods[0]
-    if selected is None or not retriever._indexed_file_is_current(symbol.relative_path):
-        return None
-
-    class_start = symbol.start_line + classes[0].lineno - 1
-    method_start, method_end = selected.get("start_line"), selected.get("end_line")
-    if (isinstance(method_start, bool) or not isinstance(method_start, int)
-            or isinstance(method_end, bool) or not isinstance(method_end, int)
-            or method_start < 1 or method_end < method_start):
-        return None
-    try:
-        class_text = retriever._excerpt(symbol.relative_path, class_start, class_start)
-        method_text = retriever._excerpt(symbol.relative_path, method_start, method_end)
-    except ValueError:
-        return None
-
-    from .product_retrieval import ProductCandidate, _content_hash
-    class_header = replace(
-        symbol, start_line=class_start, end_line=class_start, text=class_text,
-        content_hash=_content_hash(symbol.relative_path, class_start, class_start, class_text),
-        evidence_roles=("definition",),
-    )
-    member = ProductCandidate(
-        symbol.repository, symbol.relative_path, method_start, method_end, method_text,
-        _content_hash(symbol.relative_path, method_start, method_end, method_text),
-        symbol.score, symbol.channels, symbol.channel_scores,
-        symbol_ids=(selected["symbol_id"],), resolution_status="resolved",
-        evidence_roles=("definition",),
-    )
-    return class_header, member
+        if arguments.conversation_id and conversation_context.get("provider_id") not in (None, "offline"):
+            if (conversation_context.get("provider_id") != provider_name
+                    or conversation_context.get("model_id") != arguments.agent_model):
+                raise ValueError("The selected Agent model differs from the conversation binding; switch the session model first.")
+        from .agent_execution import LLMExecutionPlanner
+        if arguments.use_memory:
+            from .repositories import repository_identity
+            repository_id = repository_id or repository_identity(arguments.repo)
+            memory_query, close_memory = _create_agent_memory_query(
+                repository_id, engine=state_engine,
+            )
+        toolbox = ReadOnlyToolbox(arguments.repo, store)
+        # Keep the CLI Agent planner aligned with the unified conversation
+        # entry point; ordinary answer limits do not cap structured plans.
+        planner_budget = LLMExecutionPlanner.output_tokens_for(provider)
+        planner = LLMExecutionPlanner(provider, max_output_tokens=planner_budget,
+                                      timeout_seconds=min(60.0, arguments.tool_timeout),
+                                      history=conversation_context.get("history", ()),
+                                      summary=conversation_context.get("summary"),
+                                      memory_query=memory_query,
+                                      repository_id=repository_id)
+        report = AgentLoop(toolbox, planner, max_steps=arguments.max_steps,
+            tool_timeout_seconds=arguments.tool_timeout,
+            run_timeout_seconds=min(600.0, max(120.0, arguments.tool_timeout * arguments.max_steps)),
+            authorization=_agent_authorization(arguments, {"repository:read"}),
+            state_store=state_store, result_store=result_store,
+            on_event=on_event, cancel_event=cancel_event,
+            repository_id=repository_id,
+            conversation_id=arguments.conversation_id).run(
+                arguments.query, execution_id=arguments.execution_id, user_input=arguments.user_input)
+        _persist_agent_conversation_turn(
+            arguments, report, provider, state_engine, repository_id, conversation_store,
+        )
+        return report, provider
+    finally:
+        if close_memory is not None:
+            close_memory()
+        if state_engine is not None:
+            state_engine.dispose()
 
 
-def _narrow_explicit_symbol_candidates(query, symbols, store):
-    """按精确拼写解析；必要时优先选择唯一的包级重新导出项。"""
-    from .product_retrieval import _mentioned_code_symbol
+def _create_agent_memory_query(repository_id, *, engine=None):
+    """Create a lazy, repository-scoped approved-memory port for the Agent planner."""
+    from .memory_service import MemoryRetrievalUnavailable
+    state = {"engine": engine, "owns_engine": False, "client": None,
+             "embedding": None, "service": None, "retriever": None,
+             "failure_type": None}
 
-    mentioned = _mentioned_code_symbol(query)
-    if not mentioned:
-        return tuple(symbols)
-
-    rows_by_candidate = {}
-    for candidate in symbols:
+    def initialize():
+        if state["failure_type"] is not None:
+            raise MemoryRetrievalUnavailable(state["failure_type"])
+        if state["service"] is not None:
+            return
         try:
-            rows = store.search_symbols_by_ids(candidate.symbol_ids, limit=100)
-        except (ValueError, AgentForgeError):
-            continue
-        rows_by_candidate[id(candidate)] = rows
+            if state["engine"] is None:
+                state["engine"] = _conversation_engine()
+                state["owns_engine"] = True
+            from .af012_connection import check_database_health
+            if not check_database_health(state["engine"]):
+                raise ConnectionError("PostgreSQL health check failed.")
+            from .af012_runtime import (
+                collection_for_model, create_persistent_chroma,
+                embedding_provider_from_environment,
+            )
+            from .memory_retrieval import ChromaMemoryRetriever
+            from .memory_service import MemoryService
+            from .memory_store import MemoryStore
 
-    if "." in mentioned:
-        exact = [candidate for candidate in symbols
-                 if any(row.get("qualified_name") == mentioned
-                        for row in rows_by_candidate.get(id(candidate), ()))]
-    else:
-            # Python 标识符区分大小写；交互式搜索的存储查找
-            # 不区分大小写，因此构建证据前要先移除
-        # 仅在大小写折叠后才匹配的近似结果，再构建证据。
-        exact = [candidate for candidate in symbols
-                 if any(row.get("name") == mentioned
-                        for row in rows_by_candidate.get(id(candidate), ()))]
-    if not exact:
-        return ()
-    if len(exact) == 1 or "." in mentioned:
-        return tuple(exact)
+            embedding = embedding_provider_from_environment()
+            client = create_persistent_chroma()
+            collection = collection_for_model(client, embedding.model_id, embedding.dimension)
+            memory_store = MemoryStore(state["engine"])
+            # The repository argument scopes both vector filters and PostgreSQL
+            # authority checks; global memories are admitted only by that retriever.
+            state["embedding"] = embedding
+            state["client"] = client
+            state["service"] = MemoryService(memory_store)
+            state["retriever"] = ChromaMemoryRetriever(collection, embedding, memory_store)
+        except Exception as exc:
+            state["failure_type"] = type(exc).__name__
+            close()
+            raise MemoryRetrievalUnavailable(state["failure_type"]) from None
 
-        # 若精确名称对应多个定义，则只有在包的 __init__.py 中存在唯一
-        # 重新导出项时才优先选择它。否则，如果仓库无法
-        # 确认唯一的公开定义，就保留全部候选，并由现有
-    # 预算与证据门禁安全拒绝，而不是猜测。
-    public = []
-    for candidate in exact:
-        for row in rows_by_candidate.get(id(candidate), ()):
-            if row.get("name") != mentioned:
-                continue
+    def query(text):
+        initialize()
+        try:
+            return state["service"].retrieve_approved(
+                state["retriever"], text, repository_id, limit=4,
+            )
+        except Exception as exc:
+            state["failure_type"] = type(exc).__name__
+            raise MemoryRetrievalUnavailable(state["failure_type"]) from None
+
+    def close():
+        client = state.get("client")
+        close_client = getattr(client, "close", None)
+        if callable(close_client):
             try:
-                references = store.search_references(
-                    target=row.get("qualified_name"),
-                    reference_type="from_import", status="resolved", limit=500,
-                )
-            except (ValueError, AgentForgeError):
-                continue
-            if any(
-                str(reference.get("relative_path", "")).replace("\\", "/").rsplit("/", 1)[-1]
-                == "__init__.py"
-                and str(reference.get("target_path", "")).casefold()
-                == str(row.get("relative_path", "")).casefold()
-                and reference.get("target_qualified_name") == row.get("qualified_name")
-                for reference in references
-            ):
-                public.append(candidate)
-                break
-    return tuple(public) if len(public) == 1 else tuple(exact)
+                close_client()
+            except Exception:
+                pass
+        embedding = state.get("embedding")
+        close_embedding = getattr(embedding, "close", None)
+        if callable(close_embedding):
+            try:
+                close_embedding()
+            except Exception:
+                pass
+        if state["owns_engine"] and state["engine"] is not None:
+            state["engine"].dispose()
+        state.update({"client": None, "embedding": None, "service": None,
+                      "retriever": None, "engine": engine, "owns_engine": False})
+
+    return query, close
 
 
-def _context_candidates(outcome, conversation, *, store=None, retriever=None):
-    """将精确的定义及其静态关联证据一起保留。"""
-    query = getattr(outcome, "query", "")
-    if outcome.decision.route == "exact_symbol":
-        symbols = tuple(item for item in outcome.candidates if item.symbol_ids)
-        if symbols:
-            if store is None or retriever is None:
-                return symbols
-            symbols = _narrow_explicit_symbol_candidates(query, symbols, store)
-            if not symbols:
-                return ()
-            focused = []
-            for symbol_item in symbols:
-                replacements = _focus_large_class_symbol(query, symbol_item, store, retriever)
-                focused.extend(replacements if replacements is not None else (symbol_item,))
-            symbols = tuple(focused)
-            explicit = set(re.findall(r"\b[A-Z][A-Z0-9_]{2,}\b", query))
-            targets = []
-            for item in symbols:
-                try:
-                    tree = ast.parse(item.text)
-                except (SyntaxError, ValueError):
-                    continue
-                referenced = {node.id for node in ast.walk(tree)
-                              if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
-                              and node.id in explicit}
-                if not referenced:
-                    continue
-                try:
-                    refs = store.search_references(relative_path=item.relative_path,
-                                                   reference_type="from_import", limit=500)
-                except (ValueError, AgentForgeError):
-                    continue
-                for ref in refs:
-                    qualified = ref.get("target_qualified_name") or ""
-                    if ref.get("resolution_status") == "ambiguous" or not re.fullmatch(
-                            r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+", qualified):
-                        continue
-                    module, name = qualified.rsplit(".", 1)
-                    if name in referenced:
-                        targets.append((ref, name, {module.replace(".", "/") + ".py",
-                                                   module.replace(".", "/") + "/__init__.py"}))
-            additions = []
-            imports = []
-            configuration_names = set()
-            for ref, name, possible_paths in targets:
-                configuration_names.add(name)
-                # 被省略的检索候选不能掩盖模块或包名存在歧义的事实。
-                repository_paths = {path.casefold() for path in retriever._candidates}
-                if sum(path.casefold() in repository_paths for path in possible_paths) != 1:
-                    continue
-                matching = [item for item in outcome.candidates if not item.symbol_ids and
-                            item.relative_path.casefold() in {path.casefold() for path in possible_paths}]
-                if len(matching) != 1:
-                    continue
-                item = matching[0]
-                try:
-                    tree = ast.parse(item.text)
-                except (SyntaxError, ValueError):
-                    continue
-                declared = set()
-                for node in tree.body:
-                    targets = node.targets if isinstance(node, ast.Assign) else (
-                        [node.target] if isinstance(node, ast.AnnAssign) else [])
-                    declared.update(target.id for target in targets if isinstance(target, ast.Name))
-                if name not in declared or not retriever._indexed_file_is_current(ref["relative_path"]):
-                    continue
-                try:
-                    import_text = retriever._excerpt(ref["relative_path"], ref["line"], ref["line"])
-                except ValueError:
-                    continue
-                from .product_retrieval import ProductCandidate, _content_hash
-                imports.append(ProductCandidate(str(retriever.repository), ref["relative_path"],
-                    ref["line"], ref["line"], import_text,
-                    _content_hash(ref["relative_path"], ref["line"], ref["line"], import_text),
-                    item.score, ("references",), (("references", item.score),),
-                    relation_ids=(ref["reference_id"],), resolution_status="unresolved",
-                    evidence_roles=("import",)))
-                additions.append(replace(
-                    item, resolution_status="uncertain",
-                    evidence_roles=tuple(dict.fromkeys(
-                        item.evidence_roles + ("configuration_definition", "definition")
-                    )),
-                ))
-            symbols = tuple(replace(
-                symbol_item,
-                evidence_roles=tuple(dict.fromkeys(
-                    symbol_item.evidence_roles + ("configuration_use",)
-                )),
-            ) if any(name in symbol_item.text for name in configuration_names) else symbol_item
-                for symbol_item in symbols)
-            candidates = (*symbols, *imports, *additions)
-            return _prioritize_required_evidence(query, candidates)
-    return _prioritize_required_evidence(query, outcome.candidates)
+def _agent_persistence(arguments, *, provider=None):
+    if arguments.execution_id and not arguments.conversation_id:
+        raise ValueError("--execution-id requires --conversation-id.")
+    if arguments.user_input and not arguments.execution_id:
+        raise ValueError("--user-input requires --execution-id.")
+    if arguments.approve_pending and not arguments.execution_id:
+        raise ValueError("--approve-pending requires --execution-id.")
+    if not arguments.conversation_id:
+        return None, None, None, None, None, {"history": (), "summary": None}
+    from .af012_connection import check_database_health
+    from .agent_execution import PostgresExecutionStateStore, PostgresToolResultStore
+    from .conversation_store import ConversationStore
+    from .repositories import repository_identity
+    engine = _conversation_engine()
+    if not check_database_health(engine):
+        engine.dispose()
+        raise ValueError("PostgreSQL execution persistence is unavailable; no Agent run was started.")
+    try:
+        repository_id = repository_identity(arguments.repo)
+        conversation_store = ConversationStore(engine)
+        from .session_service import SessionService
+        service = SessionService()
+        binding = service.get(conversation_store, arguments.conversation_id, repository_id)
+        summarizer = (_semantic_summary_callback(provider)
+                      if callable(getattr(provider, "summary_text", None)) else None)
+        restored = service.restore_context(
+            conversation_store, arguments.conversation_id, repository_id,
+            summarizer=summarizer, summary_model=getattr(provider, "model", None),
+        )
+        history = tuple({"role": item.role, "content": item.content, "status": item.status}
+                        for item in restored.history)
+        context = {"history": history,
+                   "summary": restored.summary["content"] if restored.summary else None,
+                   "provider_id": binding["provider_id"], "model_id": binding["model_id"],
+                   "cloud_consent_at": binding["cloud_consent_at"]}
+        return (engine, PostgresExecutionStateStore(engine), PostgresToolResultStore(engine),
+                repository_id, conversation_store, context)
+    except Exception:
+        engine.dispose()
+        raise
 
 
-def _prioritize_required_evidence(question, candidates):
-    from .evidence_roles import required_evidence_roles
-    required = required_evidence_roles(question)
-    if not required:
-        return tuple(candidates)
-    return tuple(pair[1] for pair in sorted(enumerate(candidates), key=lambda pair: (
-        0 if set(pair[1].evidence_roles) & set(required) else 1,
-        pair[0],
-    )))
+def _persist_agent_conversation_turn(arguments, report, provider, engine, repository_id, store):
+    if (engine is None or store is None or repository_id is None
+            or report.status != "completed" or report.answer_contract is None):
+        return None
+    from .models import Answer
+    from .session_service import SessionService
+    phases = {
+        f"agent_planner_{position}": diagnostic
+        for position, diagnostic in enumerate(report.planner_request_diagnostics, 1)
+        if isinstance(diagnostic, dict)
+    }
+    return SessionService().commit_execution_turn(
+        store, arguments.conversation_id, repository_id, report.execution_id,
+        report.objective, Answer(report.answer, report.citations, report.offline), provider,
+        request_diagnostics=phases or None,
+    )
+
+
+def _agent_authorization(arguments, scopes):
+    from .agent_execution import ToolAuthorization
+    approve = bool(arguments.approve_pending and arguments.execution_id)
+    handler = (lambda _definition, _call: True) if approve else None
+    return ToolAuthorization(permission_scopes=frozenset(scopes), approval_handler=handler)
 
 
 def _load_conversation(engine, conversation_id, repository):
     from .conversation_store import ConversationStore
-    from .conversation_context import ConversationTurn
+    from .session_service import SessionService
     from sqlalchemy.exc import SQLAlchemyError
     store = ConversationStore(engine)
     repo_id = _repository_id(repository)
+    service = SessionService()
     try:
-        binding = store.get_conversation(conversation_id, repo_id)
-        rows = store.get_messages(conversation_id, repo_id)
-        summary = store.latest_summary(conversation_id, repo_id)
+        binding = service.get(store, conversation_id, repo_id)
+        # Loading a conversation is read-only; evidence-gated refusals must not
+        # trigger history compaction before we know an answer will be generated.
+        restored = service.load_context(store, conversation_id, repo_id)
+        rows = restored.rows
     except SQLAlchemyError:
         raise ValueError("PostgreSQL conversation storage is unavailable or not migrated.") from None
-    covered = summary["covered_through"] if summary else 0
     conversation = {"conversation_id": conversation_id, "repository_id": repo_id,
-        "history": tuple(ConversationTurn(conversation_id, repo_id, row["sequence"], row["role"],
-                                          row["content"], row["status"])
-                         for row in rows if row["sequence"] > covered),
-        "summary": summary["content"] if summary else None,
+        "history": restored.history,
+        "summary": restored.summary["content"] if restored.summary else None,
+        "context_fact_ledger": restored.fact_ledger,
         "provider_id": binding["provider_id"], "model_id": binding["model_id"],
         "thinking_enabled": binding["thinking_enabled"],
         "reasoning_effort": binding["reasoning_effort"],
@@ -1277,6 +1337,9 @@ def _semantic_summary_callback(provider):
                 before_stats = None
             text = provider.summary_text(messages, max_output_tokens=summary_output_tokens)
             diagnostic["output_bytes"] = len(text.encode("utf-8")) if isinstance(text, str) else None
+            budget_diagnostics = getattr(provider, "last_summary_budget_diagnostics", None)
+            if isinstance(budget_diagnostics, dict):
+                diagnostic["context_budget"] = dict(budget_diagnostics)
             after_stats = provider.client.request_stats()
             if isinstance(after_stats, dict) and after_stats.get("last_finish_reason") == "length":
                 diagnostic["failure_stage"] = "response_validation"
@@ -1290,6 +1353,9 @@ def _semantic_summary_callback(provider):
             diagnostic["failure_exception_type"] = type(exc).__name__
             raise
         finally:
+            budget_diagnostics = getattr(provider, "last_summary_budget_diagnostics", None)
+            if isinstance(budget_diagnostics, dict):
+                diagnostic["context_budget"] = dict(budget_diagnostics)
             if after_stats is None:
                 try:
                     after_stats = provider.client.request_stats()
@@ -1307,24 +1373,6 @@ def _semantic_summary_callback(provider):
 
     summarize.diagnostics = diagnostics
     return summarize
-
-
-def _persist_conversation(store, arguments, repo_id, answer, provider):
-    from sqlalchemy.exc import SQLAlchemyError
-    try:
-        generated = not answer.offline and provider is not None
-        stats = provider.request_stats() if generated and callable(getattr(provider, "request_stats", None)) else {}
-        usage = stats.get("last_usage") if isinstance(stats, dict) else None
-        elapsed = stats.get("last_elapsed_seconds") if isinstance(stats, dict) else None
-        latency_ms = round(elapsed * 1000) if isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) else None
-        model_id = getattr(provider, "model", None) if generated else None
-        provider_id = getattr(provider, "provider_id", None) if generated else None
-        store.append_turn(arguments.conversation_id, repo_id, arguments.query, answer.text,
-                          model_name=model_id, provider_id=provider_id, model_id=model_id,
-                          usage=usage, latency_ms=latency_ms,
-                          request_id=stats.get("last_request_id") if isinstance(stats, dict) else None)
-    except SQLAlchemyError:
-        raise ValueError("Could not persist the completed turn; no successful response was committed.") from None
 
 
 def _injected_memory_metadata(conversation):
@@ -1352,49 +1400,6 @@ def _injected_memory_metadata(conversation):
     return output
 
 
-def _followup_symbol(query, rows, store):
-    """只解析前一个问题提到、且索引中唯一对应的符号。"""
-    if not _is_followup(query):
-        return None
-    if len(rows) < 2 or rows[-2]["role"] != "user" or rows[-1]["role"] != "assistant":
-        return None
-    mentioned = {_unique_mentioned_symbol(row["content"], store)
-                 for row in rows[-12:] if row["role"] == "user"}
-    mentioned.discard(None)
-    return next(iter(mentioned)) if len(mentioned) == 1 else None
-
-
-def _is_followup(query):
-    return bool(re.search(r"(?:它|其|这个|该)|\b(?:it|its|that)\b|\bwere we discussing\b",
-                          query, re.IGNORECASE))
-
-
-def _unique_mentioned_symbol(query, store):
-            # 模块和其中的函数可以合法地同名。若问题已明确
-            # 指出符号种类，就按该种类解析；绝不在多个定义间猜选。
-    explicit = re.findall(r"\b(function|class|method)\s+`?([A-Za-z_][A-Za-z0-9_]*)`?",
-                          query, re.IGNORECASE)
-    if explicit:
-        resolved = set()
-        for kind, name in explicit:
-            found = store.search_symbols(name=name, kind=kind.casefold(), limit=2)
-            if len(found) != 1:
-                return None
-            resolved.add(name)
-        return next(iter(resolved)) if len(resolved) == 1 else None
-    words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", query))
-    matches = []
-    generic = {"what", "which", "does", "function", "class", "method", "module", "symbol",
-               "return", "returns", "cite", "evidence", "identify", "the", "and", "for"}
-    for word in sorted(words):
-        if len(word) < 3 or word.casefold() in generic:
-            continue
-        found = store.search_symbols(name=word, limit=2)
-        if len(found) == 1:
-            matches.append(word)
-    return matches[0] if len(matches) == 1 else None
-
-
 def _conversation_engine():
     try:
         from .af012_connection import create_local_engine
@@ -1407,7 +1412,9 @@ def _session_command(arguments):
     engine = _conversation_engine()
     try:
         from .conversation_store import ConversationStore
+        from .session_service import SessionService
         from sqlalchemy.exc import SQLAlchemyError
+        service = SessionService()
         if arguments.session_action == "health":
             from .af012_connection import check_database_health
             if not check_database_health(engine):
@@ -1424,27 +1431,29 @@ def _session_command(arguments):
         repo_id = _repository_id(repository)
         store = ConversationStore(engine)
         from .memory_store import MemoryStore
-        MemoryStore(engine).register_repository(repo_id, os.path.abspath(repository))
+        from .memory_service import MemoryService
+        MemoryService(MemoryStore(engine)).register_repository(repo_id, os.path.abspath(repository))
         action = arguments.session_action
         if action == "create":
-            value = store.create_conversation(repo_id, arguments.title)
+            value = service.create(store, repo_id, arguments.title)
         elif action == "list":
-            value = store.list_conversations(repo_id)
+            value = service.list(store, repo_id)
         elif action == "current":
-            value = store.current_conversation(repo_id)
+            value = service.current(store, repo_id)
         elif action == "switch":
-            value = store.switch_conversation(arguments.conversation_id, repo_id)
+            value = service.switch(store, arguments.conversation_id, repo_id)
         elif action == "show":
-            value = {"conversation": store.get_conversation(arguments.conversation_id, repo_id),
-                     "messages": store.get_messages(arguments.conversation_id, repo_id)}
+            value = {"conversation": service.get(store, arguments.conversation_id, repo_id),
+                     "messages": service.messages(store, arguments.conversation_id, repo_id)}
         elif action == "model":
-            value = store.get_conversation(arguments.conversation_id, repo_id)
+            value = service.get(store, arguments.conversation_id, repo_id)
         elif action == "set-model":
-            existing_binding = store.get_conversation(arguments.conversation_id, repo_id)
+            existing_binding = service.get(store, arguments.conversation_id, repo_id)
             _validate_persisted_model_selection(arguments, existing=existing_binding)
             from datetime import datetime, timezone
             consent_at = datetime.now(timezone.utc) if arguments.cloud_consent else None
-            value = store.update_model_binding(
+            value = service.bind_model(
+                store,
                 arguments.conversation_id, repo_id,
                 provider_id=arguments.provider_id, model_id=arguments.model_id,
                 thinking_enabled=arguments.thinking == "on",
@@ -1452,11 +1461,11 @@ def _session_command(arguments):
                 cloud_consent_at=consent_at,
             )
         elif action == "revoke-cloud-consent":
-            value = store.revoke_cloud_consent(arguments.conversation_id, repo_id)
+            value = service.revoke_cloud_consent(store, arguments.conversation_id, repo_id)
         elif action == "rename":
-            value = store.rename_conversation(arguments.conversation_id, repo_id, arguments.title)
+            value = service.rename(store, arguments.conversation_id, repo_id, arguments.title)
         else:
-            store.delete_conversation(arguments.conversation_id, repo_id)
+            service.delete(store, arguments.conversation_id, repo_id)
             value = {"deleted": arguments.conversation_id}
         return {"repository": repository, "result": value}
     except SQLAlchemyError:
@@ -1469,7 +1478,8 @@ def _validate_persisted_model_selection(arguments, *, existing=None):
     """Validate registry metadata and session settings before committing a binding."""
     from .model_registry import ModelRegistry
     registry = ModelRegistry()
-    descriptor = registry.get(arguments.model_id)
+    descriptor = (registry.get_for_request(arguments.model_id)
+                  if arguments.provider_id == "deepseek" else registry.get(arguments.model_id))
     if descriptor.provider_id != arguments.provider_id:
         raise ValueError("Model ID does not belong to the selected provider.")
     if arguments.provider_id == "llama-server" and arguments.model_id != "qwen3.5-4b":
@@ -1551,33 +1561,36 @@ def _memory_command(arguments):
         repo_id = _repository_id(repository)
         from .conversation_store import ConversationStore
         from .memory_store import MemoryStore
+        from .memory_service import MemoryService
         conversation_store = ConversationStore(engine)
         memory_store = MemoryStore(engine)
-        memory_store.register_repository(repo_id, os.path.abspath(repository))
+        memory_service = MemoryService(memory_store)
+        memory_service.register_repository(repo_id, os.path.abspath(repository))
         action = arguments.memory_action
         from .memory_store import GLOBAL_MEMORY_REPOSITORY_ID
         memory_scope_id = GLOBAL_MEMORY_REPOSITORY_ID if getattr(arguments, "scope", "repository") == "global" else repo_id
         if action == "list":
-            value = memory_store.list(memory_scope_id, status=arguments.status, limit=arguments.limit)
+            value = memory_service.list(memory_scope_id, status=arguments.status, limit=arguments.limit)
         elif action == "status":
-            value = memory_store.outbox_status(memory_scope_id)
+            value = memory_service.outbox_status(memory_scope_id)
         elif action == "expire":
-            value = {"expired": memory_store.expire_due()}
+            value = {"expired": memory_service.expire_due()}
         elif action == "show":
-            record = memory_store.get(arguments.memory_id, memory_scope_id)
-            value = {"memory": record, "sources": memory_store.source_records(arguments.memory_id, memory_scope_id),
-                     "events": memory_store.events(arguments.memory_id, memory_scope_id)}
+            record = memory_service.get(arguments.memory_id, memory_scope_id)
+            value = {"memory": record, "sources": memory_service.source_records(arguments.memory_id, memory_scope_id),
+                     "events": memory_service.events(arguments.memory_id, memory_scope_id)}
         elif action == "propose":
             expires_at = None
             if arguments.expires_in_days is not None:
                 if not 1 <= arguments.expires_in_days <= 3650:
                     raise ValueError("Memory expiration must be from 1 to 3650 days.")
                 expires_at = datetime.now(timezone.utc) + timedelta(days=arguments.expires_in_days)
-            value = memory_store.propose(repo_id, arguments.conversation_id, arguments.content,
+            value = memory_service.propose(repo_id, arguments.conversation_id, arguments.content,
                 arguments.source_message_id, memory_type=arguments.type, expires_at=expires_at,
                 scope=arguments.scope)
         elif action == "suggest":
-            messages = conversation_store.get_messages(arguments.conversation_id, repo_id)
+            from .session_service import SessionService
+            messages = SessionService().messages(conversation_store, arguments.conversation_id, repo_id)
             api_key = os.environ.get("AGENTFORGE_LLAMA_API_KEY")
             from .providers.llama_server import LlamaServerClient
             if not api_key:
@@ -1585,38 +1598,48 @@ def _memory_command(arguments):
             client = LlamaServerClient(arguments.base_url, api_key=api_key,
                                        total_timeout=180.0, max_output_tokens=512)
             from .memory_extraction import extract_memory_candidates
-            candidates = extract_memory_candidates(client, arguments.model, messages)
+            from .model_registry import ModelRegistry
+            from .context_assembler import ContextAssembler
+            memory_budget_diagnostics = {}
+            candidates = extract_memory_candidates(
+                client, arguments.model, messages,
+                descriptor=ModelRegistry().get("qwen-local"),
+                context_assembler=ContextAssembler(),
+                budget_diagnostics=memory_budget_diagnostics,
+            )
             by_sequence = {row["sequence"]: row for row in messages}
             for candidate in candidates:
                 candidate["source_message_ids"] = [
                     by_sequence[sequence]["id"] for sequence in candidate["source_sequences"]]
                 candidate.pop("source_messages", None)
             value = {"saved": False, "human_approval_required": True,
-                     "request_stats": client.request_stats(), "candidates": candidates}
+                     "request_stats": client.request_stats(),
+                     "context_budget": memory_budget_diagnostics,
+                     "candidates": candidates}
         elif action in ("approve", "reject", "revoke"):
-            value = getattr(memory_store, action)(arguments.memory_id, memory_scope_id)
+            value = getattr(memory_service, action)(arguments.memory_id, memory_scope_id)
         elif action == "update":
-            prior = memory_store.get(arguments.memory_id, memory_scope_id)
+            prior = memory_service.get(arguments.memory_id, memory_scope_id)
             expires_at = prior["expires_at"]
             if arguments.expires_in_days is not None:
                 if not 1 <= arguments.expires_in_days <= 3650:
                     raise ValueError("Memory expiration must be from 1 to 3650 days.")
                 expires_at = datetime.now(timezone.utc) + timedelta(days=arguments.expires_in_days)
-            value = memory_store.update(arguments.memory_id, memory_scope_id, arguments.content,
+            value = memory_service.update(arguments.memory_id, memory_scope_id, arguments.content,
                 memory_type=arguments.type, expires_at=expires_at)
         elif action == "sync":
             from .af012_runtime import collection_for_model, create_persistent_chroma, embedding_provider_from_environment
-            requeued = memory_store.requeue_approved(repo_id) if arguments.rebuild else 0
+            requeued = memory_service.requeue_approved(repo_id) if arguments.rebuild else 0
             provider = embedding_provider_from_environment()
-            status = memory_store.outbox_status(repo_id)
-            global_status = memory_store.outbox_status(GLOBAL_MEMORY_REPOSITORY_ID)
+            status = memory_service.outbox_status(repo_id)
+            global_status = memory_service.outbox_status(GLOBAL_MEMORY_REPOSITORY_ID)
             if any(queue.get(state, 0) for queue in (status, global_status)
                    for state in ("pending", "processing")):
                 readiness_seconds = provider.wait_ready()
                 client = create_persistent_chroma()
                 collection = collection_for_model(client, provider.model_id, provider.dimension)
                 from .embeddings.chroma_store import ChromaCandidateStore
-                value = memory_store.sync_outbox(ChromaCandidateStore(collection, dimension=provider.dimension),
+                value = memory_service.sync_outbox(ChromaCandidateStore(collection, dimension=provider.dimension),
                                                  provider, repository_ids=(repo_id, GLOBAL_MEMORY_REPOSITORY_ID))
             else:
                 readiness_seconds = None

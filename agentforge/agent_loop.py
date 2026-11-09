@@ -15,6 +15,7 @@ import time
 from typing import Any, Protocol
 
 from .answer_contract import VerifiedAnswerContract, build_offline_contract, verify_generated_answer
+from .agent_execution import ToolAuditRecord, ToolCall
 from .chunker import split_source_lines
 from .context import build_context, validate_model_citations
 from .errors import AgentForgeError
@@ -33,25 +34,6 @@ _IDENTIFIER = re.compile(r"^[A-Za-z_]\w*$", re.UNICODE)
 
 
 @dataclass(frozen=True)
-class ToolCall:
-    name: str
-    arguments: dict[str, Any]
-    origin: str
-
-
-@dataclass(frozen=True)
-class ToolAuditRecord:
-    step: int
-    name: str
-    origin: str
-    arguments: dict[str, Any]
-    status: str
-    elapsed_seconds: float
-    result: Any = None
-    error: str | None = None
-
-
-@dataclass(frozen=True)
 class AgentRunReport:
     objective: str
     status: str
@@ -67,6 +49,13 @@ class AgentRunReport:
     offline: bool = True
     retrieval: dict[str, Any] | None = None
     answer_contract: VerifiedAnswerContract | None = None
+    execution_id: str | None = None
+    execution_state: str | None = None
+    execution_rounds: int = 0
+    execution_results: tuple[dict[str, Any], ...] = ()
+    user_input_request: str | None = None
+    pending_approval: dict[str, Any] | None = None
+    planner_request_diagnostics: tuple[dict[str, Any], ...] = ()
 
 
 class AgentPlanner(Protocol):
@@ -289,6 +278,10 @@ class AgentLoop:
         self, toolbox: ReadOnlyToolbox, planner: AgentPlanner, *,
         max_steps: int = 4, tool_timeout_seconds: float = 30.0,
         run_timeout_seconds: float = 120.0, monotonic=time.monotonic,
+        state_store=None, result_store=None, authorization=None, max_concurrency: int = 4,
+        on_event=None, cancel_event=None, repository_id: str | None = None,
+        conversation_id: str | None = None, include_index_tool: bool = True,
+        tool_registry_factory=None,
     ):
         self.toolbox = toolbox
         self.planner = planner
@@ -304,84 +297,103 @@ class AgentLoop:
         self.tool_timeout_seconds = float(tool_timeout_seconds)
         self.run_timeout_seconds = float(run_timeout_seconds)
         self.monotonic = monotonic
+        self.state_store, self.result_store, self.authorization = state_store, result_store, authorization
+        self.max_concurrency, self.on_event = max_concurrency, on_event
+        self.cancel_event = cancel_event
+        self.repository_id, self.conversation_id = repository_id, conversation_id
+        if not isinstance(include_index_tool, bool):
+            raise ValueError("include_index_tool must be a boolean.")
+        self.include_index_tool = include_index_tool
+        if tool_registry_factory is not None and not callable(tool_registry_factory):
+            raise ValueError("tool_registry_factory must be callable.")
+        self.tool_registry_factory = tool_registry_factory
 
-    def run(self, objective: str) -> AgentRunReport:
+    def run(self, objective: str, *, execution_id: str | None = None,
+            user_input: str | None = None) -> AgentRunReport:
         objective = _nonempty_text(objective, "objective")
         started = self.monotonic()
-        audit: list[ToolAuditRecord] = []
-        status = "completed"
-        for step in range(1, self.max_steps + 1):
-            if self.monotonic() - started >= self.run_timeout_seconds:
-                status = "run_timeout"
-                break
-            call = self.planner.next_call(objective, tuple(audit))
-            if call is None:
-                break
-            if not isinstance(call, ToolCall):
-                audit.append(ToolAuditRecord(
-                    step, "invalid", "unknown", {}, "rejected", 0.0,
-                    error="Planner output must be a ToolCall.",
-                ))
-                status = "failed"
-                break
-            call_started = self.monotonic()
-            try:
-                result = self.toolbox.execute(call)
-                elapsed = self.monotonic() - call_started
-                if elapsed > self.tool_timeout_seconds:
-                    audit.append(ToolAuditRecord(
-                        step, call.name, call.origin, dict(call.arguments), "timeout",
-                        round(elapsed, 6), error="Tool exceeded its wall-clock budget; no retry was attempted.",
-                    ))
-                    status = "tool_timeout"
-                    break
-                audit.append(ToolAuditRecord(
-                    step, call.name, call.origin, dict(call.arguments), "ok",
-                    round(elapsed, 6), result=result,
-                ))
-            except (AgentForgeError, ValueError, OSError, sqlite3.Error) as exc:
-                elapsed = self.monotonic() - call_started
-                audit.append(ToolAuditRecord(
-                    step, call.name if isinstance(call, ToolCall) else "invalid",
-                    call.origin if isinstance(call, ToolCall) else "unknown",
-                    dict(call.arguments) if isinstance(call, ToolCall) and isinstance(call.arguments, dict) else {},
-                    "rejected", round(elapsed, 6), error=str(exc),
-                ))
-                status = "failed"
-                break
-        else:
-            # 达到循环上限本身不代表失败：计划可能刚好
-            # 用完允许的工具调用次数。此时只查看一次计划器
-            # （不执行其他工具），以判断计划是否已经完成
-            # 还是仍有工作待处理。
-            status = (
-                "completed"
-                if self.planner.next_call(objective, tuple(audit)) is None
-                else "step_budget_exhausted"
+        from .agent_execution import (
+            AgentExecutionEngine, LegacyPlannerAdapter, ToolAuthorization,
+            ToolRegistry, toolbox_registry,
+        )
+        legacy = callable(getattr(self.planner, "next_call", None))
+        execution_planner = LegacyPlannerAdapter(self.planner) if legacy else self.planner
+        if self.tool_registry_factory is None:
+            registry = toolbox_registry(
+                self.toolbox, include_index=self.include_index_tool,
+                timeout_seconds=self.tool_timeout_seconds,
             )
-
+        else:
+            registry = self.tool_registry_factory(self.toolbox)
+            if not isinstance(registry, ToolRegistry):
+                raise ValueError("tool_registry_factory must return a ToolRegistry.")
+        authorization = self.authorization or ToolAuthorization(
+            permission_scopes=frozenset(item.permission_scope for item in registry.definitions()))
+        execution = AgentExecutionEngine(
+            registry, execution_planner, authorization=authorization,
+            state_store=self.state_store, result_store=self.result_store,
+            max_rounds=min(16, self.max_steps + 1),
+            max_tool_calls=self.max_steps, max_tasks_per_plan=min(12, self.max_steps),
+            max_concurrency=self.max_concurrency, run_timeout_seconds=self.run_timeout_seconds,
+            on_event=self.on_event, cancel_event=self.cancel_event,
+            monotonic=self.monotonic,
+        ).run(objective, repository_id=self.repository_id, conversation_id=self.conversation_id,
+              execution_id=execution_id, user_input=user_input, started_at=started)
         elapsed = self.monotonic() - started
-        if elapsed > self.run_timeout_seconds and status == "completed":
-            status = "run_timeout"
-        answer, citations, contract, retrieval = self._offline_answer(objective)
+        audit = []
+        for step, result in enumerate(execution.results, 1):
+            call = (execution_planner.calls.get(result.call_id)
+                    if legacy and isinstance(execution_planner, LegacyPlannerAdapter) else None)
+            origin = getattr(call, "origin", "llm_planner")
+            arguments = dict(getattr(call, "arguments", {}))
+            status = "ok" if result.status == "completed" else (
+                "timeout" if result.error_code == "TIMEOUT" else "rejected")
+            error = result.error_code
+            if result.error_code == "TOOL_NOT_FOUND":
+                error = "Unknown or forbidden tool request."
+            elif result.error_code == "INVALID_ARGUMENTS":
+                error = "Tool arguments were rejected by the registered schema."
+            elif result.error_code == "PERMISSION_DENIED":
+                error = "Tool permission was denied."
+            audit.append(ToolAuditRecord(step, result.tool_id, origin, arguments, status,
+                float(result.execution_metadata.get("elapsed_seconds", 0.0)), result.output, error))
+        status = execution.status
+        if any(item.status == "timeout" for item in audit):
+            status = "tool_timeout"
+        elif status == "failed" and execution.error_code == "PARTIAL_RESULT" and len(audit) >= self.max_steps:
+            status = "step_budget_exhausted"
+        elif status == "failed" and execution.error_code == "TIMEOUT":
+            status = "run_timeout" if elapsed >= self.run_timeout_seconds else "tool_timeout"
+        answer, citations, contract, retrieval = self._offline_answer(
+            objective, generated_override=execution.final_answer)
         return AgentRunReport(
             objective=objective, status=status, max_steps=self.max_steps,
             completed_steps=len(audit), elapsed_seconds=round(elapsed, 6),
             tool_timeout_seconds=self.tool_timeout_seconds,
             run_timeout_seconds=self.run_timeout_seconds,
-            allowed_tools=tuple(sorted(ALLOWED_AGENT_TOOLS)), audit=tuple(audit),
+            allowed_tools=tuple(item.tool_id for item in registry.definitions()), audit=tuple(audit),
             answer=answer, citations=citations,
-            offline=getattr(self.planner, "final_answer", None) is None,
+            offline=(execution.final_answer is None and getattr(self.planner, "final_answer", None) is None),
             retrieval=retrieval, answer_contract=contract,
+            execution_id=execution.execution_id, execution_state=execution.state,
+            execution_rounds=execution.rounds,
+            execution_results=tuple({"call_id": item.call_id, "task_id": item.task_id,
+                "tool_id": item.tool_id, "status": item.status, "error_code": item.error_code,
+                "output": item.output, "execution_metadata": item.execution_metadata,
+                "provenance": item.provenance}
+                for item in execution.results),
+            user_input_request=execution.user_input_request,
+            pending_approval=execution.pending_approval,
+            planner_request_diagnostics=execution.planner_request_diagnostics,
         )
 
     def _offline_answer(
-        self, objective: str,
+        self, objective: str, *, generated_override: str | None = None,
     ) -> tuple[str, tuple[str, ...], VerifiedAnswerContract, dict[str, Any]]:
         results = getattr(self.toolbox, "last_search_results", [])
         context = build_context(objective, results, max_candidates=20, budget=6000,
                                 evidence_source_ids=getattr(self.toolbox, "last_evidence_source_ids", None))
-        generated = getattr(self.planner, "final_answer", None)
+        generated = generated_override or getattr(self.planner, "final_answer", None)
         answer = (Answer(generated, (), False) if isinstance(generated, str) and generated.strip()
                   else OfflineProvider().answer(context))
         outcome = getattr(self.toolbox, "last_retrieval_outcome", None)

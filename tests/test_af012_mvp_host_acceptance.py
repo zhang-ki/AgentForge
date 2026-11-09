@@ -1,11 +1,16 @@
 """针对 AF-012 MVP 宿主验收 Runner 合同的离线测试。"""
 import json
 import hashlib
+import io
+import os
+import shutil
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import AF012_MVP_HOST_ACCEPTANCE as host_runner
 from AF012_MVP_HOST_ACCEPTANCE import (
     EXPECTED_POSTGRES_IDENTITY,
     ROOT,
@@ -13,6 +18,8 @@ from AF012_MVP_HOST_ACCEPTANCE import (
     _answer_contract_status,
     _health_ready,
     _postgres_identity_diagnostic,
+    _isolated_test_scope,
+    _create_isolated_test_engine,
     _sha256,
     AcceptanceFailure,
 )
@@ -28,6 +35,75 @@ class AF012MvpHostRunnerTests(unittest.TestCase):
     def test_windows_host_script_has_utf8_bom_for_windows_powershell(self):
         script = ROOT / "AF012_MVP_HOST_ACCEPTANCE.ps1"
         self.assertTrue(script.read_bytes().startswith(b"\xef\xbb\xbf"))
+        self.assertIn("This is an isolated child runner", script.read_text(encoding="utf-8-sig"))
+
+    def test_isolation_preflight_rejects_missing_or_formal_database_scope(self):
+        with self.assertRaisesRegex(AcceptanceFailure, "isolated_test_database_required"):
+            _isolated_test_scope({})
+        with self.assertRaisesRegex(AcceptanceFailure, "isolated_test_database_required"):
+            _create_isolated_test_engine("synthetic-test-password", "agentforge")
+
+    def test_runner_refuses_missing_isolation_before_health_or_credentials(self):
+        test_temp_root = ROOT / "tests" / ".tmp"
+        test_temp_root.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="af012-host-runner-gate-", dir=test_temp_root,
+        ) as temporary:
+            env = {key: value for key, value in os.environ.items() if key not in {
+                "CODEX_SANDBOX_NETWORK_DISABLED", "AGENTFORGE_DB_PASSWORD",
+                "AGENTFORGE_LLAMA_API_KEY", "AGENTFORGE_EMBEDDING_BASE_URL",
+                "AGENTFORGE_EMBEDDING_MODEL_ID", "AGENTFORGE_EMBEDDING_API_MODEL",
+                "AF012_TEST_DATABASE", "AF012_TEST_CHROMA_PATH",
+            }}
+            env["CODEX_SANDBOX_NETWORK_DISABLED"] = "0"
+            output = io.StringIO()
+            with (patch("AF012_MVP_HOST_ACCEPTANCE.ROOT", Path(temporary)),
+                  patch.dict(os.environ, env, clear=True),
+                  patch("AF012_MVP_HOST_ACCEPTANCE._health_ready",
+                        side_effect=AssertionError("health must not run without isolated scope")),
+                  redirect_stdout(output)):
+                exit_code = host_runner._main()
+            payload = json.loads(output.getvalue())
+            self.assertEqual(2, exit_code)
+            self.assertEqual("isolated_test_database_required", payload["failure_code"])
+            self.assertEqual(0, payload["chat_requests"]["attempted"])
+            self.assertEqual(0, payload["embedding_requests"]["attempts"])
+
+    def test_isolated_engine_uses_only_the_coordinator_database(self):
+        with patch("sqlalchemy.create_engine", side_effect=lambda url, **_kwargs: Mock(url=url)) as factory:
+            engine = _create_isolated_test_engine(
+                "synthetic-test-password", "af012_accept_0123456789abcdefabcd",
+            )
+        self.assertEqual("agentforge_app", engine.url.username)
+        self.assertEqual("af012_accept_0123456789abcdefabcd", engine.url.database)
+        self.assertEqual("127.0.0.1", engine.url.host)
+        self.assertEqual(5432, engine.url.port)
+        kwargs = factory.call_args.kwargs
+        self.assertTrue(kwargs["hide_parameters"])
+        self.assertEqual(2, kwargs["pool_size"])
+
+    def test_isolated_chroma_scope_must_be_under_uuid_temp_root(self):
+        test_temp_root = ROOT / "tests" / ".tmp"
+        test_temp_root.mkdir(exist_ok=True)
+        owned_root = Path(tempfile.mkdtemp(
+            prefix="af012-dual-host-" + "a" * 32 + "-", dir=test_temp_root,
+        ))
+        chroma_path = owned_root / "chroma"
+        chroma_path.mkdir()
+        try:
+            database, resolved = _isolated_test_scope({
+                "AF012_TEST_DATABASE": "af012_accept_0123456789abcdefabcd",
+                "AF012_TEST_CHROMA_PATH": str(chroma_path),
+            })
+            self.assertEqual("af012_accept_0123456789abcdefabcd", database)
+            self.assertEqual(chroma_path.resolve(), resolved)
+            with self.assertRaisesRegex(AcceptanceFailure, "isolated_test_chroma_path_required"):
+                _isolated_test_scope({
+                    "AF012_TEST_DATABASE": "af012_accept_0123456789abcdefabcd",
+                    "AF012_TEST_CHROMA_PATH": str(ROOT / ".agentforge" / "data" / "chroma"),
+                })
+        finally:
+            shutil.rmtree(owned_root)
 
     def _connection(self, status, body):
         response = Mock()

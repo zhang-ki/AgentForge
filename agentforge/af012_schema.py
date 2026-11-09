@@ -28,6 +28,42 @@ class Conversation(Base):
     __table_args__ = (CheckConstraint("status IN ('active','archived')", name="conversation_status"),)
 
 
+class AgentExecution(Base):
+    """Checkpoint for one Agent task; it is separate from the conversation transcript."""
+    __tablename__ = "agent_executions"
+    execution_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    repository_id = mapped_column(String(256), nullable=True, index=True)
+    conversation_id = mapped_column(Uuid, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True, index=True)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    snapshot = mapped_column(JSON, nullable=False)
+    created_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    __table_args__ = (
+        CheckConstraint("state IN ('PLANNING','PLAN_VALIDATING','READY','RUNNING','OBSERVING','REPLANNING','WAITING_APPROVAL','WAITING_USER_INPUT','COMPLETED','FAILED','CANCELLED')", name="agent_execution_state"),
+        CheckConstraint("version > 0", name="agent_execution_version_positive"),
+        Index("ix_agent_execution_repository_updated", "repository_id", "updated_at"),
+    )
+
+
+class AgentExecutionResult(Base):
+    """Large tool output stored separately from prompt observations and resumable state."""
+    __tablename__ = "agent_execution_results"
+    result_ref: Mapped[str] = mapped_column(String(160), primary_key=True)
+    execution_id: Mapped[str] = mapped_column(String(64), ForeignKey("agent_executions.execution_id", ondelete="CASCADE"), nullable=False)
+    call_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    content_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    __table_args__ = (
+        UniqueConstraint("execution_id", "call_id",
+                         name="uq_agent_execution_results_execution_call"),
+        CheckConstraint("char_count >= 0", name="agent_execution_result_char_count"),
+        Index("ix_agent_execution_result_execution", "execution_id"),
+    )
+
+
 class RepositoryMetadata(Base):
     """本地仓库目录项；文件索引数据仍以 SQLite 代码索引为准。"""
     __tablename__ = "repository_metadata"

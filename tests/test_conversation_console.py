@@ -7,6 +7,58 @@ from agentforge import conversation_console
 
 
 class ConversationConsoleRepositoryTests(unittest.TestCase):
+    def test_plain_question_uses_auto_planning_without_manual_mode_selection(self):
+        state = {"repository": r"D:\synthetic\repo", "current": {
+            "id": "conversation-1", "title": "session", "provider_id": "llama-server",
+            "model_id": "qwen3.5-4b", "thinking_enabled": False,
+        }}
+
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": state["repository"], "result": state["current"]}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("agentforge.conversation_console.presentation.main") as ask,
+              patch("builtins.input", side_effect=["Explain attention in a transformer", "/exit"]),
+              redirect_stdout(output)):
+            self.assertEqual(0, conversation_console.main())
+
+        arguments = ask.call_args.args[0]
+        self.assertEqual("ask", arguments[0])
+        self.assertIn("--mode", arguments)
+        self.assertEqual("auto", arguments[arguments.index("--mode") + 1])
+        self.assertIn("由 Planner 自动选择", output.getvalue())
+
+    def test_debug_mode_override_keeps_same_session_and_can_return_to_auto(self):
+        state = {"repository": r"D:\synthetic\repo", "current": {
+            "id": "conversation-keep", "title": "session", "provider_id": "llama-server",
+            "model_id": "qwen3.5-4b", "thinking_enabled": False,
+        }}
+
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": state["repository"], "result": state["current"]}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("agentforge.conversation_console.presentation.main") as ask,
+              patch("builtins.input", side_effect=[
+                  "/mode repository", "inspect this source", "/mode auto", "explain this idea", "/exit",
+              ]),
+              redirect_stdout(output)):
+            self.assertEqual(0, conversation_console.main())
+
+        requests = [call.args[0] for call in ask.call_args_list]
+        self.assertEqual(2, len(requests))
+        self.assertEqual("conversation-keep", requests[0][requests[0].index("--conversation-id") + 1])
+        self.assertEqual("conversation-keep", requests[1][requests[1].index("--conversation-id") + 1])
+        self.assertEqual("repository", requests[0][requests[0].index("--mode") + 1])
+        self.assertEqual("auto", requests[1][requests[1].index("--mode") + 1])
+        self.assertIn("执行状态保持不变", output.getvalue())
+
     def test_model_list_command_renders_cached_capabilities_without_refreshing_remote_models(self):
         from agentforge.model_registry import ModelDescriptor, LOCAL_QWEN, OFFLINE_PROVIDER
 
@@ -68,49 +120,70 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
             self.assertEqual(0, conversation_console.main())
         self.assertIn("当前模型：Qwen Local", output.getvalue())
 
-    def test_model_default_checks_qwen_before_persisting_binding(self):
-        from agentforge.model_registry import LOCAL_QWEN
+    def test_model_default_selects_deepseek_only_after_consent_and_discovery(self):
+        from datetime import datetime, timezone
+        from agentforge.model_registry import ModelDescriptor
+
         state = {"repository": r"D:\synthetic\repo", "current": {
-            "id": "conversation-1", "title": "session", "provider_id": "deepseek",
-            "model_id": "deepseek-flash", "thinking_enabled": False,
+            "id": "conversation-1", "title": "session", "provider_id": "llama-server",
+            "model_id": "qwen3.5-4b", "thinking_enabled": False,
         }}
+        descriptor = ModelDescriptor("deepseek", "deepseek-flash", "Flash", "cloud",
+                                     65536, 8192, capability_source="DeepSeek official /models API response",
+                                     capability_verified_at=datetime.now(timezone.utc).isoformat())
         calls = []
+
         def fake_call(*args):
             calls.append(args)
             if args == ("session", "current"):
                 return {"repository": state["repository"], "result": dict(state["current"])}
             if args[:2] == ("session", "set-model"):
-                state["current"].update(provider_id="llama-server", model_id="qwen3.5-4b")
+                state["current"].update(provider_id="deepseek", model_id="deepseek-flash",
+                                         cloud_consent_at=datetime.now(timezone.utc))
                 return {"result": dict(state["current"])}
             raise AssertionError(args)
-        output = io.StringIO()
+
         class Registry:
+            def __init__(self):
+                self.lookups = []
+
             def get(self, key):
-                if key in {"qwen-local", "qwen3.5-4b"}: return LOCAL_QWEN
+                if key == "deepseek-flash":
+                    return descriptor
                 raise ValueError("unknown model")
-        with (patch("agentforge.conversation_console._registry", return_value=Registry()),
-              patch("agentforge.model_registry.check_qwen_identity", return_value={"health": "ready"}) as check,
+
+            def refresh_deepseek(self, client):
+                self.client = client
+                return (descriptor,)
+
+        registry = Registry()
+        client = object()
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._registry", return_value=registry),
+              patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": True}),
+              patch("agentforge.conversation_console._deepseek_client", return_value=(client, "environment")),
               patch("agentforge.conversation_console._call", side_effect=fake_call),
-              patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "synthetic-key"}, clear=True),
-              patch("builtins.input", side_effect=["/model default", "/exit"]),
+              patch("builtins.input", side_effect=["/model default", "YES", "/exit"]),
               redirect_stdout(output)):
             self.assertEqual(0, conversation_console.main())
-        check.assert_called_once()
-        self.assertIn(("session", "set-model", "conversation-1", "llama-server", "qwen3.5-4b", "--thinking", "off"), calls)
-        self.assertEqual("llama-server", state["current"]["provider_id"])
+        self.assertIs(client, registry.client)
+        self.assertTrue(any(call == ("session", "set-model", "conversation-1", "deepseek",
+                                     "deepseek-flash", "--thinking", "off", "--cloud-consent")
+                            for call in calls))
+        self.assertEqual("deepseek", state["current"]["provider_id"])
 
     def test_failed_qwen_health_check_keeps_previous_binding(self):
         from agentforge.model_registry import LOCAL_QWEN
         current = {"id": "conversation-1", "title": "session", "provider_id": "deepseek",
                    "model_id": "deepseek-flash", "thinking_enabled": False}
         with (patch("agentforge.conversation_console._registry") as registry,
-              patch("agentforge.model_registry.check_qwen_identity",
+              patch("agentforge.providers.local_health.check_qwen_identity",
                     side_effect=ValueError("service unavailable")),
               patch("agentforge.conversation_console._save_model_binding") as save,
               patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "synthetic-key"}, clear=True)):
             registry.return_value.get.return_value = LOCAL_QWEN
             with self.assertRaisesRegex(ValueError, "service unavailable"):
-                conversation_console._switch_model("default", current)
+                conversation_console._switch_model("qwen-local", current)
         save.assert_not_called()
         self.assertEqual(("deepseek", "deepseek-flash"),
                          (current["provider_id"], current["model_id"]))
@@ -217,7 +290,11 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
 
         output = io.StringIO()
         with (patch("agentforge.conversation_console._call", side_effect=fake_call),
-              patch("builtins.input", side_effect=["/repo switch 2", "/new new repository session", "/exit"]),
+              patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": False}),
+              patch("agentforge.providers.local_health.check_qwen_identity", return_value={"health": "ready"}),
+              patch("agentforge.conversation_console._save_model_binding", side_effect=lambda current, descriptor, **kwargs: current),
+              patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "synthetic-key"}, clear=True),
+              patch("builtins.input", side_effect=["/repo switch 2", "/new new repository session", "LOCAL", "/exit"]),
               redirect_stdout(output)):
             self.assertEqual(0, conversation_console.main())
 
@@ -293,6 +370,69 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
         self.assertFalse(any(call[1] == "set-model" for call in calls if len(call) > 1))
         self.assertEqual("llama-server", state["current"]["provider_id"])
         self.assertIn("已取消", output.getvalue())
+
+    def test_new_default_session_cancelled_consent_creates_nothing_and_makes_no_request(self):
+        calls = []
+
+        def fake_call(*args):
+            calls.append(args)
+            raise AssertionError(f"No session command is allowed: {args!r}")
+
+        with (patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": True}),
+              patch("agentforge.conversation_console._registry", side_effect=AssertionError("no discovery")),
+              patch("agentforge.conversation_console._deepseek_client", side_effect=AssertionError("no request")),
+              patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("builtins.input", side_effect=["NO", "CANCEL"]),
+              redirect_stdout(io.StringIO())):
+            self.assertIsNone(conversation_console._create_default_conversation("synthetic"))
+        self.assertEqual([], calls)
+
+    def test_new_default_session_without_cloud_credential_requires_explicit_local_choice(self):
+        from agentforge.model_registry import LOCAL_QWEN
+
+        state = {"current": {"id": "session-1", "title": "synthetic"}}
+        calls = []
+
+        def fake_call(*args):
+            calls.append(args)
+            if args == ("session", "create", "synthetic"):
+                return {"result": state["current"]}
+            if args == ("session", "switch", "session-1"):
+                return {"result": state["current"]}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": False}),
+              patch("agentforge.providers.local_health.check_qwen_identity", return_value={"health": "ready"}) as health,
+              patch("agentforge.conversation_console._save_model_binding", return_value=state["current"]) as save,
+              patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "synthetic-key"}, clear=True),
+              patch("builtins.input", return_value="LOCAL"),
+              redirect_stdout(output)):
+            result = conversation_console._create_default_conversation("synthetic")
+
+        self.assertEqual(state["current"], result)
+        health.assert_called_once()
+        save.assert_called_once_with(state["current"], LOCAL_QWEN)
+        self.assertEqual([("session", "create", "synthetic"), ("session", "switch", "session-1")], calls)
+        self.assertIn("DeepSeek 尚未配置", output.getvalue())
+
+    def test_new_default_session_without_credentials_cancels_without_creating_session(self):
+        with (patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": False}),
+              patch("agentforge.providers.local_health.check_qwen_identity", side_effect=AssertionError("local not selected")),
+              patch("agentforge.conversation_console._call", side_effect=AssertionError("must not create session")),
+              patch("builtins.input", return_value="CANCEL"),
+              redirect_stdout(io.StringIO())):
+            self.assertIsNone(conversation_console._create_default_conversation("synthetic"))
+
+    def test_new_default_local_choice_requires_configured_qwen_before_creating_session(self):
+        with (patch("agentforge.credential_store.CredentialStore.status", return_value={"configured": False}),
+              patch("agentforge.providers.local_health.check_qwen_identity", side_effect=AssertionError("no key")),
+              patch("agentforge.conversation_console._call", side_effect=AssertionError("must not create session")),
+              patch.dict("os.environ", {}, clear=True),
+              patch("builtins.input", return_value="LOCAL")):
+            with self.assertRaisesRegex(ValueError, "本地 Qwen 认证未配置"):
+                conversation_console._create_default_conversation("synthetic")
 
 
 if __name__ == "__main__":

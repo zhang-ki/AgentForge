@@ -5,6 +5,8 @@ import json
 import time
 
 from ..agent_loop import ToolCall
+from ..context_assembler import ContextAssembler
+from ..conversation_context import ContextBudgetExceeded
 from ..errors import ProviderError
 from ..token_budget import TokenBudgetManager
 
@@ -30,9 +32,10 @@ _TOOLS = [
 
 class DeepSeekAgentPlanner:
     """Call the bounded existing ReadOnlyToolbox; never expose shell or Python execution."""
-    def __init__(self, client, model: str, descriptor, *, max_output_tokens: int = 256,
+    def __init__(self, client, model: str, descriptor, *, max_output_tokens: int = 4_096,
                  thinking: bool | None = None, effort: str | None = None, stream: bool = False,
-                 run_timeout_seconds: float = 120.0, monotonic=time.monotonic):
+                 run_timeout_seconds: float = 120.0, monotonic=time.monotonic,
+                 context_assembler: ContextAssembler | None = None):
         if descriptor.provider_id != "deepseek" or descriptor.model_id != model:
             raise ValueError("DeepSeek Agent model does not match the selected model metadata.")
         if thinking is not None and not isinstance(thinking, bool):
@@ -52,7 +55,8 @@ class DeepSeekAgentPlanner:
         self.thinking = thinking if descriptor.supports_thinking is True else None
         self.effort, self.stream = effort, stream
         self.run_timeout_seconds, self.monotonic = float(run_timeout_seconds), monotonic
-        self.token_budget_manager = TokenBudgetManager()
+        self.context_assembler = context_assembler or ContextAssembler(TokenBudgetManager())
+        self.token_budget_manager = self.context_assembler.budgets
         self.token_budget = self.token_budget_manager.budget(
             descriptor, requested_output_tokens=max_output_tokens)
         self.last_token_budget_diagnostics = None
@@ -103,28 +107,41 @@ class DeepSeekAgentPlanner:
         if not self.objective_added:
             self.messages.append({"role": "user", "content": objective})
             self.objective_added = True
-        measured = self.token_budget_manager.measure_request(self.messages, tools=_TOOLS)
-        self.last_token_budget_diagnostics = {
-            "estimated_input_tokens": measured.count,
-            "method": measured.method,
-            "input_budget_tokens": self.token_budget.input_budget,
-            "context_window": self.token_budget.context_window,
-            "reserved_output_tokens": self.token_budget.output_reserve,
-            "safety_margin_tokens": self.token_budget.safety_margin,
-            "tool_schema_included": True,
-            "protocol_history_included": True,
-        }
-        if measured.count > self.token_budget.input_budget:
-            raise ProviderError(
-                "DeepSeek Agent request exceeds the selected model input budget; no request was sent. "
-                f"(estimated={measured.count}, budget={self.token_budget.input_budget}, {measured.method})"
+        try:
+            request_messages, budget_diagnostics = self.context_assembler.fit_messages(
+                self.messages, descriptor=self.descriptor,
+                requested_output_tokens=self.max_output_tokens,
+                tools=_TOOLS, phase="deepseek_tool_planner",
             )
+        except ContextBudgetExceeded as exc:
+            self.last_token_budget_diagnostics = {
+                "phase": "deepseek_tool_planner", **exc.diagnostics,
+                "request_sent": False, "request_succeeded": False,
+            }
+            raise ProviderError("CONTEXT_BUDGET_EXCEEDED; no request was sent to DeepSeek.") from None
         completion = self.client.chat(
-            self.messages, model=self.model, max_output_tokens=self.max_output_tokens,
+            request_messages, model=self.model, max_output_tokens=self.max_output_tokens,
             thinking=self.thinking, effort=self.effort, stream=self.stream,
             tools=_TOOLS,
         )
         self.request_count += 1
+        usage = getattr(completion, "usage", None)
+        self.last_token_budget_diagnostics = {
+            **budget_diagnostics,
+            "request_sent": True,
+            "request_succeeded": True,
+            "finish_reason": completion.finish_reason,
+            "usage": usage if isinstance(usage, dict) else None,
+            "reasoning_tokens": (usage.get("reasoning_tokens")
+                                 if isinstance(usage, dict) else None),
+            "ordinary_completion_tokens": (
+                max(0, usage.get("completion_tokens", 0)
+                    - usage.get("reasoning_tokens", 0))
+                if isinstance(usage, dict)
+                and isinstance(usage.get("completion_tokens"), int)
+                and isinstance(usage.get("reasoning_tokens", 0), int)
+                else None),
+        }
         if completion.tool_calls:
             if completion.finish_reason not in {None, "tool_calls"}:
                 raise ProviderError("DeepSeek returned tool calls with an unexpected finish reason.")
@@ -156,4 +173,4 @@ class DeepSeekAgentPlanner:
         if completion.finish_reason not in {None, "stop"}:
             raise ProviderError("DeepSeek Agent returned an unexpected final finish reason.")
         self.final_answer = completion.content
-        return None\n
+        return None

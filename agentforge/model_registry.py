@@ -1,52 +1,17 @@
 """Runtime model metadata for explicit local and DeepSeek model selection."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any
-import http.client
-import json as _json
 
 from .af012_runtime import DATA_ROOT
-
-
-@dataclass(frozen=True)
-class ModelDescriptor:
-    provider_id: str
-    model_id: str
-    display_name: str
-    model_type: str
-    context_window: int | None
-    max_output_tokens: int | None
-    tokenizer_id: str | None = None
-    supports_streaming: bool | None = None
-    supports_tool_calling: bool | None = None
-    supports_thinking: bool | None = None
-    supported_efforts: tuple[str, ...] = ()
-    default_effort: str | None = None
-    input_modalities: tuple[str, ...] = ()
-    output_modalities: tuple[str, ...] = ()
-    availability: str = "UNKNOWN"
-
-    @property
-    def key(self) -> str:
-        return "qwen-local" if self.provider_id == "llama-server" else self.model_id
-
-
-LOCAL_QWEN = ModelDescriptor(
-    provider_id="llama-server", model_id="qwen3.5-4b", display_name="Qwen Local",
-    model_type="local", context_window=4096, max_output_tokens=512,
-    tokenizer_id=None, supports_streaming=None, supports_tool_calling=False,
-    supports_thinking=False, input_modalities=("text",), output_modalities=("text",),
-    availability="CONFIGURED",
+from .model_types import (
+    LOCAL_QWEN, OFFLINE_PROVIDER, ModelDescriptor,
 )
-OFFLINE_PROVIDER = ModelDescriptor(
-    provider_id="offline", model_id="offline", display_name="Offline Evidence",
-    model_type="offline", context_window=None, max_output_tokens=None,
-    availability="CONFIGURED",
-)
+
 
 
 def _optional_positive_int(value: Any, name: str) -> int | None:
@@ -57,7 +22,7 @@ def _optional_positive_int(value: Any, name: str) -> int | None:
     return value
 
 
-def parse_deepseek_models(payload: Any) -> tuple[ModelDescriptor, ...]:
+def parse_deepseek_models(payload: Any, *, capability_verified_at: str | None = None) -> tuple[ModelDescriptor, ...]:
     """Parse the official `/models` response; absent capabilities remain unknown."""
     if not isinstance(payload, dict) or payload.get("object") != "list" or not isinstance(payload.get("data"), list):
         raise ValueError("DeepSeek model discovery returned an invalid list response.")
@@ -105,6 +70,9 @@ def parse_deepseek_models(payload: Any) -> tuple[ModelDescriptor, ...]:
         if tokenizer_id is not None and (not isinstance(tokenizer_id, str) or not tokenizer_id.strip()
                                          or len(tokenizer_id) > 256):
             raise ValueError("DeepSeek tokenizer metadata is invalid.")
+        output_includes_reasoning = item.get("output_limit_includes_reasoning", True)
+        if output_includes_reasoning is not None and not isinstance(output_includes_reasoning, bool):
+            raise ValueError("DeepSeek output/reasoning limit metadata is invalid.")
         descriptors.append(ModelDescriptor(
             provider_id="deepseek", model_id=model_id, display_name=name or model_id,
             model_type="cloud", context_window=_optional_positive_int(item.get("context_window"), "context_window"),
@@ -116,6 +84,15 @@ def parse_deepseek_models(payload: Any) -> tuple[ModelDescriptor, ...]:
             supported_efforts=tuple(levels), default_effort=default_effort,
             input_modalities=tuple(inputs), output_modalities=tuple(outputs),
             availability="UNKNOWN",
+            max_input_tokens=_optional_positive_int(item.get("max_input_tokens"), "max_input_tokens"),
+            reasoning_token_limit=_optional_positive_int(item.get("reasoning_token_limit"), "reasoning_token_limit"),
+            output_limit_includes_reasoning=output_includes_reasoning,
+            provider_max_output_tokens=_optional_positive_int(
+                item.get("provider_max_output_tokens"), "provider_max_output_tokens"),
+            adapter_max_output_tokens=None,
+            capability_source=("DeepSeek official /models API response; Chat Completions API "
+                               "documents max_tokens as the generated completion limit"),
+            capability_verified_at=capability_verified_at,
         ))
     return tuple(descriptors)
 
@@ -142,10 +119,43 @@ class ModelRegistry:
                 return item
         raise ValueError("Unknown model ID. Refresh the model list before selecting a remote model.")
 
+    def get_for_request(self, model_key: str) -> ModelDescriptor:
+        """Return request-usable capabilities; stale cloud metadata stays display-only."""
+        descriptor = self.get(model_key)
+        if descriptor.provider_id != "deepseek":
+            return descriptor
+        if self.cache_status != "fresh":
+            raise ValueError(
+                "DeepSeek capability metadata is stale or unavailable; explicitly run /model refresh before use."
+            )
+        if (not isinstance(descriptor.capability_source, str)
+                or not descriptor.capability_source.startswith("DeepSeek official /models API response")
+                or not descriptor.capability_verified_at
+                or descriptor.context_window is None
+                or descriptor.max_output_tokens is None):
+            raise ValueError(
+                "DeepSeek model capabilities lack current verified provenance; refresh model information."
+            )
+        try:
+            verified_at = datetime.fromisoformat(descriptor.capability_verified_at)
+            if verified_at.tzinfo is None:
+                raise ValueError
+            age = (self.now().astimezone(timezone.utc)
+                   - verified_at.astimezone(timezone.utc)).total_seconds()
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError(
+                "DeepSeek model capability verification timestamp is invalid; refresh model information."
+            ) from None
+        if age < -300 or age > self.max_age_seconds:
+            raise ValueError(
+                "DeepSeek model capabilities are stale; explicitly run /model refresh before use."
+            )
+        return descriptor
+
     def refresh_deepseek(self, client) -> tuple[ModelDescriptor, ...]:
         payload = client.list_models()
-        models = parse_deepseek_models(payload)
         saved_at = self.now().astimezone(timezone.utc)
+        models = parse_deepseek_models(payload, capability_verified_at=saved_at.isoformat())
         record = {"version": 1, "saved_at": saved_at.isoformat(),
                   "models": [asdict(model) for model in models]}
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -177,6 +187,13 @@ class ModelRegistry:
                 if not isinstance(raw, dict):
                     raise ValueError
                 raw = dict(raw)
+                if raw.get("provider_id") == "deepseek":
+                    # Older AgentForge caches persisted a generic 512-token
+                    # adapter cap on DeepSeek descriptors. The current
+                    # DeepSeek adapter has no such ceiling; retaining that
+                    # obsolete field would clamp every preset despite fresh
+                    # official model metadata.
+                    raw["adapter_max_output_tokens"] = None
                 raw["supported_efforts"] = tuple(raw.get("supported_efforts", ()))
                 raw["input_modalities"] = tuple(raw.get("input_modalities", ()))
                 raw["output_modalities"] = tuple(raw.get("output_modalities", ()))
@@ -206,6 +223,21 @@ def _validate_cached_descriptor(descriptor: ModelDescriptor) -> None:
         raise ValueError("Invalid cached model identity.")
     _optional_positive_int(descriptor.context_window, "context_window")
     _optional_positive_int(descriptor.max_output_tokens, "max_output_tokens")
+    _optional_positive_int(descriptor.max_input_tokens, "max_input_tokens")
+    _optional_positive_int(descriptor.reasoning_token_limit, "reasoning_token_limit")
+    if (descriptor.output_limit_includes_reasoning is not None
+            and not isinstance(descriptor.output_limit_includes_reasoning, bool)):
+        raise ValueError("Invalid cached reasoning output-limit semantics.")
+    _optional_positive_int(descriptor.provider_max_output_tokens, "provider_max_output_tokens")
+    _optional_positive_int(descriptor.adapter_max_output_tokens, "adapter_max_output_tokens")
+    for value in (descriptor.capability_source, descriptor.capability_verified_at):
+        if value is not None and (not isinstance(value, str) or len(value) > 512):
+            raise ValueError("Invalid cached capability provenance.")
+    if descriptor.capability_verified_at is not None:
+        try:
+            datetime.fromisoformat(descriptor.capability_verified_at)
+        except ValueError:
+            raise ValueError("Invalid cached capability verification timestamp.") from None
     if any(value not in {"low", "high", "max"} for value in descriptor.supported_efforts):
         raise ValueError("Invalid cached reasoning effort.")
     if descriptor.default_effort is not None and descriptor.default_effort not in descriptor.supported_efforts:
@@ -215,43 +247,3 @@ def _validate_cached_descriptor(descriptor: ModelDescriptor) -> None:
         raise ValueError("Invalid cached model capability.")
     if descriptor.availability != "UNKNOWN":
         raise ValueError("Cached model availability cannot be trusted as a connection status.")
-
-
-def check_qwen_identity(endpoint: str, api_key: str, expected_model: str, *, timeout: float = 3.0) -> dict:
-    """Verify the explicitly configured loopback Qwen service and model alias."""
-    from .providers.llama_server import LlamaServerClient
-    client = LlamaServerClient(endpoint, api_key=api_key, connect_timeout=min(timeout, 2.0),
-                               read_timeout=max(5.0, timeout), total_timeout=max(10.0, timeout))
-    connection = http.client.HTTPConnection(client.host, client.port, timeout=timeout)
-    try:
-        connection.request("GET", "/health", headers={"Accept": "application/json"})
-        response = connection.getresponse()
-        raw = response.read(8193)
-        if response.status != 200 or len(raw) > 8192:
-            raise ValueError("Local Qwen health check failed; model selection was not changed.")
-        try:
-            health = _json.loads(raw.decode("utf-8"))
-        except (UnicodeError, _json.JSONDecodeError):
-            raise ValueError("Local Qwen health response was invalid; model selection was not changed.") from None
-        if not isinstance(health, dict) or health.get("status") != "ok":
-            raise ValueError("Local Qwen model is not ready; model selection was not changed.")
-        connection.close()
-        connection = http.client.HTTPConnection(client.host, client.port, timeout=timeout)
-        connection.request("GET", "/v1/models", headers={"Accept": "application/json",
-                            "Authorization": "Bearer " + api_key})
-        response = connection.getresponse()
-        raw = response.read(65_537)
-        if response.status != 200 or len(raw) > 65_536:
-            raise ValueError("Local Qwen model identity could not be confirmed; model selection was not changed.")
-        try:
-            payload = _json.loads(raw.decode("utf-8"))
-        except (UnicodeError, _json.JSONDecodeError):
-            raise ValueError("Local Qwen model identity response was invalid; model selection was not changed.") from None
-        entries = payload.get("data") if isinstance(payload, dict) else None
-        if not isinstance(entries, list) or not any(isinstance(item, dict) and item.get("id") == expected_model for item in entries):
-            raise ValueError("The running local service does not expose the expected Qwen model alias.")
-        return {"health": "ready", "model_id": expected_model}
-    except (OSError, http.client.HTTPException):
-        raise ValueError("Local Qwen readiness or model identity request failed; selection was not changed.") from None
-    finally:
-        connection.close()

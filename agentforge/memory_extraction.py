@@ -1,14 +1,17 @@
 """一次性本地候选提取；提案始终是不可信且待审批的状态。"""
 import json
 
+from .context_assembler import ContextAssembler
 from .memory_store import _SECRET_LIKE
 
 
 _ALLOWED_TYPES = {"preference", "project_fact", "workflow", "other"}
 
 
-def extract_memory_candidates(chat_client, model: str, messages, *, max_candidates=5,
-                             max_input_bytes=10000):
+def extract_memory_candidates(chat_client, model: str, messages, *, descriptor,
+                             context_assembler: ContextAssembler | None = None,
+                             max_candidates=5, max_input_bytes=10000,
+                             max_output_tokens=512, budget_diagnostics: dict | None = None):
     """请求已配置的本地聊天 Provider 提取用户明确表达的记忆候选。
 
     此函数不会持久化或批准模型输出，只会返回
@@ -18,6 +21,10 @@ def extract_memory_candidates(chat_client, model: str, messages, *, max_candidat
         raise ValueError("A model name is required for local memory suggestions.")
     if isinstance(max_candidates, bool) or not isinstance(max_candidates, int) or not 1 <= max_candidates <= 10:
         raise ValueError("Memory suggestion count must be between 1 and 10.")
+    if isinstance(max_output_tokens, bool) or not isinstance(max_output_tokens, int) or not 1 <= max_output_tokens <= 512:
+        raise ValueError("Memory suggestion output budget must be between 1 and 512 tokens.")
+    if budget_diagnostics is not None and not isinstance(budget_diagnostics, dict):
+        raise ValueError("Memory suggestion budget diagnostics must be a mapping.")
     eligible = []
     for item in messages:
         if (item.get("role") == "user" and item.get("status") == "completed"
@@ -39,7 +46,26 @@ def extract_memory_candidates(chat_client, model: str, messages, *, max_candidat
         )},
         {"role": "user", "content": source},
     ]
-    raw = chat_client.chat(messages_for_model, model=model)
+    assembler = context_assembler or ContextAssembler()
+    from .conversation_context import ContextBudgetExceeded
+    try:
+        bounded_messages, diagnostics = assembler.fit_messages(
+            messages_for_model, descriptor=descriptor,
+            requested_output_tokens=max_output_tokens,
+            phase="memory_candidate_extraction",
+        )
+    except ContextBudgetExceeded as exc:
+        if budget_diagnostics is not None:
+            budget_diagnostics.update({
+                "phase": "memory_candidate_extraction", **exc.diagnostics,
+                "request_sent": False, "request_succeeded": False,
+            })
+        raise ValueError("Memory suggestion exceeds the selected model's input budget; no request was sent.") from None
+    if budget_diagnostics is not None:
+        budget_diagnostics.update({**diagnostics, "request_sent": True, "request_succeeded": False})
+    raw = chat_client.chat(bounded_messages, model=model, max_output_tokens=max_output_tokens)
+    if budget_diagnostics is not None:
+        budget_diagnostics["request_succeeded"] = True
     if not isinstance(raw, str) or len(raw) > 20000:
         raise ValueError("Local memory suggestion response is invalid or too large.")
     try:

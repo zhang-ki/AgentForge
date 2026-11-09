@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import hashlib
 import os
 from pathlib import Path
 import sqlite3
@@ -15,23 +14,7 @@ import stat
 
 from .config import DATA_DIR, DATABASE_PATH, PROJECT_ROOT, REPOSITORY_CATALOG_PATH, REPOSITORY_INDEX_DIR
 from .errors import StoreError
-
-
-def canonical_repository(path: str | os.PathLike[str]) -> Path:
-    if not isinstance(path, (str, os.PathLike)):
-        raise ValueError("Repository path is invalid.")
-    try:
-        root = Path(path).resolve(strict=True)
-    except (OSError, RuntimeError):
-        raise ValueError("Repository path does not exist or cannot be resolved.") from None
-    if not root.is_dir():
-        raise ValueError("Repository path must be a directory.")
-    return root
-
-
-def repository_identity(path: str | os.PathLike[str]) -> str:
-    root = canonical_repository(path)
-    return hashlib.sha256(os.path.normcase(str(root)).encode("utf-8")).hexdigest()
+from .repository_identity import canonical_repository, repository_identity
 
 
 def _ordinary(path: Path, *, directory: bool) -> None:

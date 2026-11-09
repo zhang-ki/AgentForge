@@ -175,11 +175,15 @@ class ContextPlanTests(unittest.TestCase):
         self.assertLessEqual(plan.bytes_used, 600)
 
     def test_source_linked_fact_context_fails_closed_if_fact_exceeds_budget(self):
+        from agentforge.conversation_context import ContextBudgetExceeded
         from agentforge.conversation_facts import extract_message_facts
         ledger = extract_message_facts([{"id": "m1", "sequence": 1, "role": "user",
                                         "content": "Project fact GAMMA953."}])
-        with self.assertRaisesRegex(ValueError, r"Protected conversation facts.*base_bytes=\d+, fact_bytes=\d+, budget_bytes=240"):
+        with self.assertRaises(ContextBudgetExceeded) as caught:
             self.base(protected_facts=ledger, budget_bytes=240)
+        self.assertEqual("protected_facts_exceed_budget", caught.exception.diagnostics["failure_code"])
+        self.assertGreater(caught.exception.diagnostics["required_bytes"],
+                           caught.exception.diagnostics["budget_bytes"])
 
     def test_invalid_budget_empty_summary_and_oversized_memory(self):
         for value in (True, 0, 1_000_001, "120"):
@@ -197,3 +201,27 @@ class ContextPlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.base(history=(ConversationTurn("c1", "r1", 2, "user", "a"),
                                ConversationTurn("c1", "r1", 1, "assistant", "b")))
+
+    def test_non_code_and_explicit_history_questions_keep_the_complete_fact_ledger(self):
+        from agentforge.conversation_context import _relevant_facts_for_self_contained_code_query
+
+        ledger = [
+            {"kind": "project_fact", "text": "Release target is version 1.2."},
+            {"kind": "decision", "text": "Use a bounded retry policy."},
+        ]
+        for question in (
+            "Explain the design tradeoff.",
+            "What did we decide earlier about the caller?",
+            "What does it call now?",
+        ):
+            with self.subTest(question=question):
+                self.assertEqual(ledger, _relevant_facts_for_self_contained_code_query(
+                    ledger, question, "synthetic code evidence"))
+
+    def test_approved_memory_with_malformed_source_hash_is_rejected(self):
+        memory = MemoryCandidate(
+            "r1", "approved project preference", True, "m-invalid", "preference", 1,
+            (MemorySourceReference("message-1", 1, "user", "not-a-sha256"),),
+        )
+        with self.assertRaisesRegex(ValueError, "provenance is invalid"):
+            self.base(memories=(memory,))

@@ -142,11 +142,13 @@ class ConversationProviderTests(unittest.TestCase):
             "summary": "Prior extract."})
         self.assertIn("[E1]", answer.text)
         messages = client.chat.call_args.args[0]
-        self.assertEqual(["system", "user", "user", "assistant", "user"],
+        self.assertEqual(["system", "user", "assistant", "user"],
                          [message["role"] for message in messages])
         self.assertIn("prior IDs expire", messages[0]["content"])
-        self.assertIn("Untrusted prior conversation summary", messages[1]["content"])
-        self.assertEqual("What does foo do?", messages[2]["content"])
+        self.assertNotIn("Untrusted prior conversation summary", "\n".join(
+            message["content"] or "" for message in messages))
+        self.assertEqual("What does foo do?", messages[1]["content"])
+        self.assertEqual("Earlier answer [E1].", messages[2]["content"])
         self.assertIn("And what does it return?", messages[-1]["content"])
 
     def test_cross_repository_history_never_reaches_provider(self):
@@ -237,6 +239,25 @@ class ConversationProviderTests(unittest.TestCase):
               redirect_stdout(StringIO())):
             self.assertEqual(0, console.main())
         self.assertEqual("b", ask.call_args.args[0][3])
+
+    def test_console_mode_selection_reaches_the_shared_conversation_flow(self):
+        from agentforge import conversation_console as console
+        from contextlib import redirect_stdout
+        from io import StringIO
+        current = {"id": "a", "title": "first"}
+
+        def call(*args):
+            if args == ("session", "current"):
+                return {"repository": "synthetic", "result": current}
+            raise AssertionError(args)
+
+        with (patch.object(console, "_call", side_effect=call),
+              patch.object(console.presentation, "main", return_value=0) as ask,
+              patch("builtins.input", side_effect=["/mode hybrid", "question", "/exit"]),
+              redirect_stdout(StringIO())):
+            self.assertEqual(0, console.main())
+        self.assertIn("--mode", ask.call_args.args[0])
+        self.assertEqual("hybrid", ask.call_args.args[0][ask.call_args.args[0].index("--mode") + 1])
 
     def test_console_detects_external_repository_change_and_forgets_old_selection(self):
         from agentforge import conversation_console as console

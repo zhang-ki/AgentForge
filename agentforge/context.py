@@ -7,6 +7,11 @@ from .models import BuiltContext, Evidence, SearchResult
 from .errors import CitationValidationError, ProviderError
 
 
+# Evidence collection is a byte-bounded intermediate, not the model input
+# budget. ContextAssembler applies the selected model's token budget later.
+MAX_INTERMEDIATE_EVIDENCE_BYTES = 512_000
+
+
 def build_context(
     question: str,
     results: list[SearchResult],
