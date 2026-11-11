@@ -176,11 +176,18 @@
     "real_repository_source_sent_to_cloud": false
   },
   "git_delivery": {
-    "local_commit": "PENDING",
-    "github_push": "BLOCKED_REMOTE_UNREACHABLE",
-    "reason": "GitHub port 443 was unreachable through Git transport; remote branch divergence could not be checked.",
-    "github_app_repository_access": "PASS_READ_WRITE",
-    "target_branch_search": "NOT_FOUND_BY_GITHUB_BRANCH_SEARCH",
-    "git_transport": "BLOCKED_PORT_443_UNREACHABLE"
+    "release_commit": "529139cd21c9be09ca8ce2d1a4ae46dd09145140",
+    "commit_message": "feat(agentforge): finalize v0.1 evidence-backed agent workflow",
+    "committed_paths": 75,
+    "github_push": "PUSHED_AND_VERIFIED",
+    "remote": "origin",
+    "remote_branch": "feature/auto-chroma-hybrid",
+    "remote_head_at_release_push": "529139cd21c9be09ca8ce2d1a4ae46dd09145140",
+    "remote_head_matched_release_commit": true,
+    "branch_created_by_normal_push": true,
+    "force_push": false,
+    "remote_history_overwritten": false,
+    "protection_tag_unchanged": true,
+    "followup_delivery_record": "PHASE5_2_FINAL_DELIVERY_REPORT.md documents the release commit; that record is committed separately."
   }
 }
