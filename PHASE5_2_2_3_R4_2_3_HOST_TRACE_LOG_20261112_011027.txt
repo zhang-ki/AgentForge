@@ -1,0 +1,29 @@
+Phase 5.2.2.3-R4.2.3 Host Trace (sanitized) — 20261112_011027
+Run ID: e502f6bfd9c04e7ea877e42c36315b1c
+Raw result SHA256: 887cf4a6e69b7586a5b0f3e30cdac8256099459e1b2c98e5a568c40c6b43e64a
+Raw trace SHA256: 612ebb4b8d09e225b8b069be8c4647974e53c917c3f1dce8a328d3d799ba22c1
+Data scope: synthetic repository/source/question only. No credential or model response body is copied.
+
+Timeline:
+- Planner: PASS — repository intent; tool execution requested; plan valid; no correction
+- Repository preparation: PASS — 1 synthetic file, 1 chunk, SQLite + Chroma ready; 1 document embedding
+- Mixed retrieval: PASS — one orchestrator query; vector + lexical candidate; merged to one verified evidence item
+- Agent tool: search: PASS — completed; Observation produced
+- Agent tool: read attempt 1: RECOVERED [INVALID_ARGUMENTS] — safe validation reason LINE_RANGE_OUT_OF_BOUNDS; field=end_line; line_count=5
+- Agent replanning and read attempt 2: PASS — distinct call ID; completed; Observation produced; bounded recovery
+- Agent execution: PASS — completed; 4 rounds; 3 calls; 3 observations; 7 Planner requests
+- Evidence validation: PASS — SQLite source/path/line/hash verified; 1 evidence item accepted
+- Final context: PASS — one source ID and citation included; context evidence hash linked
+- DeepSeek final answer: PASS — non-empty answer; answer consistency check true; citation synthetic_calculation.py:1-5
+- Answer Contract: LIMITED — request-local citation is linked; semantic entailment is not independently verified
+- Session save and restore: PASS — 2 messages persisted; reload passed
+- Formal data protection: PASS — official Chroma 599 vectors unchanged; PostgreSQL/registry/active SQLite snapshots unchanged
+- Synthetic cleanup: PASS — conversation, vector, registration, SQLite index and directory removed and verified
+
+DeepSeek request usage (from trace provider_request completion events):
+- agent_replanner: 7 requests, prompt=7158, completion=401, total=7559
+- final_answer: 1 requests, prompt=1136, completion=94, total=1230
+- planner: 1 requests, prompt=607, completion=228, total=835
+- Total: 9 requests, prompt=8901, completion=723, total=9624.
+
+The raw JSONL remains unchanged and contains the full event record. The summary intentionally omits prompt/answer text, tool parameter values, credentials, and unneeded source content.

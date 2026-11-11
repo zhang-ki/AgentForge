@@ -14,8 +14,9 @@ import sys
 from .agent_loop import AgentLoop, OfflineAgentPlanner, ReadOnlyToolbox
 from .config import DATABASE_PATH, REPOSITORY_CATALOG_PATH
 from .conversation_context import ContextBudgetExceeded
-from .errors import AgentForgeError
+from .errors import AgentForgeError, StoreError
 from .indexer import index_repository
+from .index_lifecycle import UnavailableVectorRetriever
 from .planner import PlanningError
 from .providers.llama_server import (
     LlamaServerClient, LlamaServerProvider, validate_output_tokens, validate_timeout,
@@ -182,7 +183,7 @@ def create_provider(
 
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(
-        description="AgentForge: read-only repository search with offline summaries or explicitly configured local generation."
+        description="AgentForge: automatic dialogue routing, local repository indexing and verified retrieval, with explicitly configured providers."
     )
     commands = root.add_subparsers(dest="command", required=True)
     index = commands.add_parser("index", help="Index one explicitly supplied repository.")
@@ -202,8 +203,12 @@ def parser() -> argparse.ArgumentParser:
                 default="auto",
                 help="Advanced routing override for development and acceptance; default: LLM-planned auto routing.",
             )
-            command.add_argument("--use-chroma", action="store_true",
-                                 help="Use the persistent local Chroma code and approved-memory candidates.")
+            chroma_options = command.add_mutually_exclusive_group()
+            chroma_options.add_argument("--use-chroma", dest="use_chroma", action="store_true",
+                                        help="Use local Chroma code and approved-memory candidates (default).")
+            chroma_options.add_argument("--no-chroma", dest="use_chroma", action="store_false",
+                                        help="Use SQLite lexical/symbol retrieval only.")
+            command.set_defaults(use_chroma=True)
             command.add_argument("--context-budget", type=int, default=None,
                                  help="Optional maximum input-token cap; the selected model's verified limits still apply.")
             command.add_argument(
@@ -221,6 +226,8 @@ def parser() -> argparse.ArgumentParser:
                                  help="DeepSeek thinking effort; requires --thinking on and model support.")
             command.add_argument("--stream", action="store_true",
                                  help="Receive DeepSeek response via SSE; final output is still shown only after evidence validation.")
+            command.add_argument("--debug", action="store_true",
+                                 help="Show internal request lifecycle progress in the console.")
             command.add_argument("--allow-cloud-data", action="store_true",
                                  help="Confirm this stateless request may send its question and retrieved evidence to DeepSeek.")
             command.add_argument(
@@ -379,6 +386,14 @@ def _planner_failure_diagnostic(error):
 
 def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=None) -> int:
     arguments = parser().parse_args(argv)
+    from .observability import current_lifecycle, lifecycle_stage
+    lifecycle = current_lifecycle()
+    if lifecycle is not None and arguments.command == "ask":
+        lifecycle.start_request(
+            provider=arguments.provider or "offline", model=arguments.model,
+            session_id=arguments.conversation_id, streaming_enabled=arguments.stream,
+            mode=arguments.mode,
+        )
     engine = None
     provider = None
     planned_dialogue_plan = None
@@ -485,7 +500,7 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
                 connect_timeout=arguments.connect_timeout, read_timeout=arguments.read_timeout,
                 total_timeout=arguments.total_timeout, thinking=arguments.thinking == "on",
                 effort=arguments.effort, stream=arguments.stream,
-                use_chroma=False, mode=arguments.mode,
+                use_chroma=arguments.use_chroma, mode=arguments.mode,
                 cloud_data_authorized=arguments.allow_cloud_data,
             )
             dependencies = ConversationDependencies(
@@ -498,7 +513,8 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
             orchestrator = ConversationOrchestrator(dependencies)
             stateless_session = ConversationSession(provider=provider)
             dialogue_plan = orchestrator.plan(request, session=stateless_session)
-            if dialogue_plan.mode is DialogueMode.GENERAL:
+            if (not dialogue_plan.use_repository
+                    or not _has_active_repository_index()):
                 result = orchestrator.run(
                     request, index_store=None,
                     session=stateless_session, on_content=stream_callback,
@@ -512,7 +528,7 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
         if arguments.command == "status" and not DATABASE_PATH.exists() and not REPOSITORY_CATALOG_PATH.exists():
             _print_json({"database": str(DATABASE_PATH), "exists": False, "files": 0, "chunks": 0, "indexed_at": None})
             return 0
-        with _open_current_index(readonly=True) as store:
+        with _open_current_index(readonly=arguments.command != "ask") as store:
             if arguments.command == "status":
                 _print_json(store.status())
             elif arguments.command == "search":
@@ -551,9 +567,15 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
                 embedding_readiness_seconds = None
                 if arguments.conversation_id:
                     engine = _conversation_engine()
-                    conversation_store, repo_id, rows, conversation = _load_conversation(
-                        engine, arguments.conversation_id, repository,
-                    )
+                    with lifecycle_stage("session_restore") as restore_stage:
+                        conversation_store, repo_id, rows, conversation = _load_conversation(
+                            engine, arguments.conversation_id, repository,
+                        )
+                        if restore_stage is not None:
+                            restore_stage.finish("COMPLETED", metadata={
+                                "history_message_count": len(rows),
+                                "summary_present": bool(conversation.get("summary")),
+                            })
                     bound_provider = conversation.get("provider_id") or arguments.provider or "llama-server"
                     bound_model = conversation.get("model_id") or arguments.model or "qwen3.5-4b"
                     if arguments.provider is None:
@@ -587,36 +609,61 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
                         )
                 elif arguments.provider == "deepseek" and not arguments.allow_cloud_data:
                     raise ValueError("Cloud use requires --allow-cloud-data for this stateless request.")
+                elif lifecycle is not None:
+                    lifecycle.skip("session_restore", "new_or_stateless_request")
 
                 vector_retriever = None
+                vector_setup = None
                 if arguments.use_chroma:
-                    from .af012_runtime import (
-                        create_persistent_chroma, embedding_provider_from_environment,
-                        collection_for_model,
-                    )
-                    from .embeddings.chroma_index import ChromaCodeIndex
-                    embedding_provider = embedding_provider_from_environment()
-                    embedding_readiness_seconds = embedding_provider.wait_ready()
-                    chroma_client = create_persistent_chroma()
-                    collection = collection_for_model(
-                        chroma_client, embedding_provider.model_id, embedding_provider.dimension,
-                    )
-                    vector_retriever = ChromaCodeIndex(store, collection, embedding_provider)
-                    if conversation is not None:
+                    vector_setup = _initialize_optional_chroma(store)
+                    vector_retriever = vector_setup["vector_retriever"]
+                    embedding_readiness_seconds = vector_setup["readiness_seconds"]
+                elif lifecycle is not None:
+                    lifecycle.skip("embedding_readiness", "vector_retrieval_disabled")
+                    lifecycle.skip("chroma_initialization", "vector_retrieval_disabled")
+                if conversation is not None:
+                    conversation = dict(conversation)
+                    if vector_setup is None or vector_setup["embedding_provider"] is None:
+                        conversation["memories"] = ()
+                        conversation["memory_retrieval"] = {
+                            "status": "unavailable", "candidate_count": 0,
+                            "reason_code": ((vector_setup or {}).get("failure") or {}).get(
+                                "reason_code", "vector_not_requested"),
+                        }
+                        if lifecycle is not None:
+                            reason = ((vector_setup or {}).get("failure") or {}).get("reason_code")
+                            if reason:
+                                lifecycle.degrade("memory_retrieval", reason,
+                                                  metadata={"memory_result_count": 0})
+                            else:
+                                lifecycle.skip("memory_retrieval", "embedding_or_vector_not_requested")
+                    else:
                         from .memory_retrieval import ChromaMemoryRetriever
                         from .memory_store import MemoryStore
                         from .memory_service import MemoryService
-                        conversation = dict(conversation)
+                        embedding_provider = vector_setup["embedding_provider"]
+                        collection = vector_setup["collection"]
                         memory_repository = MemoryStore(engine)
                         try:
-                            conversation["memories"] = MemoryService(memory_repository).retrieve_approved(
-                                ChromaMemoryRetriever(collection, embedding_provider, memory_repository),
-                                arguments.query, repo_id, limit=4,
-                            )
+                            with lifecycle_stage("memory_retrieval", metadata={
+                                "provider": arguments.provider, "model": arguments.model,
+                            }) as memory_stage:
+                                try:
+                                    conversation["memories"] = MemoryService(memory_repository).retrieve_approved(
+                                        ChromaMemoryRetriever(collection, embedding_provider, memory_repository),
+                                        arguments.query, repo_id, limit=4,
+                                    )
+                                except Exception as exc:
+                                    if memory_stage is not None:
+                                        memory_stage.finish("DEGRADED", error_code="memory_retrieval_unavailable",
+                                                            metadata={"error_type": type(exc).__name__})
+                                    raise
                             memory_count = len(conversation["memories"])
                             conversation["memory_retrieval"] = {
                                 "status": "available", "candidate_count": memory_count,
                             }
+                            if memory_stage is not None:
+                                memory_stage.finish("COMPLETED", metadata={"memory_result_count": memory_count})
                         except Exception as exc:
                             # Long-term memory is optional context. Keep repository
                             # retrieval active, but make the degradation observable.
@@ -625,6 +672,8 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
                                 "status": "unavailable", "candidate_count": 0,
                                 "error_type": type(exc).__name__,
                             }
+                elif lifecycle is not None:
+                    lifecycle.skip("memory_retrieval", "stateless_request")
 
                 from .conversation_orchestrator import (
                     ConversationDependencies, ConversationOrchestrator,
@@ -672,6 +721,7 @@ def main(argv=None, *, stream_callback=None, event_callback=None, cancel_event=N
                     summary_callback_factory=_semantic_summary_callback,
                     session_service=SessionService(),
                     agent_executor=ConversationAgentExecutor(engine=engine),
+                    repository_preparer=_prepare_repository_index,
                 )
                 result = ConversationOrchestrator(dependencies).run(
                     request, index_store=store, vector_retriever=vector_retriever,
@@ -790,7 +840,7 @@ def _add_repository_commands(commands):
     actions = repo.add_subparsers(dest="repo_action", required=True)
     actions.add_parser("list", help="List registered repositories and the active repository.")
     actions.add_parser("current", help="Show the active repository.")
-    register = actions.add_parser("register", help="Register a local repository path without scanning it.")
+    register = actions.add_parser("register", help="Register and automatically index a local repository.")
     register.add_argument("path")
     register.add_argument("--name")
     switch = actions.add_parser("switch", help="Activate a previously indexed repository by ID or path.")
@@ -877,6 +927,17 @@ def _open_current_index(*, readonly: bool):
     return IndexStore(readonly=readonly)
 
 
+def _has_active_repository_index() -> bool:
+    """Probe the selected local index read-only; missing/corrupt indexes are optional context failures."""
+    if not DATABASE_PATH.exists() and not REPOSITORY_CATALOG_PATH.exists():
+        return False
+    try:
+        with _open_current_index(readonly=True) as store:
+            return bool(store.metadata().get("repository"))
+    except (StoreError, sqlite3.Error, OSError):
+        return False
+
+
 def _index_command(arguments):
     from .repositories import RepositoryRegistry, canonical_repository, open_index_for_repository, repository_identity
     from .chunker import chunk_signature
@@ -894,11 +955,193 @@ def _index_command(arguments):
             result = index_repository(root, index, window_lines=arguments.window_lines,
                 overlap_lines=arguments.overlap_lines, replace_repository=arguments.replace_repository)
             registry.set_index_path(repo_id, index.database)
+            initialized = _initialize_optional_chroma(index)
+            vector_retriever = _synchronize_optional_chroma(
+                index, initialized["vector_retriever"],
+            )
+            lifecycle = _maintenance_index_lifecycle(index, vector_retriever)
         finally:
             index.close()
         registry.mark_indexed(repo_id)
         registry.activate(repo_id)
-    return {**result, "repository_id": repo_id, "active": True}
+    return {**result, "repository_id": repo_id, "active": True,
+            "index_lifecycle": lifecycle}
+
+
+def _initialize_optional_chroma(index_store):
+    """Prepare local Embedding and embedded Chroma without blocking lexical use."""
+    from .observability import lifecycle_stage
+    stage = "embedding_configuration"
+    try:
+        from .af012_runtime import (
+            collection_for_model, create_persistent_chroma,
+            embedding_provider_from_environment,
+        )
+        from .embeddings.chroma_index import ChromaCodeIndex
+
+        with lifecycle_stage("embedding_configuration") as config_stage:
+            try:
+                embedding_provider = embedding_provider_from_environment()
+            except Exception as exc:
+                if config_stage is not None:
+                    config_stage.finish("DEGRADED", error_code="embedding_configuration_unavailable",
+                                        metadata={"error_type": type(exc).__name__})
+                raise
+            if config_stage is not None:
+                config_stage.finish("COMPLETED")
+        stage = "embedding_readiness"
+        with lifecycle_stage("embedding_readiness") as readiness_stage:
+            try:
+                readiness_seconds = embedding_provider.wait_ready(timeout=20.0, poll_interval=0.5)
+            except Exception as exc:
+                if readiness_stage is not None:
+                    readiness_stage.finish("DEGRADED", error_code="embedding_service_unavailable",
+                                           metadata={"error_type": type(exc).__name__})
+                raise
+        stage = "chroma_initialization"
+        with lifecycle_stage("chroma_initialization") as chroma_stage:
+            try:
+                chroma_client = create_persistent_chroma()
+                collection = collection_for_model(
+                    chroma_client, embedding_provider.model_id, embedding_provider.dimension,
+                )
+            except Exception as exc:
+                if chroma_stage is not None:
+                    chroma_stage.finish("DEGRADED", error_code="chroma_unavailable",
+                                        metadata={"error_type": type(exc).__name__})
+                raise
+        return {
+            "embedding_provider": embedding_provider,
+            "collection": collection,
+            "vector_retriever": ChromaCodeIndex(index_store, collection, embedding_provider),
+            "readiness_seconds": readiness_seconds,
+            "failure": None,
+        }
+    except Exception as exc:
+        reason_codes = {
+            "embedding_configuration": "embedding_configuration_unavailable",
+            "embedding_readiness": "embedding_service_unavailable",
+            "chroma_initialization": "chroma_unavailable",
+        }
+        failure = {
+            "reason_code": reason_codes.get(stage, "vector_backend_unavailable"),
+            "error_type": type(exc).__name__,
+        }
+        return {
+            "embedding_provider": None,
+            "collection": None,
+            "vector_retriever": UnavailableVectorRetriever(**failure),
+            "readiness_seconds": None,
+            "failure": failure,
+        }
+
+
+def _synchronize_optional_chroma(index_store, vector_retriever):
+    """Repair an incomplete derived vector snapshot; preserve lexical fallback."""
+    if isinstance(vector_retriever, UnavailableVectorRetriever) or vector_retriever is None:
+        return vector_retriever
+    inspect = getattr(vector_retriever, "inspect_consistency", None)
+    synchronize = getattr(vector_retriever, "sync", None)
+    if not callable(inspect) or not callable(synchronize):
+        return vector_retriever
+    try:
+        state = inspect()
+        if not isinstance(state, dict) or not isinstance(state.get("complete"), bool):
+            raise ValueError("Vector consistency status is invalid.")
+        if not state["complete"]:
+            synchronize()
+            state = inspect()
+            if not isinstance(state, dict) or not isinstance(state.get("complete"), bool):
+                raise ValueError("Vector consistency status is invalid.")
+        return vector_retriever
+    except (sqlite3.Error, StoreError):
+        raise
+    except Exception as exc:
+        return UnavailableVectorRetriever(
+            "chroma_synchronization_unavailable", type(exc).__name__,
+        )
+
+
+def _maintenance_index_lifecycle(index_store, vector_retriever):
+    from .index_lifecycle import derive_index_lifecycle
+
+    metadata = index_store.metadata()
+    repository_id = metadata.get("repository_id")
+    indexed = bool(metadata.get("indexed_at"))
+    if isinstance(vector_retriever, UnavailableVectorRetriever):
+        return derive_index_lifecycle(
+            repository_id=repository_id, indexed=indexed, vector_requested=True,
+            vector_available=False, reason_code=vector_retriever.reason_code,
+        ).to_dict()
+    if vector_retriever is None:
+        return derive_index_lifecycle(
+            repository_id=repository_id, indexed=indexed,
+            reason_code="vector_not_requested",
+        ).to_dict()
+    inspect = getattr(vector_retriever, "inspect_consistency", None)
+    if not callable(inspect):
+        return derive_index_lifecycle(
+            repository_id=repository_id, indexed=indexed, vector_requested=True,
+            vector_available=True, vector_complete=None,
+            reason_code="vector_integrity_unverified",
+        ).to_dict()
+    try:
+        state = inspect()
+    except (sqlite3.Error, StoreError):
+        raise
+    except Exception as exc:
+        return derive_index_lifecycle(
+            repository_id=repository_id, indexed=indexed, vector_requested=True,
+            vector_available=False, reason_code="vector_integrity_check_unavailable",
+        ).to_dict()
+    if not isinstance(state, dict) or not isinstance(state.get("complete"), bool):
+        return derive_index_lifecycle(
+            repository_id=repository_id, indexed=indexed, vector_requested=True,
+            vector_available=False, reason_code="vector_integrity_status_invalid",
+        ).to_dict()
+    return derive_index_lifecycle(
+        repository_id=repository_id, indexed=indexed, vector_requested=True,
+        vector_available=True, vector_complete=state["complete"],
+        reason_code=None if state["complete"] else "vector_index_incomplete",
+        expected_vectors=state.get("expected_vectors"),
+        stored_vectors=state.get("stored_vectors"),
+        invalid_vectors=state.get("invalid_vectors"),
+    ).to_dict()
+
+
+def _prepare_repository_index(index_store, request, vector_retriever):
+    """Synchronously refresh SQLite before retrieval and reconcile local Chroma."""
+    from .observability import lifecycle_stage
+    from .indexer import index_repository
+    from .repositories import RepositoryRegistry, canonical_repository, repository_identity
+    from .scanner import scan_repository
+
+    root = canonical_repository(request.repository)
+    with lifecycle_stage("repository_file_scan") as scan_stage:
+        scan_report = scan_repository(root)
+        if scan_stage is not None:
+            scan_stage.finish("COMPLETED", metadata={
+                "file_count": len(scan_report.candidates),
+                "skipped_count": len(scan_report.issues),
+            })
+    index_result = index_repository(root, index_store, scan_report=scan_report)
+    repo_id = repository_identity(root)
+    with RepositoryRegistry() as registry:
+        try:
+            registry.get(repo_id)
+        except ValueError:
+            registry.register(root)
+        registry.set_index_path(repo_id, index_store.database)
+        registry.mark_indexed(repo_id)
+    with lifecycle_stage("chroma_index_synchronization", metadata={
+        "index_unchanged": bool(index_result.get("index_unchanged")),
+        "added_count": index_result.get("added", 0),
+        "changed_count": index_result.get("changed", 0),
+        "removed_count": index_result.get("removed", 0),
+    }):
+        vector_retriever = _synchronize_optional_chroma(index_store, vector_retriever)
+    return {"scan_report": scan_report, "vector_retriever": vector_retriever,
+            "index_result": index_result}
 
 
 def _repository_command(arguments):
@@ -910,8 +1153,26 @@ def _repository_command(arguments):
         if action == "register":
             root = canonical_repository(arguments.path)
             item = registry.register(root, display_name=arguments.name)
-            return {"registered": True, "indexed": bool(item["indexed_at"]),
-                    "repository": item}
+            from .repositories import open_index_for_repository
+            from .scanner import scan_repository
+
+            index = open_index_for_repository(root, readonly=False)
+            try:
+                report = scan_repository(root)
+                index_result = index_repository(root, index, scan_report=report)
+                registry.set_index_path(item["repository_id"], index.database)
+                lifecycle_setup = _initialize_optional_chroma(index)
+                vector_retriever = _synchronize_optional_chroma(
+                    index, lifecycle_setup["vector_retriever"],
+                )
+                index_lifecycle = _maintenance_index_lifecycle(index, vector_retriever)
+            finally:
+                index.close()
+            registry.mark_indexed(item["repository_id"])
+            registry.activate(item["repository_id"])
+            return {"registered": True, "indexed": True, "active": True,
+                    "repository": registry.get(item["repository_id"]),
+                    "index_result": index_result, "index_lifecycle": index_lifecycle}
         if action == "list":
             return {"active_repository_id": registry.active_id(), "repositories": registry.list()}
         if action == "current":
@@ -977,13 +1238,21 @@ def _repository_command(arguments):
     index = __import__("agentforge.repositories", fromlist=["open_index_for_repository"]).open_index_for_repository(
         root, readonly=False)
     try:
-        result = index_repository(root, index, force_rebuild=action == "rebuild")
+        from .scanner import scan_repository
+        report = scan_repository(root)
+        result = index_repository(root, index, force_rebuild=action == "rebuild",
+                                  scan_report=report)
         with RepositoryRegistry() as registry:
             registry.set_index_path(active["repository_id"], index.database)
             registry.mark_indexed(active["repository_id"])
             registry.activate(active["repository_id"])
+        lifecycle_setup = _initialize_optional_chroma(index)
+        vector_retriever = _synchronize_optional_chroma(
+            index, lifecycle_setup["vector_retriever"],
+        )
+        index_lifecycle = _maintenance_index_lifecycle(index, vector_retriever)
         return {**result, "repository_id": active["repository_id"], "active": True,
-                "operation": action}
+                "operation": action, "index_lifecycle": index_lifecycle}
     finally:
         index.close()
 
@@ -1415,6 +1684,7 @@ def _session_command(arguments):
         from .session_service import SessionService
         from sqlalchemy.exc import SQLAlchemyError
         service = SessionService()
+        action = arguments.session_action
         if arguments.session_action == "health":
             from .af012_connection import check_database_health
             if not check_database_health(engine):
@@ -1424,6 +1694,15 @@ def _session_command(arguments):
             from .conversation_migrations import upgrade
             upgrade(engine)
             return {"status": "migrated"}
+        if action == "current":
+            from .repositories import RepositoryRegistry
+            if REPOSITORY_CATALOG_PATH.exists():
+                with RepositoryRegistry(readonly=True) as registry:
+                    active = registry.active()
+                if active is None:
+                    return {"repository": None, "result": None}
+            elif not DATABASE_PATH.exists():
+                return {"repository": None, "result": None}
         with _open_current_index(readonly=True) as index:
             repository = index.metadata().get("repository")
         if not repository:
@@ -1433,7 +1712,6 @@ def _session_command(arguments):
         from .memory_store import MemoryStore
         from .memory_service import MemoryService
         MemoryService(MemoryStore(engine)).register_repository(repo_id, os.path.abspath(repository))
-        action = arguments.session_action
         if action == "create":
             value = service.create(store, repo_id, arguments.title)
         elif action == "list":

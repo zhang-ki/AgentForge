@@ -63,6 +63,7 @@ class ScanCandidate:
     mtime_ns: int
     device: int | None = None
     inode: int | None = None
+    ctime_ns: int | None = None
 
 
 @dataclass(frozen=True)
@@ -276,6 +277,7 @@ def scan_repository(root: str | os.PathLike[str], limits: ScanLimits | None = No
                     mtime_ns=info.st_mtime_ns,
                     device=info.st_dev,
                     inode=info.st_ino,
+                    ctime_ns=getattr(info, "st_ctime_ns", None),
                 )
             )
         # 反向压入目录，使后进先出栈的遍历顺序保持确定。

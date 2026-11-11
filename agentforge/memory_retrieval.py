@@ -4,6 +4,7 @@ import hashlib
 from .conversation_context import MemoryCandidate, MemorySourceReference
 from .embeddings.base import embed_text, provider_identity
 from .embeddings.chroma_store import ChromaCandidateStore
+from .observability import lifecycle_stage
 
 
 class ChromaMemoryRetriever:
@@ -44,9 +45,12 @@ class ChromaMemoryRetriever:
 
         from .memory_store import GLOBAL_MEMORY_REPOSITORY_ID
         matches = []
-        for scope_id in dict.fromkeys((repository_id, GLOBAL_MEMORY_REPOSITORY_ID)):
-            matches.extend(self.vectors.search_with_documents(vector, repository_id=scope_id,
-                model_id=self.model_id, source_type="memory", verify_source=verify, limit=limit))
+        with lifecycle_stage("memory_vector_search") as search_stage:
+            for scope_id in dict.fromkeys((repository_id, GLOBAL_MEMORY_REPOSITORY_ID)):
+                matches.extend(self.vectors.search_with_documents(vector, repository_id=scope_id,
+                    model_id=self.model_id, source_type="memory", verify_source=verify, limit=limit))
+            if search_stage is not None:
+                search_stage.finish("COMPLETED", metadata={"memory_result_count": len(matches)})
         results = []
         for source, distance, document in matches:
             record = active.get(source.chunk_id)

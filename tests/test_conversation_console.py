@@ -7,6 +7,23 @@ from agentforge import conversation_console
 
 
 class ConversationConsoleRepositoryTests(unittest.TestCase):
+    def test_console_starts_when_no_repository_is_registered(self):
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": None, "result": None}
+            if args == ("repo", "list"):
+                return {"repositories": []}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("builtins.input", side_effect=["/repo list", "/exit"]),
+              redirect_stdout(output)):
+            self.assertEqual(0, conversation_console.main())
+
+        self.assertIn("当前没有活动仓库", output.getvalue())
+        self.assertIn("注册时会自动建立 SQLite 与 Chroma 索引", output.getvalue())
+
     def test_plain_question_uses_auto_planning_without_manual_mode_selection(self):
         state = {"repository": r"D:\synthetic\repo", "current": {
             "id": "conversation-1", "title": "session", "provider_id": "llama-server",
@@ -19,7 +36,8 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
             raise AssertionError(args)
 
         output = io.StringIO()
-        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+        with (patch.dict("os.environ", {}, clear=True),
+              patch("agentforge.conversation_console._call", side_effect=fake_call),
               patch("agentforge.conversation_console.presentation.main") as ask,
               patch("builtins.input", side_effect=["Explain attention in a transformer", "/exit"]),
               redirect_stdout(output)):
@@ -29,7 +47,30 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
         self.assertEqual("ask", arguments[0])
         self.assertIn("--mode", arguments)
         self.assertEqual("auto", arguments[arguments.index("--mode") + 1])
+        self.assertIn("--use-chroma", arguments)
         self.assertIn("由 Planner 自动选择", output.getvalue())
+
+    def test_vector_retrieval_can_be_disabled_only_by_explicit_environment_or_command(self):
+        state = {"repository": r"D:\synthetic\repo", "current": {
+            "id": "conversation-1", "title": "session", "provider_id": "llama-server",
+            "model_id": "qwen3.5-4b", "thinking_enabled": False,
+        }}
+
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": state["repository"], "result": state["current"]}
+            raise AssertionError(args)
+
+        with (patch.dict("os.environ", {"AGENTFORGE_CHROMA_ENABLED": "0"}, clear=True),
+              patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("agentforge.conversation_console.presentation.main") as ask,
+              patch("builtins.input", side_effect=["explain this", "/exit"]),
+              redirect_stdout(io.StringIO())):
+            self.assertEqual(0, conversation_console.main())
+
+        arguments = ask.call_args.args[0]
+        self.assertIn("--no-chroma", arguments)
+        self.assertNotIn("--use-chroma", arguments)
 
     def test_debug_mode_override_keeps_same_session_and_can_return_to_auto(self):
         state = {"repository": r"D:\synthetic\repo", "current": {

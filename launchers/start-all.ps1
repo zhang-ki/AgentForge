@@ -1,4 +1,6 @@
-﻿$ErrorActionPreference = 'Stop'
+﻿param([switch]$EmbeddingOnly)
+
+$ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\common.ps1"
 Set-Location -LiteralPath $ProjectRoot
 
@@ -246,16 +248,21 @@ try {
     }
     Write-Host 'PostgreSQL 已运行。'
 
-    Ensure-Model -Label '聊天模型' -Port $ChatPort `
-        -LauncherPath (Join-Path $ProjectRoot 'Start-Qwen.cmd') `
-        -ExpectedModel $ChatModel -SkipIdentityCheck
-    $chatKey = Get-LauncherKey $false
-    Confirm-ModelIdentity -Label '聊天模型认证' -Port $ChatPort -ExpectedModel $ChatModel -BearerToken $chatKey
+    if (-not $EmbeddingOnly) {
+        Ensure-Model -Label '聊天模型' -Port $ChatPort `
+            -LauncherPath (Join-Path $ProjectRoot 'Start-Qwen.cmd') `
+            -ExpectedModel $ChatModel -SkipIdentityCheck
+        $chatKey = Get-LauncherKey $false
+        Confirm-ModelIdentity -Label '聊天模型认证' -Port $ChatPort -ExpectedModel $ChatModel -BearerToken $chatKey
+    }
 
     Ensure-Model -Label 'Embedding 模型' -Port $EmbeddingPort `
         -LauncherPath (Join-Path $ProjectRoot 'Start-Qwen-Embedding.cmd') `
         -ExpectedModel $EmbeddingModel
 
+    if ($EmbeddingOnly) {
+        Write-Host 'PostgreSQL 与 Embedding 已就绪。Chroma 使用嵌入式本地持久化存储，不需要单独服务进程。'
+    }
     Write-Host '依赖已就绪，正在本窗口启动 AgentForge。模型窗口会继续运行。'
     & (Join-Path $PSScriptRoot 'start-agentforge.ps1')
 } catch {

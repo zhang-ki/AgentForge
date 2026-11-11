@@ -10,7 +10,7 @@ import math
 from pathlib import PurePosixPath
 import re
 
-from .base import EmbeddingError, normalize_vector
+from .base import EmbeddingError, MAX_EMBEDDING_BATCH_ITEMS, normalize_vector
 
 
 @dataclass(frozen=True)
@@ -83,6 +83,27 @@ class ChromaCandidateStore:
             # Chroma 的 upsert 会保留被省略的旧 document；显式写空串才能清掉旧代码副本。
             kwargs["documents"] = [""]
         self.collection.upsert(**kwargs)
+
+    def upsert_many(self, sources, vectors) -> None:
+        """Validate and atomically submit one bounded batch of derived vectors."""
+        try:
+            source_values = tuple(sources)
+            vector_values = tuple(vectors)
+        except Exception:
+            raise ValueError("Chroma upsert batch must be iterable.") from None
+        if (not source_values or len(source_values) != len(vector_values)
+                or len(source_values) > MAX_EMBEDDING_BATCH_ITEMS):
+            raise ValueError("Chroma upsert batch size is invalid.")
+        ids, embeddings, metadatas = [], [], []
+        for source, vector in zip(source_values, vector_values):
+            metadatas.append(_metadata(source))
+            ids.append(_identity(source))
+            embeddings.append(list(normalize_vector(vector, expected_dimension=self.dimension)))
+        self.collection.upsert(
+            ids=ids, embeddings=embeddings, metadatas=metadatas,
+            # Explicitly blank docs to avoid retaining old plaintext source copies.
+            documents=[""] * len(ids),
+        )
 
     def delete(self, source: ChromaSource) -> None:
         _metadata(source)

@@ -174,7 +174,7 @@ class ScannerRaceGuardTests(LocalTestCase):
 
     def test_incomplete_scan_cannot_authorize_toolbox_or_read(self):
         self.write("sample.py", "safe = 1\n")
-        incomplete = SimpleNamespace(complete=False)
+        incomplete = SimpleNamespace(complete=False, issues=[])
         with IndexStore(":memory:") as store:
             with patch("agentforge.agent_loop.scan_repository", return_value=incomplete):
                 with self.assertRaisesRegex(ValueError, "incomplete"):

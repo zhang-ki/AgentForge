@@ -32,12 +32,12 @@ AgentForge is a local-first code assistant with General, Repository, Hybrid and 
 - **Python** parses repositories, plans Auto/Hybrid turns with the selected LLM, retrieves and assesses source candidates, builds bounded context, validates citations, and coordinates the CLI and conversation console.
 - **Project SQLite** remains the authoritative local code index for file snapshots, chunks, symbols, and static references. The 1.1 development branch keeps one independent SQLite index per registered repository, with a compatibility path for the legacy index.
 - **PostgreSQL** stores repository-scoped conversations, messages, history excerpts, approved memories, provenance, audit events, and vector-sync outbox records.
-- **Chroma** stores rebuildable code and approved-memory vectors. A vector candidate is checked against the authoritative SQLite or PostgreSQL record before use.
+- **Chroma** is an embedded, local persistent store for rebuildable code and approved-memory vectors; it does not run as a separate service. It is enabled by default for repository retrieval. Every code candidate is resolved back to the authoritative SQLite chunk and content hash before use.
 - **Qwen through llama-server** provides local chat and embedding APIs. AgentForge sends requests only to explicitly configured loopback endpoints; the model files and runtime are not included.
 - **DeepSeek** is an optional, explicitly selected cloud chat provider. Model metadata is fetched only by `/model refresh`; switching a conversation to a cloud model requires a separate confirmation that its question, relevant code evidence, and necessary history or approved memory may be sent to the cloud.
 - **Model Registry and Token Budget Manager** keep model capability metadata separate from connection state and calculate input budgets from the selected model's context and output limits. Counts are labeled `estimated` unless an exact tokenizer is configured; UTF-8 bytes are not presented as token counts.
 
-Retrieval follows: the Auto/Hybrid LLM plan or an explicit Repository request → symbol/relationship/lexical retrieval and optional Chroma candidates → source identity and content checks → bounded context → selected Qwen or DeepSeek provider → request-local citation validation and Answer Contract. Historical experiments did not establish that RRF improves retrieval, so RRF, reranking, and a production similarity-based refusal threshold are not enabled by default.
+Retrieval follows: the Auto/Hybrid LLM plan or an explicit Repository request → symbol/relationship/lexical retrieval and Chroma vector candidates when relevant → source identity and content-hash checks → bounded context → selected Qwen or DeepSeek provider → request-local citation validation and Answer Contract. If Embedding or Chroma is unavailable, repository answers continue with SQLite lexical retrieval and show the degraded state. Historical experiments did not establish that RRF improves retrieval, so RRF, reranking, and a production similarity-based refusal threshold are not enabled by default.
 
 ### Conversation routing
 
@@ -90,14 +90,14 @@ The launcher verifies the pinned embedding model/runtime assets before starting 
 ## Start on Windows
 
 1. Start PostgreSQL and confirm the `agentforge` database and least-privilege `agentforge_app` role exist.
-2. Double-click `Start-AgentForge.cmd`. It applies migrations and opens the console; it does not start PostgreSQL or model services. The project environment must already exist at `.agentforge\af012-venv`.
+2. Start PostgreSQL, then double-click `Start-AgentForge.cmd`. It checks PostgreSQL and the local Embedding endpoint, opening the Embedding launcher only when needed, then applies migrations and opens the console. It does not start the chat model or PostgreSQL. Chroma is initialized inside AgentForge when a repository is registered or first used. The project environment must already exist at `.agentforge\af012-venv`.
 3. Run `/model auth set deepseek` and complete the hidden credential prompt. Then use `/new Project question`; type `YES` at the separate per-session cloud-data notice. If capability metadata is stale, run `/model refresh` after consent.
-4. Register and index a codebase with `/repo register <path>` and `/repo index <path>`. Ordinary questions are planned as General or Repository automatically; repository claims require source evidence and citations.
+4. Register a codebase with `/repo register <path>`. Registration automatically scans and builds its SQLite index, then synchronizes Chroma vectors when Embedding and Chroma are available. Later Repository/Hybrid turns rescan for changes and incrementally update both indexes; `/repo index`, `/repo rebuild`, `/chroma index`, and `/chroma rebuild` remain available for maintenance. Ordinary questions are planned as General, Repository, or Hybrid automatically; repository claims require source evidence and citations.
 5. Use `/list`, `/switch 1`, `/history`, `/rename New title`, `/delete`, and `/exit` to manage conversations. Existing sessions retain their saved model selection.
-6. For this DeepSeek-first release, use `Start-AgentForge.cmd`. Do not use `Start-Qwen.cmd` or `Start-AgentForge-All.cmd` unless you supplied the local llama-server runtime and Qwen assets; the release bundle does not include them. `Start-AgentForge-All.cmd` also starts the optional Embedding service. DeepSeek symbol/keyword retrieval does not need Qwen Embedding.
-7. Chroma vectors are optional: configure and start the local embedding service, then use `/chroma index` and `/chroma on`. Long-term Memory requires explicit review and approval before activation.
+6. For this DeepSeek-first release, use `Start-AgentForge.cmd`; it starts/checks the Embedding service but does not start the optional Qwen chat model. `Start-AgentForge-All.cmd` checks both Qwen Chat and Embedding. Local model binaries and weights remain operator-supplied.
+7. Vector retrieval is on by default. If Embedding or Chroma is unavailable, the app falls back to SQLite lexical search and reports that status. `/chroma on|off` is a maintenance/debug override, not a normal setup step. Long-term Memory still requires explicit review and approval before activation.
 
-`Start-AgentForge.cmd` starts the console without starting model services. `Start-AgentForge-All.cmd` may launch local model windows and therefore requires the operator-supplied binaries and weights. PostgreSQL is never started or stopped by AgentForge.
+`Start-AgentForge.cmd` may open the local Embedding model window when that service is not ready; Chroma remains embedded in the Python process. `Start-AgentForge-All.cmd` may also open the Qwen Chat window. PostgreSQL is never started or stopped by AgentForge. No repository watcher or background indexing queue is installed: updates happen synchronously at registration and before each repository-oriented turn, using the existing incremental indexer.
 
 
 ## Model management (1.2 development branch)
@@ -129,7 +129,7 @@ $Python = '.\.agentforge\af012-venv\Scripts\python.exe'
 & $Python -X utf8 -B -m agentforge search SomeSymbol --top-k 5
 ```
 
-Register a repository once, index it, then switch among repositories without rebuilding an unchanged repository index:
+Register a repository once; registration builds its initial index automatically. Later Repository/Hybrid turns detect repository changes and incrementally refresh SQLite and Chroma. The explicit index/rebuild commands below remain available for maintenance and debugging:
 
 ```powershell
 & $Python -X utf8 -B -m agentforge repo register .\path\to\repository
@@ -139,7 +139,7 @@ Register a repository once, index it, then switch among repositories without reb
 & $Python -X utf8 -B -m agentforge repo rebuild .\path\to\repository
 ```
 
-`index --repo PATH` remains supported and registers, indexes, and activates that repository. Each repository has a stable path-derived identity and its own SQLite file under `.agentforge/data/repositories/`; unchanged indexes are reused. `/repo list`, `/repo register PATH`, `/repo switch ID-or-number`, `/repo index`, `/repo rebuild`, and `/repo remove ID` are also available in the desktop console. Removing an active repository is refused until another indexed repository is selected. Removal deletes only AgentForge's repository index and its Chroma vectors/registration; source files and PostgreSQL conversations/memories are retained.
+`index --repo PATH` remains supported as an explicit maintenance command. Each repository has a stable path-derived identity and its own SQLite file under `.agentforge/data/repositories/`; unchanged indexes are reused. `/repo list`, `/repo register PATH`, `/repo switch ID-or-number`, `/repo index`, `/repo rebuild`, and `/repo remove ID` are also available in the desktop console. Removing an active repository is refused until another repository is selected. Removal deletes only AgentForge's repository index and its Chroma vectors/registration; source files and PostgreSQL conversations/memories are retained.
 
 Local data is kept under `.agentforge/data/`:
 
@@ -173,7 +173,7 @@ Tests use synthetic repositories, temporary directories, and in-memory SQLite wh
 - Model capability-aware context assembly is offline-tested, including Qwen's launcher-configured 4,096 window, 30/100-turn request views, model switching without mutating stored history, and fail-closed overflow. The current DeepSeek capability cache is stale and has no provenance, so no DeepSeek request was made in this run. See [Model-aware context report](MODEL_AWARE_CONTEXT_REPORT_20261106.md) and [machine results](MODEL_AWARE_CONTEXT_RESULTS_20261106.json).
 - The 1.1 branch has deterministic synthetic coverage for repository isolation and a 30-turn context lifecycle. Those checks use temporary SQLite/test doubles; they do not replace live PostgreSQL, Chroma, or Qwen acceptance for the new branch changes.
 - A bounded real-service entry point is available as `AF011_1_FULL_HOST_ACCEPTANCE.ps1`; it has only passed offline checks in the current environment and does not yet verify desktop or PostgreSQL service restart. It must not be treated as complete 1.1 acceptance.
-- Chroma retrieval is optional and explicitly enabled in the console. RRF, reranking, and a production score threshold remain deferred.
+- Phase 5.1 default behavior: Chroma retrieval is enabled in the console; SQLite remains authoritative and degraded lexical retrieval is visible if vectors are unavailable. Repository synchronization is synchronous and incremental at registration/first use and before repository-oriented turns. RRF, reranking, background watchers, and a production score threshold remain deferred.
 - AF-011 chat and AF-012-MVP database/Chroma/model acceptance covered bounded scenarios; they are not a guarantee for arbitrary repositories, questions, or model outputs. See [release notes](RELEASE_NOTES.md).
 
 ### Phase 3 integration status (2026-11-06)

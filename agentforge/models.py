@@ -4,6 +4,20 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class EvidenceProvenance:
+    """Request-scoped origin for source evidence verified from an Agent read."""
+
+    source_kind: str
+    repository_id: str
+    content_hash: str
+    execution_id: str
+    search_call_id: str
+    tool_call_id: str
+    observation_id: str
+    tool_source_id: str
+
+
+@dataclass(frozen=True)
 class SearchResult:
     repository: str
     relative_path: str
@@ -13,6 +27,7 @@ class SearchResult:
     content_hash: str
     score: float
     evidence_roles: tuple[str, ...] = ()
+    provenance: EvidenceProvenance | None = None
 
     @property
     def citation(self) -> str:

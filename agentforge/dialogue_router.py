@@ -43,6 +43,7 @@ def plan_dialogue(requested: str | DialogueMode, question: str, *,
         if mode is DialogueMode.HYBRID and planner_result.intent != DialogueMode.HYBRID.value:
             raise ValueError("The LLM Planner result conflicts with explicit Hybrid mode.")
         mode = DialogueMode(planner_result.intent)
+        use_repository = planner_result.needs_repository_retrieval
         tasks = planner_result.tasks
         reason = planner_result.reason
         external = planner_result.requires_external_data
@@ -58,6 +59,7 @@ def plan_dialogue(requested: str | DialogueMode, question: str, *,
         )
         if planner_result is not None:
             raise ValueError("An LLM Planner result is not accepted for a fixed explicit mode.")
+        use_repository = mode in {DialogueMode.REPOSITORY, DialogueMode.HYBRID}
         task_type = "general" if mode is DialogueMode.GENERAL else "repository"
         tasks = (ConversationTask(
             "task_1", task_type, question.strip(), task_type == "repository",
@@ -65,7 +67,7 @@ def plan_dialogue(requested: str | DialogueMode, question: str, *,
         ),)
     return DialoguePlan(
         mode=mode,
-        use_repository=mode in {DialogueMode.REPOSITORY, DialogueMode.HYBRID},
+        use_repository=use_repository,
         use_general_knowledge=any(task.task_type == "general" for task in tasks),
         reason=reason,
         tasks=tasks,

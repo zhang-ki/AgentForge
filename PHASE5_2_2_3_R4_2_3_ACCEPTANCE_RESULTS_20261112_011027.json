@@ -1,0 +1,335 @@
+{
+  "schema": "agentforge.phase5.2.2.3.r4_2_3.acceptance.v1",
+  "generated_at_local": "2026-11-12T01:10:27+08:00",
+  "phase": "5.2.2.3-R4.2.3",
+  "status": "PARTIAL",
+  "release_freeze": "NOT_READY",
+  "stop_reason": "C2 attempt limit 3/3 reached; strict Answer Contract remains LIMITED; no further host requests authorized in this phase.",
+  "git": {
+    "branch": "feature/auto-chroma-hybrid",
+    "head": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "protection_tag_peeled_commit": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "head_matches_expected": true,
+    "pre_host_worktree_entries": 70,
+    "current_pre_report_worktree_entries": 73,
+    "preserved_existing_changes": true,
+    "committed_or_pushed": false
+  },
+  "root_causes": [
+    {
+      "code": "LOW_CONFIDENCE_ROUTE",
+      "classification": "confirmed_application_routing defect",
+      "evidence_run_id": "3de6d934ea19477fa24d7dac3e85adca",
+      "resolution": "Narrow formula/code-identifier route rule; still requires relevance and authoritative source validation."
+    },
+    {
+      "code": "LINE_RANGE_OUT_OF_BOUNDS",
+      "classification": "safe input rejection with bounded recovery",
+      "evidence_run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+      "resolution": "Read rejected end_line beyond 5-line source; subsequent distinct call succeeded."
+    },
+    {
+      "code": "runner_recovered_failure_false_negative",
+      "classification": "confirmed acceptance Runner defect",
+      "evidence_run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+      "resolution": "Runner reads actual execution summary and permits only one invalid read followed by a distinct completed read; raw host result preserved."
+    },
+    {
+      "code": "SEMANTIC_ENTAILMENT_UNVERIFIED",
+      "classification": "contract limitation, not passed",
+      "evidence_run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+      "resolution": "No weakening; remains LIMITED and blocks strict phase PASS."
+    }
+  ],
+  "implementation_files": [
+    {
+      "path": "agentforge/product_retrieval.py",
+      "change": "Code-identifier/formula-query retrieval relevance support; candidate source/hash validation retained."
+    },
+    {
+      "path": "agentforge/evidence_evaluator.py",
+      "change": "Adds stable rejection reason codes for evidence candidates without relaxing relevance/sufficiency criteria."
+    },
+    {
+      "path": "agentforge/dialogue_router.py",
+      "change": "Uses the Planner structured repository-retrieval decision independently from answer intent."
+    },
+    {
+      "path": "agentforge/conversation_orchestrator.py",
+      "change": "Allowlisted, value-free read/source rejection diagnostics."
+    },
+    {
+      "path": "PHASE5_2_2_3_HOST_ACCEPTANCE.py",
+      "change": "Correct nested execution-result extraction and bounded-read-recovery validation."
+    },
+    {
+      "path": "tests/test_conversation_agent.py",
+      "change": "Diagnostic redaction behavior regression."
+    },
+    {
+      "path": "tests/test_phase5_2_2_3_runner.py",
+      "change": "Bounded recovery positive and unrecovered/repeated failure negative assertions."
+    }
+  ],
+  "offline": {
+    "full_suite": {
+      "status": "PASS_WITH_SKIPS",
+      "run": 1073,
+      "passed": 1070,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 3,
+      "log": "PHASE5_2_2_3_R4_2_3_FULL_OFFLINE_20261112_07.txt",
+      "skip_test_names_and_reasons": "NOT_MEASURED in quiet output"
+    },
+    "related_forward": {
+      "status": "PASS",
+      "run": 348,
+      "passed": 348,
+      "log": "PHASE5_2_2_3_R4_2_3_RELATED_FORWARD_20261112_07.log"
+    },
+    "related_reverse": {
+      "status": "PASS",
+      "run": 348,
+      "passed": 348,
+      "log": "PHASE5_2_2_3_R4_2_3_RELATED_REVERSE_20261112_07.log"
+    },
+    "static_dependency": {
+      "status": "PASS",
+      "run": 21,
+      "passed": 21
+    },
+    "compile": {
+      "status": "PASS",
+      "scope": "agentforge, host runner, tests Python sources excluding intentional malformed syntax fixture tests/fixtures/symbol_repo/broken.py"
+    },
+    "diff_check": "PASS"
+  },
+  "host": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "synthetic_only": true,
+    "c2_attempts_used": 3,
+    "c2_attempts_max": 3,
+    "c2_chat_requests": 21,
+    "per_attempt_max_chat_requests": 27,
+    "all_c2_requests_succeeded": true,
+    "failed_requests": 0,
+    "automatic_retries": 0,
+    "model_discovery_requests": 0,
+    "capability_probe_historical_requests": 1,
+    "capability_probe_sha256": "8ffbc9e69b1f57faf5b6fad1068ad5f27f6ecfde31cbda98518cd79ccb166634",
+    "remaining_phase_chat_accounting_after_attempt3": 5,
+    "attempts": [
+      {
+        "attempt": 1,
+        "run_id": "3de6d934ea19477fa24d7dac3e85adca",
+        "raw_result_file": "PHASE5_2_2_3_HOST_RUN_3de6d934ea19477fa24d7dac3e85adca.json",
+        "raw_result_sha256": "8621ad076c130a4fb2c0db05c932094086c90ad1bafeeb97bd7fa0ac0b219d09",
+        "raw_trace_file": "PHASE5_2_2_3_HOST_TRACE_3de6d934ea19477fa24d7dac3e85adca.jsonl",
+        "chat_requests": {
+          "attempted": 5,
+          "sent": 5,
+          "succeeded": 5,
+          "failed": 0,
+          "retries": 0,
+          "model_discovery": 0
+        },
+        "raw_overall_status": "PARTIAL",
+        "raw_selected_c2_status": "FAIL",
+        "effective_evidence_count": 0,
+        "answer_contract_status": "limited",
+        "execution_status": "completed",
+        "session_restore_status": "PASS",
+        "diagnosis": "LOW_CONFIDENCE_ROUTE blocked candidate evidence"
+      },
+      {
+        "attempt": 2,
+        "run_id": "b20160750dad498283f5a6e4bcb1fe53",
+        "raw_result_file": "PHASE5_2_2_3_HOST_RUN_b20160750dad498283f5a6e4bcb1fe53.json",
+        "raw_result_sha256": "c3bdce833ee70cf7e112ab6623c642673c76fec87162494d057774474b273d7e",
+        "raw_trace_file": "PHASE5_2_2_3_HOST_TRACE_b20160750dad498283f5a6e4bcb1fe53.jsonl",
+        "chat_requests": {
+          "attempted": 7,
+          "sent": 7,
+          "succeeded": 7,
+          "failed": 0,
+          "retries": 0,
+          "model_discovery": 0
+        },
+        "raw_overall_status": "PARTIAL",
+        "raw_selected_c2_status": "FAIL",
+        "effective_evidence_count": null,
+        "answer_contract_status": null,
+        "execution_status": "failed",
+        "session_restore_status": "FAIL",
+        "diagnosis": "Two INVALID_ARGUMENTS Read failures; runner did not preserve enough diagnostic detail for exact post-hoc classification"
+      },
+      {
+        "attempt": 3,
+        "run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+        "raw_result_file": "PHASE5_2_2_3_HOST_RUN_e502f6bfd9c04e7ea877e42c36315b1c.json",
+        "raw_result_sha256": "887cf4a6e69b7586a5b0f3e30cdac8256099459e1b2c98e5a568c40c6b43e64a",
+        "raw_trace_file": "PHASE5_2_2_3_HOST_TRACE_e502f6bfd9c04e7ea877e42c36315b1c.jsonl",
+        "chat_requests": {
+          "attempted": 9,
+          "sent": 9,
+          "succeeded": 9,
+          "failed": 0,
+          "retries": 0,
+          "model_discovery": 0
+        },
+        "raw_overall_status": "PARTIAL",
+        "raw_selected_c2_status": "FAIL",
+        "effective_evidence_count": 1,
+        "answer_contract_status": "limited",
+        "execution_status": "completed",
+        "session_restore_status": "PASS",
+        "diagnosis": "One safely rejected out-of-range Read, then successful bounded replan with a distinct call ID; contract remained LIMITED"
+      }
+    ],
+    "final_run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+    "final_run_chat_usage": {
+      "planner": {
+        "requests": 1,
+        "prompt_tokens": 607,
+        "completion_tokens": 228,
+        "total_tokens": 835
+      },
+      "agent_replanner": {
+        "requests": 7,
+        "prompt_tokens": 7158,
+        "completion_tokens": 401,
+        "total_tokens": 7559
+      },
+      "final_answer": {
+        "requests": 1,
+        "prompt_tokens": 1136,
+        "completion_tokens": 94,
+        "total_tokens": 1230
+      }
+    },
+    "final_execution_checks_reevaluated_offline": {
+      "planner_requested_tool_execution": true,
+      "agent_engine_completed": true,
+      "authorized_tool_executed": true,
+      "read_only_scope_preserved": true,
+      "registered_schema_loaded": true,
+      "plan_validator_ran": true,
+      "required_tools_completed_after_bounded_recovery": true,
+      "observation_reached_final_answer_context": true,
+      "repository_retrieval_ran_once": true,
+      "effective_repository_evidence_found": true,
+      "retrieval_evidence_reached_context": true,
+      "contract_evidence_hash_linked": true,
+      "agent_read_provenance_chain_valid": true,
+      "answer_consistent_with_synthetic_evidence": true,
+      "session_reloaded": true,
+      "synthetic_repository_registration_used": true
+    },
+    "all_final_execution_checks_pass": true,
+    "raw_host_result_modified": false,
+    "answer_contract_status": "LIMITED",
+    "c2_strict_acceptance": "PARTIAL"
+  },
+  "c2_evidence": {
+    "orchestrator_retrieval_queries": 1,
+    "candidate_count": 1,
+    "effective_evidence_count": 1,
+    "source_id": "E1",
+    "citation": "synthetic_calculation.py:1-5",
+    "content_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+    "path_line_hash_verified": true,
+    "context_evidence_hash_linked": true,
+    "search_calls": 1,
+    "read_calls": 2,
+    "read_failures": [
+      {
+        "error_code": "INVALID_ARGUMENTS",
+        "safe_reason_code": "LINE_RANGE_OUT_OF_BOUNDS",
+        "field": "end_line",
+        "line_count": 5
+      }
+    ],
+    "bounded_recovery_succeeded": true,
+    "distinct_call_ids": true,
+    "agent_execution": {
+      "status": "completed",
+      "rounds": 4,
+      "tool_calls": 3,
+      "observations": 3,
+      "planner_requests": 7
+    },
+    "final_answer_nonempty": true,
+    "answer_consistency_check": true,
+    "answer_text_persisted": false,
+    "session_restore": "PASS"
+  },
+  "checks": {
+    "repository_retrieval": "PASS",
+    "chroma_candidate": "PASS",
+    "sqlite_source_mapping": "PASS",
+    "path_validation": "PASS",
+    "line_validation": "PASS",
+    "content_hash_validation": "PASS",
+    "evidence_generation": "PASS",
+    "planner_tool_decision": "PASS",
+    "authorized_registry_and_schema": "PASS",
+    "agent_executor": "PASS_AFTER_BOUNDED_RECOVERY",
+    "observations": "PASS",
+    "evidence_context_injection": "PASS",
+    "answer_contract": "LIMITED",
+    "deepseek_final_answer": "PASS",
+    "session_persistence": "PASS",
+    "session_restore": "PASS",
+    "official_data_protection": "PASS",
+    "synthetic_cleanup": "PASS",
+    "provider_native_streaming": "NOT_MEASURED"
+  },
+  "data_protection": {
+    "status": "PASS",
+    "official_chroma_collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+    "official_chroma_count_before": 599,
+    "official_chroma_count_after": 599,
+    "official_chroma_digest_before": "d4204b54982f8ddd4edf204b9f41d6a4c08bc8410147a2ac9474e09ff13d0a5d",
+    "official_chroma_digest_after": "d4204b54982f8ddd4edf204b9f41d6a4c08bc8410147a2ac9474e09ff13d0a5d",
+    "official_chroma_unchanged": true,
+    "postgresql_snapshot_before": "8d84c2b20b6f1802397b7c15235b001149530004f7c5fefe3c445f2f88a2dbc0",
+    "postgresql_snapshot_after": "8d84c2b20b6f1802397b7c15235b001149530004f7c5fefe3c445f2f88a2dbc0",
+    "postgresql_unchanged": true,
+    "repository_registry_count_before": 7,
+    "repository_registry_count_after": 7,
+    "repository_registry_unchanged": true,
+    "active_sqlite_count_before": 195,
+    "active_sqlite_count_after": 195,
+    "active_sqlite_unchanged": true,
+    "cleanup": {
+      "status": "PASS",
+      "synthetic_conversation": "removed_and_verified",
+      "synthetic_conversation_count_removed": 2,
+      "synthetic_chroma_vectors": "removed_and_verified",
+      "synthetic_chroma_vectors_removed": 1,
+      "synthetic_repository_registration": "removed_and_verified",
+      "synthetic_sqlite_index": "removed_and_verified",
+      "synthetic_repository_directory": "removed_and_verified"
+    }
+  },
+  "limitations": [
+    "Answer Contract does not independently verify semantic entailment; LIMITED is not PASS.",
+    "Provider native streaming NOT_MEASURED.",
+    "Current quiet full-suite log reports 3 skips without listing individual test IDs/reasons."
+  ],
+  "artifacts": {
+    "PHASE5_2_2_3_HOST_RUN_e502f6bfd9c04e7ea877e42c36315b1c.json": "887cf4a6e69b7586a5b0f3e30cdac8256099459e1b2c98e5a568c40c6b43e64a",
+    "PHASE5_2_2_3_HOST_TRACE_e502f6bfd9c04e7ea877e42c36315b1c.jsonl": "612ebb4b8d09e225b8b069be8c4647974e53c917c3f1dce8a328d3d799ba22c1",
+    "STATUS.md": "f2dc7d5ef57e9d2443bff04988150cd03e87e35ac46154da7afd722fa36e293f",
+    "ROADMAP.md": "572910a0d0d46bc00d8e8002db797f2a2d9ad3bdb60a471e00d522984b1305f2",
+    "ARCHITECTURE.md": "524c3335a27ac4cc64e331db12116ebdd05f2743643ec7c20ba3a0424e30f4fc",
+    "PHASE5_2_2_3_R4_2_3_ROOT_CAUSE_REPORT_20261112_011027.md": "146269679c9e3bceecfa03bf8bda8befdf9e210b8edf9d2999bd534fab4b8d70",
+    "PHASE5_2_2_3_R4_2_3_IMPLEMENTATION_REPORT_20261112_011027.md": "1275ecfe57a09cc18ce22cd3e531743d5fb17f25464b80c9dcacd1a7253fc55e",
+    "PHASE5_2_2_3_R4_2_3_SCENARIO_MATRIX_20261112_011027.md": "db7c1dd788fd9ff1714c5fb6b65c8927ca6c2d7ea7f4fa4ebfeff7fe3fa1376c",
+    "PHASE5_2_2_3_R4_2_3_TEST_LOG_20261112_011027.txt": "9c5cf03089de4c799ffa3368ff2bad1f2049708cff99a3020f10bd51e54b9cee",
+    "PHASE5_2_2_3_R4_2_3_HOST_TRACE_LOG_20261112_011027.txt": "0a3bc8009a583d7afb52c3f3883d1e70a9f02c3895ce4c50cdc3421c52a3030d",
+    "PHASE5_2_2_3_R4_2_3_DATA_PROTECTION_REPORT_20261112_011027.md": "0a8244b34cd7bbeccddcd70f43afd8bb3deddc77f4e40bbfad08e58bd279edbf"
+  }
+}

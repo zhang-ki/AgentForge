@@ -1,4 +1,5 @@
 """会话消息构造与作用域检查；不发送模型请求。"""
+import os
 import unittest
 from unittest.mock import Mock
 
@@ -92,9 +93,13 @@ class ConversationProviderTests(unittest.TestCase):
         from agentforge import conversation_console as console
         from contextlib import redirect_stdout
         from io import StringIO
-        state = {"current": None, "deleted": False}
+        from agentforge.credential_store import CredentialStore
+
+        state = {"current": None, "bound_session": None, "deleted": False, "delete_calls": 0,
+                 "delete_prompt_answers": [], "delete_calls_at_prompt": [], "calls": []}
         item = {"id": "a", "title": "original"}
         def call(*args):
+            state["calls"].append(args)
             if args == ("session", "current"):
                 return {"repository": "synthetic", "result": state["current"]}
             if args[:2] == ("session", "create"):
@@ -107,19 +112,62 @@ class ConversationProviderTests(unittest.TestCase):
             if args[:2] == ("session", "rename"):
                 state["current"] = {"id": "a", "title": args[-1]}
                 return {"result": state["current"]}
+            if args[:2] == ("session", "set-model"):
+                state["current"] = {
+                    **(state["current"] or dict(item)),
+                    "provider_id": args[3], "model_id": args[4],
+                    "thinking_enabled": args[6] == "on",
+                }
+                state["bound_session"] = dict(state["current"])
+                return {"result": state["current"]}
             if args[:2] == ("session", "show"):
                 return {"result": {"messages": [{"role": "user", "content": "hello"}]}}
             if args[:2] == ("session", "delete"):
+                state["delete_calls"] += 1
                 state.update(current=None, deleted=True)
                 return {"result": {}}
             raise ValueError("injected")
-        inputs = ["", "unscoped question", "/new original", "/list", "/rename changed", "/history",
-                  "/switch 99", "/unknown", "/delete", "no", "/delete", "DELETE", "/exit"]
+
+        inputs = iter(["", "unscoped question", "/new original", "LOCAL", "/list",
+                       "/rename changed", "/history", "/switch 99", "/unknown",
+                       "/delete", "no", "/delete", "DELETE", "/exit"])
+        all_prompts = []
+        prompts = []
+        def provide_input(prompt=""):
+            all_prompts.append(prompt)
+            answer = next(inputs)
+            if prompt.startswith("确认删除当前会话"):
+                prompts.append(prompt)
+                state["delete_prompt_answers"].append(answer)
+                state["delete_calls_at_prompt"].append(state["delete_calls"])
+            return answer
+
         output = StringIO()
-        with (patch.object(console, "_call", side_effect=call),
-              patch("builtins.input", side_effect=inputs), redirect_stdout(output)):
+        with (
+            patch.object(console, "_call", side_effect=call),
+            patch.object(CredentialStore, "status", return_value={"configured": False}),
+            patch("agentforge.providers.local_health.check_qwen_identity"),
+            patch.dict(os.environ, {"AGENTFORGE_LLAMA_API_KEY": "synthetic-test-key"}),
+            patch("builtins.input", side_effect=provide_input),
+            redirect_stdout(output),
+        ):
             self.assertEqual(0, console.main())
         self.assertTrue(state["deleted"])
+        self.assertEqual(1, state["delete_calls"])
+        self.assertEqual(["no", "DELETE"], state["delete_prompt_answers"])
+        self.assertEqual([0, 0], state["delete_calls_at_prompt"])
+        delete_prompt = "确认删除当前会话及全部历史？输入 DELETE 确认："
+        self.assertEqual([delete_prompt, delete_prompt], prompts)
+        self.assertLess(all_prompts.index("输入 LOCAL 使用本地 Qwen；其他输入将取消："),
+                        all_prompts.index(delete_prompt))
+        self.assertIn(("session", "create", "original"), state["calls"])
+        self.assertIn(("session", "switch", "a"), state["calls"])
+        self.assertEqual({
+            "id": "a", "title": "original", "provider_id": "llama-server",
+            "model_id": "qwen3.5-4b", "thinking_enabled": False,
+        }, state["bound_session"])
+        delete_calls = [args for args in state["calls"] if args[:2] == ("session", "delete")]
+        self.assertEqual([("session", "delete", "a", "--confirm")], delete_calls)
         self.assertIn("user: hello", output.getvalue())
         self.assertIn("会话编号无效", output.getvalue())
 

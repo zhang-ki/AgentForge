@@ -1,7 +1,9 @@
 import io
 import json
+import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from agentforge.context import build_context
@@ -27,6 +29,16 @@ def payload(status="limited", provider="llama-server", cited=True):
 
 
 class FriendlyPresentationTests(unittest.TestCase):
+    def setUp(self):
+        scratch = Path.cwd() / ".agentforge" / "test-observability"
+        scratch.mkdir(parents=True, exist_ok=True)
+        self._log_temp = tempfile.TemporaryDirectory(dir=str(scratch))
+        self.addCleanup(self._log_temp.cleanup)
+        log_path = Path(self._log_temp.name) / "request-lifecycle.jsonl"
+        patcher = patch("agentforge.presentation.default_log_path", return_value=log_path)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_limited_answer_displays_cited_path_and_uncertainty(self):
         text = render_ask_result(payload())
         self.assertIn("实际回答 [E1]", text)
@@ -48,6 +60,19 @@ class FriendlyPresentationTests(unittest.TestCase):
         self.assertIn("本次没有使用模型", text)
         self.assertIn("未找到可用", text)
         self.assertNotIn("模型原文", text)
+
+    def test_degraded_vector_status_is_visible_without_changing_answer_contract(self):
+        value = payload()
+        value["retrieval"] = {"index_lifecycle": {
+            "state": "DEGRADED_LEXICAL_ONLY",
+            "reason_code": "embedding_service_unavailable",
+        }}
+
+        text = render_ask_result(value)
+
+        self.assertIn("当前使用 SQLite 词法检索", text)
+        self.assertIn("embedding_service_unavailable", text)
+        self.assertEqual("limited", value["answer_contract"]["status"])
 
     def test_main_calls_cli_once_and_preserves_nonzero_errors(self):
         def fake_cli(arguments):
@@ -85,7 +110,7 @@ class FriendlyPresentationTests(unittest.TestCase):
         self.assertIn("repo.search / failed / provider_error", err.getvalue())
         self.assertNotIn("PRIVATE TOOL OUTPUT", err.getvalue())
         self.assertNotIn("AgentForge 请求失败", err.getvalue())
-        self.assertEqual("", out.getvalue())
+        self.assertEqual("处理中…\n", out.getvalue())
 
     def test_waiting_approval_is_reported_as_pause_not_failure_detail(self):
         value = {"execution_status": "waiting_approval",

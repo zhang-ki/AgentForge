@@ -643,6 +643,66 @@ class AgentExecutionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             registry.register(definition("bad-retry", side_effect=True, retries=1), lambda _a, _c: {})
 
+    def test_failed_idempotent_read_signature_can_be_replanned_once_with_fresh_ids(self):
+        registry = ToolRegistry()
+        attempts = []
+        schema = {"type": "object", "properties": {"path": {"type": "string"}},
+                  "required": ["path"], "additionalProperties": False}
+
+        def read(args, _context):
+            attempts.append(args["path"])
+            if len(attempts) == 1:
+                raise ToolExecutionFailure(ToolErrorCode.TIMEOUT)
+            return {"text": "synthetic source"}
+
+        registry.register(definition("read", handler_schema=schema), read)
+        planner = QueuePlanner(
+            AgentExecutionPlan(calls=(call("read", task_id="read-1", call_id="read-call-1",
+                                           arguments={"path": "safe.py"}),)),
+            AgentExecutionPlan(calls=(call("read", task_id="read-2", call_id="read-call-2",
+                                           arguments={"path": "safe.py"}),)),
+            AgentExecutionPlan(done=True, final_answer="Recovered from the bounded retry."),
+        )
+
+        report = engine_for(registry, planner).run("read the synthetic file")
+
+        self.assertEqual("completed", report.status)
+        self.assertEqual(["safe.py", "safe.py"], attempts)
+        self.assertEqual([("failed", ToolErrorCode.TIMEOUT.value), ("completed", None)],
+                         [(item.status, item.error_code) for item in report.results])
+        failed_observation = next(item for item in planner.seen_observations[1]
+                                  if item.tool_id == "read")
+        self.assertEqual("allowed", failed_observation.output["safe_replanning_retry"]["status"])
+
+    def test_failed_read_signature_retry_budget_exhaustion_is_diagnostic_and_bounded(self):
+        registry = ToolRegistry()
+        attempts = []
+        schema = {"type": "object", "properties": {"path": {"type": "string"}},
+                  "required": ["path"], "additionalProperties": False}
+
+        def read(args, _context):
+            attempts.append(args["path"])
+            raise ToolExecutionFailure(ToolErrorCode.TIMEOUT)
+
+        registry.register(definition("read", handler_schema=schema), read)
+        plans = [AgentExecutionPlan(calls=(call(
+            "read", task_id=f"read-{index}", call_id=f"read-call-{index}",
+            arguments={"path": "safe.py"}),)) for index in range(1, 5)]
+        planner = QueuePlanner(*plans)
+
+        report = engine_for(registry, planner).run("read the synthetic file")
+
+        self.assertEqual("failed", report.status)
+        self.assertEqual(ToolErrorCode.DUPLICATE_CALL.value, report.error_code)
+        self.assertEqual(["safe.py", "safe.py"], attempts)
+        final_feedback = [item for item in planner.seen_observations[3]
+                          if item.tool_id == "planner_validation"]
+        self.assertEqual(1, len(final_feedback))
+        details = final_feedback[0].output["diagnostic_details"]
+        self.assertEqual("failed_retry_budget_exhausted", details["diagnostic_code"])
+        self.assertEqual(2, details["failed_attempt_count"])
+        self.assertEqual(16, len(details["signature_hash"]))
+
     def test_duplicate_tool_invocation_is_replanned_once_without_reexecution(self):
         registry = ToolRegistry()
         attempts = []

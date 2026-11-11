@@ -7,6 +7,7 @@ import re
 import sys
 
 from . import cli
+from .observability import RequestLifecycleTracker, bind_lifecycle, default_log_path
 
 
 def render_ask_result(result: dict) -> str:
@@ -27,6 +28,23 @@ def render_ask_result(result: dict) -> str:
             lines.append("提示：这是有限结论；引用有效不代表每句话都已证明，请结合源码核对。")
     else:
         raise ValueError("Unknown answer contract status")
+
+    retrieval = result.get("retrieval")
+    lifecycle = retrieval.get("index_lifecycle") if isinstance(retrieval, dict) else None
+    if isinstance(lifecycle, dict):
+        state = lifecycle.get("state")
+        reason = lifecycle.get("reason_code")
+        if state == "DEGRADED_LEXICAL_ONLY":
+            lines.append("\n检索状态：向量检索暂不可用，当前使用 SQLite 词法检索。"
+                         + (f"（{reason}）" if isinstance(reason, str) else ""))
+        elif state == "STALE":
+            lines.append("\n检索状态：索引已变化或向量索引不完整；仅使用经过 SQLite 来源与哈希校验的结果。")
+        elif state == "VECTOR_HEALTH_UNKNOWN":
+            lines.append("\n检索状态：向量索引完整性暂未验证。")
+        elif state == "LEXICAL_ONLY" and reason == "vector_not_requested":
+            lines.append("\n检索状态：本次请求使用 SQLite 词法检索。")
+        elif state == "READY":
+            lines.append("\n检索状态：SQLite 与 Chroma 向量索引一致。")
 
     cited = {citation for claim in contract.get("claims", [])
              for citation in claim.get("citations", [])}
@@ -124,6 +142,9 @@ def main(arguments=None) -> int:
     output, errors = io.StringIO(), io.StringIO()
     stream_callback = None
     original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    lifecycle = None
+    debug_enabled = "--debug" in arguments
     if "--stream" in arguments:
         banner_written = False
         def stream_callback(piece):
@@ -133,31 +154,127 @@ def main(arguments=None) -> int:
                 banner_written = True
             original_stdout.write(piece)
             original_stdout.flush()
-    with redirect_stdout(output), redirect_stderr(errors):
-        try:
-            code = (cli.main(arguments, stream_callback=stream_callback)
-                    if stream_callback is not None else cli.main(arguments))
-        except SystemExit as exc:
-            code = exc.code if isinstance(exc.code, int) else 1
-    if code:
-        error_text = errors.getvalue().strip()
-        if error_text:
-            print(error_text, file=sys.stderr)
-        else:
-            try:
-                failure = render_execution_failure(json.loads(output.getvalue()))
-            except (ValueError, TypeError):
-                failure = None
-            print(failure or "AgentForge 请求失败。", file=sys.stderr)
-        return code
+    labels = _request_labels(arguments)
+    lifecycle = RequestLifecycleTracker(
+        console_stream=original_stderr if debug_enabled else None,
+        log_path=default_log_path(),
+    )
+    lifecycle.start_request(**labels)
+    if not debug_enabled:
+        print("处理中…", file=original_stdout, flush=True)
+    result = None
+    code = 1
     try:
-        result = json.loads(output.getvalue())
-        rendered = render_ask_result(result)
-    except (ValueError, TypeError, KeyError, AttributeError):
-        print("无法读取 AgentForge 的结构化结果，未显示为成功。", file=sys.stderr)
-        return 1
-    print(rendered)
-    return 0
+        with bind_lifecycle(lifecycle):
+            with redirect_stdout(output), redirect_stderr(errors):
+                try:
+                    code = (cli.main(arguments, stream_callback=stream_callback)
+                            if stream_callback is not None else cli.main(arguments))
+                except SystemExit as exc:
+                    code = exc.code if isinstance(exc.code, int) else 1
+        raw_output = output.getvalue()
+        try:
+            result = json.loads(raw_output)
+        except (ValueError, TypeError):
+            result = None
+        if code:
+            error_text = errors.getvalue().strip()
+            if error_text:
+                print(error_text, file=original_stderr, flush=True)
+            else:
+                failure = render_execution_failure(result) if isinstance(result, dict) else None
+                print(failure or "AgentForge 请求失败。", file=original_stderr, flush=True)
+            status, error_code, metadata = _terminal_state(code, result, errors.getvalue())
+            lifecycle.finish(status, error_code=error_code, metadata=metadata)
+            return code
+        try:
+            if not isinstance(result, dict):
+                raise ValueError("The ask command did not return a structured result.")
+            rendered = render_ask_result(result)
+        except (ValueError, TypeError, KeyError, AttributeError):
+            print("无法读取 AgentForge 的结构化结果，未显示为成功。", file=original_stderr, flush=True)
+            lifecycle.finish("FAILED", error_code="invalid_cli_result")
+            return 1
+        print(rendered, file=original_stdout, flush=True)
+        contract = result.get("answer_contract")
+        contract_status = contract.get("status") if isinstance(contract, dict) else None
+        lifecycle.finish("FAILED" if contract_status == "refused" else "COMPLETED",
+                         error_code="answer_contract_refused" if contract_status == "refused" else None,
+                         metadata={
+            "answer_contract_status": contract_status,
+            "answer_produced": bool(result.get("answer")),
+            "execution_status": result.get("execution_status"),
+            "failure_stage": "answer_contract" if contract_status == "refused" else None,
+        })
+        return 0
+    except BaseException as exc:
+        lifecycle.finish("TIMEOUT" if isinstance(exc, TimeoutError) else "FAILED",
+                         error_code=_exception_code(exc))
+        raise
+    finally:
+        if lifecycle is not None:
+            lifecycle.finish("FAILED", error_code="presentation_incomplete")
+
+
+def _request_labels(arguments):
+    """Extract only model/session labels from the ask arguments; never retain the query."""
+    values = {"provider": "offline", "model": None, "session_id": None,
+              "streaming_enabled": "--stream" in arguments}
+    for option, key in (("--provider", "provider"), ("--model", "model"),
+                        ("--conversation-id", "session_id"), ("--mode", "mode")):
+        try:
+            position = arguments.index(option)
+            candidate = arguments[position + 1]
+        except (ValueError, IndexError):
+            continue
+        if isinstance(candidate, str) and len(candidate) <= 256:
+            values[key] = candidate
+    return values
+
+
+def _terminal_state(code, result, error_output):
+    if isinstance(result, dict):
+        execution_status = result.get("execution_status")
+        if execution_status in {"waiting_approval", "waiting_user_input"}:
+            return "PENDING", None, {"execution_status": execution_status}
+        if execution_status == "cancelled":
+            return "CANCELLED", None, {"execution_status": execution_status}
+    if code == 0:
+        return "COMPLETED", None, {}
+    error_code = _diagnostic_error_code(error_output)
+    if "timeout" in error_code.casefold():
+        return "TIMEOUT", error_code, {}
+    if "cancel" in error_code.casefold():
+        return "CANCELLED", error_code, {}
+    return "FAILED", error_code, {}
+
+
+def _diagnostic_error_code(text):
+    """Extract only a bounded machine error code from a structured CLI diagnostic."""
+    if not isinstance(text, str):
+        return "request_failed"
+    for prefix in ("AF_PROVIDER_DIAGNOSTIC=", "AF_PLANNER_DIAGNOSTIC=",
+                   "AF_CONTEXT_BUDGET_DIAGNOSTIC="):
+        for line in text.splitlines():
+            if not line.startswith(prefix):
+                continue
+            try:
+                payload = json.loads(line[len(prefix):])
+            except (ValueError, TypeError):
+                continue
+            if not isinstance(payload, dict):
+                continue
+            for key in ("error_code", "provider_failure_code", "planning_failure_code",
+                        "failure_code"):
+                value = payload.get(key)
+                if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", value):
+                    return value
+    return "request_failed"
+
+
+def _exception_code(exc):
+    value = getattr(exc, "code", None) or getattr(exc, "diagnostic_code", None)
+    return value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", value) else type(exc).__name__
 
 
 if __name__ == "__main__":

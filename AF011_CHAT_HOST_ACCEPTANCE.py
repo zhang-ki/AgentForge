@@ -418,7 +418,7 @@ def _ask_worker(repository: Path, endpoint: str, model: str) -> int:
             "What does function refresh_access_token return for session_id? Cite the exact source.",
             *common,
         ])
-        # This second product-path case must be blocked before a model request.
+        # A retrieval miss must still reach the model with no source evidence.
         no_evidence = _invoke_cli(cli, store, [
             "ask", "What does function quantum_flux_override_zz9 return?", *common,
         ])
@@ -607,18 +607,36 @@ def _evaluate_cases(worker: dict) -> dict:
     else:
         absent_contract = no_evidence_payload.get("answer_contract") or {}
         absent_stats = no_evidence_payload.get("provider_request_stats") or {}
+        no_evidence_answer = no_evidence_payload.get("answer")
+        no_evidence_claims = absent_contract.get("claims") or []
+        no_evidence_rows = absent_contract.get("evidence") or []
+        no_evidence_citations = [
+            citation for claim in no_evidence_claims if isinstance(claim, dict)
+            for citation in (claim.get("citations") or [])
+        ]
         no_evidence_checks = {
-            "provider_gate_refused": no_evidence_payload.get("provider") == "evidence_gate_refusal",
-            "answer_not_exposed": no_evidence_payload.get("answer") is None,
-            "contract_refused": absent_contract.get("status") == "refused",
-            "no_chat_attempt": absent_stats.get("attempted") == 0,
-            "no_chat_sent": absent_stats.get("sent") == 0,
+            "provider_generated_answer": no_evidence_payload.get("provider") == "llama-server",
+            "answer_is_nonempty": isinstance(no_evidence_answer, str)
+            and bool(no_evidence_answer.strip()),
+            "contract_is_limited_or_answered": absent_contract.get("status") in {"limited", "answered"},
+            "no_repository_evidence_was_injected": not no_evidence_rows,
+            "no_repository_citations_were_claimed": not no_evidence_citations,
+            "model_request_succeeded": (
+                absent_stats.get("attempted", 0) >= 1
+                and absent_stats.get("sent", 0) >= 1
+                and absent_stats.get("succeeded", 0) >= 1
+                and absent_stats.get("failed", 0) == 0
+            ),
+            "retrieval_miss_is_reported": (
+                (no_evidence_payload.get("retrieval") or {}).get("retrieval_status")
+                in {"no_evidence", "unavailable"}
+            ),
         }
         no_evidence_passed = all(no_evidence_checks.values())
         no_evidence_result = {
             "status": "PASS" if no_evidence_passed else "FAIL",
             "provider": no_evidence_payload.get("provider"),
-            "answer": no_evidence_payload.get("answer"),
+            "answer": no_evidence_answer,
             "refused_output": no_evidence_payload.get("refused_output"),
             "contract_status": absent_contract.get("status", "not_measured"),
             "semantic_status": "PASS" if no_evidence_passed else "FAIL",

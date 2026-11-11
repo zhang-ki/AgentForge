@@ -1,4 +1,9 @@
 $ErrorActionPreference = 'Stop'
+$UtilityModuleManifest = Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1'
+if (-not (Test-Path -LiteralPath $UtilityModuleManifest -PathType Leaf)) {
+    throw "Required PowerShell utility module manifest is missing: $UtilityModuleManifest"
+}
+Import-Module -Name $UtilityModuleManifest -ErrorAction Stop
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $ModelRoot = if ($env:AGENTFORGE_MODEL_ROOT) {
     [System.IO.Path]::GetFullPath($env:AGENTFORGE_MODEL_ROOT)

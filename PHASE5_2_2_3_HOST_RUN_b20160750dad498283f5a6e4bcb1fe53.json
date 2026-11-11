@@ -1,0 +1,2075 @@
+{
+  "phase": "5.2.2.3",
+  "run_id": "b20160750dad498283f5a6e4bcb1fe53",
+  "started_at": "2026-11-11T16:37:07.873724+00:00",
+  "status": "PARTIAL",
+  "git": {
+    "branch": "feature/auto-chroma-hybrid",
+    "head": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "tag_commit": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "status_sha256": "122e29b4cbb65b9b29212d8fdcbfb8f39ec468f0feb0f76e451948122bc59752",
+    "status_lines": 71
+  },
+  "host_preflight": {
+    "status": "HOST_CONFIRMED_PASS",
+    "postgresql_app_health": "PASS",
+    "qwen_embedding_health": "PASS",
+    "embedding_ready_seconds": 0.016,
+    "embedding_config": {
+      "endpoint_local": true,
+      "model_id": "Qwen/Qwen3-Embedding-0.6B-GGUF@370f27d7550e0def9b39c1f16d3fbaa13aa67728:Q8_0#06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
+      "api_model": "qwen3-embedding-0.6b-q8_0-agentforge",
+      "dimension": 1024
+    },
+    "deepseek_provider": "deepseek",
+    "deepseek_model": "deepseek-flash",
+    "deepseek_context_window": 1048576,
+    "deepseek_max_output_tokens": 393216,
+    "deepseek_capability_verified_at": "2026-11-11T12:57:16.224682+00:00",
+    "deepseek_capability_source": "DeepSeek official /models API response; Chat Completions API documents max_tokens as the generated completion limit",
+    "deepseek_credential_available": true,
+    "deepseek_credential_source": "environment",
+    "project_venv": "D:\\agent\\AgentForge\\.agentforge\\af012-venv\\Scripts\\python.exe",
+    "chroma_path": "D:\\agent\\AgentForge\\.agentforge\\data\\chroma",
+    "collection_name": "af012_vectors_4736794c3a222cb2b27f",
+    "collection_metadata": {
+      "hnsw:space": "cosine",
+      "agentforge_model_id": "Qwen/Qwen3-Embedding-0.6B-GGUF@370f27d7550e0def9b39c1f16d3fbaa13aa67728:Q8_0#06507C7B42688469C4E7298B0A1E16DEFF06CAF291CF0A5B278C308249C3E439",
+      "agentforge_dimension": "1024"
+    },
+    "active_repository_id": "b07dd9b5e340c3032faef4c1f998b980e887980a007adec12fc67ea6e6e1bae4",
+    "active_repository_path": "D:\\Enneuro\\code",
+    "active_sqlite": {
+      "files": 195,
+      "chunks": 599,
+      "snapshot": {
+        "count": 195,
+        "sha256": "2d188ce7855439c8fc9af1411dc0090f12d4324318533093c49754a6391e7e78"
+      },
+      "index_metadata": {
+        "indexed_at_present": true,
+        "parser_version": "python-ast-v1",
+        "chunk_signature": "line-breaks-v2:80:10"
+      }
+    },
+    "active_chroma_consistency": {
+      "complete": true,
+      "expected_vectors": 599,
+      "stored_vectors": 599,
+      "missing_vectors": 0,
+      "stale_vectors": 0,
+      "invalid_vectors": 0,
+      "legacy_document_copies": 0,
+      "reason_code": null
+    },
+    "official_collection_before": {
+      "name": "af012_vectors_4736794c3a222cb2b27f",
+      "collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+      "collection_count": 599,
+      "repository_vector_count": 599,
+      "repository_ids_sha256": "0a189fcf687f9793760099b7143e281b52974579d363da9c502a80787bce8422",
+      "existing_ids_sha256": "464f6ed855e6ef5cdd20fe998864f6513b8a1c86ac1b1a86605510c60afca8d0",
+      "record_summary_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2",
+      "metadata_sha256": "b141a2568e11f79eab7e8de4da14c62b71d52881f8216862792a15149eee6ffe",
+      "resolved_configuration": {
+        "hnsw": {
+          "space": "cosine",
+          "ef_construction": 100,
+          "ef_search": 100,
+          "max_neighbors": 16,
+          "resize_factor": 1.2,
+          "sync_threshold": 1000
+        },
+        "spann": null,
+        "embedding_function": null
+      },
+      "metadata_keys": [
+        "agentforge_dimension",
+        "agentforge_model_id",
+        "hnsw:space"
+      ],
+      "repository_record_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2"
+    },
+    "persistent_collections_before": 1,
+    "deepseek_chat_before_run": {
+      "attempted": 0,
+      "sent": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "retries": 0,
+      "last_http_status": null,
+      "last_failure_phase": null,
+      "last_elapsed_seconds": null,
+      "last_error_code": null,
+      "last_usage": null,
+      "last_request_id": null,
+      "last_requested_output_tokens": null,
+      "last_first_response_ms": null,
+      "last_first_delta_ms": null,
+      "last_reasoning_chars": null,
+      "last_finish_reason": null,
+      "last_response_diagnostic": null,
+      "discovery_attempted": 0,
+      "discovery_succeeded": 0,
+      "discovery_failed": 0,
+      "credential_source": "environment",
+      "last_application_failure_phase": null,
+      "last_application_error_code": null,
+      "output_budget": {
+        "mode": "standard",
+        "requested_tokens": 16384,
+        "effective_tokens": 16384,
+        "model_max_output_tokens": 393216,
+        "provider_max_output_tokens": null,
+        "adapter_max_output_tokens": null,
+        "context_window": 1048576,
+        "safety_margin": 104858,
+        "output_limit_includes_reasoning": true,
+        "source": "application standard preset"
+      }
+    },
+    "embedding_requests_before_run": {
+      "attempts": 0,
+      "sent": 0,
+      "successes": 0,
+      "failures": 0
+    },
+    "no_service_start_stop": true,
+    "no_database_migration": true
+  },
+  "historical_root_cause": {
+    "request_id": "0ebb32c65865",
+    "request_total_ms": 529579,
+    "repository_preparation_ms": 510516,
+    "document_embedding_requests": 201,
+    "document_embedding_items": 201,
+    "document_embedding_elapsed_ms": 487943,
+    "memory_query_embedding_requests": 1,
+    "memory_query_embedding_elapsed_ms": 781,
+    "old_repository_query_iterations": 3,
+    "old_query_loop_is_present_in_current_turn": false,
+    "current_default_query_count": 1,
+    "current_additional_refinement": "at most one, only for low-confidence/follow-up symbol resolution",
+    "historical_vector_before_after_state": "NOT_MEASURED; old trace lacks per-repo vector snapshot, so first-build vs repair cannot be proven",
+    "historical_terminal_failure": "semantic_summary_turn_input_too_large"
+  },
+  "current_repository_performance": {
+    "status": "NOT_MEASURED",
+    "reason": "C2-only run skips the mutating active-repository preparation probe."
+  },
+  "current_repository_retrieval": {
+    "status": "NOT_MEASURED",
+    "reason": "C2-only run uses only the synthetic repository for end-to-end retrieval."
+  },
+  "synthetic_end_to_end": {
+    "status": "NOT_MEASURED",
+    "scenario": "A",
+    "chroma_failure_fallback": {
+      "status": "PASS",
+      "unavailable_channels": [
+        "vector",
+        "vector"
+      ],
+      "candidate_count": 2,
+      "source_hashes_present": true,
+      "service_stopped": false
+    },
+    "embedding_failure_fallback": {
+      "status": "PASS",
+      "unavailable_channels": [
+        "vector"
+      ],
+      "candidate_count": 2,
+      "source_hashes_present": true,
+      "service_stopped": false
+    },
+    "chroma_recovery": {
+      "status": "PASS",
+      "unavailable_channels": [],
+      "vector_candidate_count": 1
+    }
+  },
+  "chroma_integrity": {
+    "status": "PASS",
+    "persistent_collection_snapshot_equal_before_after_cleanup": true,
+    "official_repository_before": {
+      "name": "af012_vectors_4736794c3a222cb2b27f",
+      "collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+      "collection_count": 599,
+      "repository_vector_count": 599,
+      "repository_ids_sha256": "0a189fcf687f9793760099b7143e281b52974579d363da9c502a80787bce8422",
+      "existing_ids_sha256": "464f6ed855e6ef5cdd20fe998864f6513b8a1c86ac1b1a86605510c60afca8d0",
+      "record_summary_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2",
+      "metadata_sha256": "b141a2568e11f79eab7e8de4da14c62b71d52881f8216862792a15149eee6ffe",
+      "resolved_configuration": {
+        "hnsw": {
+          "space": "cosine",
+          "ef_construction": 100,
+          "ef_search": 100,
+          "max_neighbors": 16,
+          "resize_factor": 1.2,
+          "sync_threshold": 1000
+        },
+        "spann": null,
+        "embedding_function": null
+      },
+      "metadata_keys": [
+        "agentforge_dimension",
+        "agentforge_model_id",
+        "hnsw:space"
+      ],
+      "repository_record_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2"
+    },
+    "official_repository_after": {
+      "name": "af012_vectors_4736794c3a222cb2b27f",
+      "collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+      "collection_count": 599,
+      "repository_vector_count": 599,
+      "repository_ids_sha256": "0a189fcf687f9793760099b7143e281b52974579d363da9c502a80787bce8422",
+      "existing_ids_sha256": "464f6ed855e6ef5cdd20fe998864f6513b8a1c86ac1b1a86605510c60afca8d0",
+      "record_summary_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2",
+      "metadata_sha256": "b141a2568e11f79eab7e8de4da14c62b71d52881f8216862792a15149eee6ffe",
+      "resolved_configuration": {
+        "hnsw": {
+          "space": "cosine",
+          "ef_construction": 100,
+          "ef_search": 100,
+          "max_neighbors": 16,
+          "resize_factor": 1.2,
+          "sync_threshold": 1000
+        },
+        "spann": null,
+        "embedding_function": null
+      },
+      "metadata_keys": [
+        "agentforge_dimension",
+        "agentforge_model_id",
+        "hnsw:space"
+      ],
+      "repository_record_sha256": "5264b1f7d9ee63a58aa6d1d2bd9590330114deafeb1ca6e13f34e2b7078552d2"
+    },
+    "all_collection_data_digest_before": "d4204b54982f8ddd4edf204b9f41d6a4c08bc8410147a2ac9474e09ff13d0a5d",
+    "all_collection_data_digest_after": "d4204b54982f8ddd4edf204b9f41d6a4c08bc8410147a2ac9474e09ff13d0a5d",
+    "synthetic_repository_id_absent_after_cleanup": true
+  },
+  "data_protection": {
+    "status": "PASS",
+    "formal_repository_registry_before": {
+      "repository_count": 7,
+      "active_repository_id_sha256": "935804b041c21d2d7e1ed446fac54e3de4881ae6d145e6b654d5388f236cc152",
+      "registry_sha256": "b79432452659d255a998bd56bf16b026c040c7555636dd4821ed33c154560e6c"
+    },
+    "active_sqlite_before": {
+      "count": 195,
+      "sha256": "2d188ce7855439c8fc9af1411dc0090f12d4324318533093c49754a6391e7e78"
+    },
+    "formal_postgresql_before": {
+      "table_count": 12,
+      "rows": {
+        "agent_execution_results": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "agent_executions": {
+          "row_count": 2,
+          "primary_key_sha256": "8d114cf7db218e9aff71c44c3eef30746a827d7f83dae1c003a91253fd423a11"
+        },
+        "conversation_selections": {
+          "row_count": 2,
+          "primary_key_sha256": "be0b356de79fc93b2c9178486a891f671bc8bcfa0529177d84bce2490a25b5e6"
+        },
+        "conversation_summaries": {
+          "row_count": 2,
+          "primary_key_sha256": "c00a7e631736848ba7d0c0b4c5169764d5dc8ead98691b6f6b73228f9a438b40"
+        },
+        "conversations": {
+          "row_count": 4,
+          "primary_key_sha256": "c41a30a007d0a020d156722693254e07e0e4c54f5d0dfde53a3a3b6d49655ace"
+        },
+        "memories": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_approvals": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_events": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_sources": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "messages": {
+          "row_count": 20,
+          "primary_key_sha256": "52f9a7e3e75ec6ef48132cd040ff297163ae756a2f252b7459458feb6bb32909"
+        },
+        "repository_metadata": {
+          "row_count": 2,
+          "primary_key_sha256": "be0b356de79fc93b2c9178486a891f671bc8bcfa0529177d84bce2490a25b5e6"
+        },
+        "vector_sync_outbox": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      "snapshot_sha256": "8d84c2b20b6f1802397b7c15235b001149530004f7c5fefe3c445f2f88a2dbc0"
+    },
+    "formal_postgresql_after": {
+      "table_count": 12,
+      "rows": {
+        "agent_execution_results": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "agent_executions": {
+          "row_count": 2,
+          "primary_key_sha256": "8d114cf7db218e9aff71c44c3eef30746a827d7f83dae1c003a91253fd423a11"
+        },
+        "conversation_selections": {
+          "row_count": 2,
+          "primary_key_sha256": "be0b356de79fc93b2c9178486a891f671bc8bcfa0529177d84bce2490a25b5e6"
+        },
+        "conversation_summaries": {
+          "row_count": 2,
+          "primary_key_sha256": "c00a7e631736848ba7d0c0b4c5169764d5dc8ead98691b6f6b73228f9a438b40"
+        },
+        "conversations": {
+          "row_count": 4,
+          "primary_key_sha256": "c41a30a007d0a020d156722693254e07e0e4c54f5d0dfde53a3a3b6d49655ace"
+        },
+        "memories": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_approvals": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_events": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "memory_sources": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "messages": {
+          "row_count": 20,
+          "primary_key_sha256": "52f9a7e3e75ec6ef48132cd040ff297163ae756a2f252b7459458feb6bb32909"
+        },
+        "repository_metadata": {
+          "row_count": 2,
+          "primary_key_sha256": "be0b356de79fc93b2c9178486a891f671bc8bcfa0529177d84bce2490a25b5e6"
+        },
+        "vector_sync_outbox": {
+          "row_count": 0,
+          "primary_key_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      },
+      "snapshot_sha256": "8d84c2b20b6f1802397b7c15235b001149530004f7c5fefe3c445f2f88a2dbc0"
+    },
+    "formal_postgresql_unchanged": true,
+    "formal_repository_registry_after": {
+      "repository_count": 7,
+      "active_repository_id_sha256": "935804b041c21d2d7e1ed446fac54e3de4881ae6d145e6b654d5388f236cc152",
+      "registry_sha256": "b79432452659d255a998bd56bf16b026c040c7555636dd4821ed33c154560e6c"
+    },
+    "formal_repository_registry_unchanged": true,
+    "active_sqlite_after": {
+      "count": 195,
+      "sha256": "2d188ce7855439c8fc9af1411dc0090f12d4324318533093c49754a6391e7e78"
+    },
+    "active_sqlite_unchanged": true
+  },
+  "cleanup": {
+    "status": "PASS",
+    "synthetic_conversation": "removed_and_verified",
+    "synthetic_conversation_count_removed": 2,
+    "synthetic_chroma_vectors": "removed_and_verified",
+    "synthetic_chroma_vectors_removed": 1,
+    "synthetic_repository_registration": "removed_and_verified",
+    "synthetic_sqlite_index": "removed_and_verified",
+    "synthetic_repository_directory": "removed_and_verified"
+  },
+  "provider_requests": {
+    "deepseek_chat": {
+      "attempted": 7,
+      "sent": 7,
+      "succeeded": 7,
+      "failed": 0,
+      "retries": 0,
+      "last_http_status": 200,
+      "last_failure_phase": null,
+      "last_elapsed_seconds": 1.453,
+      "last_error_code": null,
+      "last_usage": {
+        "prompt_tokens": 1237,
+        "completion_tokens": 88,
+        "total_tokens": 1325,
+        "prompt_cache_hit_tokens": 896,
+        "prompt_cache_miss_tokens": 341
+      },
+      "last_request_id": "b3695583-9fb5-4cb5-a91a-7676f0b457b4",
+      "last_requested_output_tokens": 4096,
+      "last_first_response_ms": 140,
+      "last_first_delta_ms": null,
+      "last_reasoning_chars": 0,
+      "last_finish_reason": "stop",
+      "last_response_diagnostic": {
+        "root_type": "dict",
+        "choice_count": 1,
+        "content_chars": 338,
+        "reasoning_chars": null,
+        "tool_call_count": 0
+      },
+      "discovery_attempted": 0,
+      "discovery_succeeded": 0,
+      "discovery_failed": 0,
+      "credential_source": "environment",
+      "last_application_failure_phase": null,
+      "last_application_error_code": null,
+      "last_request_byte_limit": 2000000,
+      "last_response_byte_limit": 2000000,
+      "output_budget": {
+        "mode": "standard",
+        "requested_tokens": 16384,
+        "effective_tokens": 16384,
+        "model_max_output_tokens": 393216,
+        "provider_max_output_tokens": null,
+        "adapter_max_output_tokens": null,
+        "context_window": 1048576,
+        "safety_margin": 104858,
+        "output_limit_includes_reasoning": true,
+        "source": "application standard preset"
+      }
+    },
+    "embedding": {
+      "counts": {
+        "attempts": 0,
+        "sent": 0,
+        "successes": 0,
+        "failures": 0
+      },
+      "events": [],
+      "document_requests": 0,
+      "document_items": 0,
+      "query_requests": 0,
+      "elapsed_ms": 0
+    },
+    "network_boundary": {
+      "chat": {
+        "attempted": 7,
+        "sent": 7,
+        "succeeded": 7,
+        "failed": 0,
+        "retries": 0
+      },
+      "model_discovery": {
+        "attempted": 0,
+        "sent": 0,
+        "succeeded": 0,
+        "failed": 0
+      }
+    },
+    "network_boundary_events": [
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_planning",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      }
+    ]
+  },
+  "request_budget": {
+    "max_deepseek_chat_requests": 21,
+    "prior_capability_probe_chat_requests": 1,
+    "prior_c2_chat_requests": 5,
+    "prior_phase_chat_requests": 6,
+    "phase_total_chat_cap": 27,
+    "remaining_phase_chat_requests": 21,
+    "model_discovery_requests": 0,
+    "automatic_retry_limit": 0,
+    "data_scope": "synthetic_only"
+  },
+  "scenario_selection": {
+    "requested": [
+      "C2"
+    ],
+    "default_runs": [
+      "A",
+      "B",
+      "C1",
+      "C2"
+    ],
+    "executed": [
+      "C2"
+    ]
+  },
+  "instrumentation": {
+    "phase": "synthetic_chroma_recovery",
+    "scanner_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 1.392,
+        "candidate_count": 1,
+        "issue_count": 0,
+        "complete": true
+      },
+      {
+        "phase": "scenario_C2_result_extraction",
+        "elapsed_ms": 1.233,
+        "candidate_count": 1,
+        "issue_count": 0,
+        "complete": true
+      }
+    ],
+    "indexer_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 19.344,
+        "index_unchanged": false,
+        "added": 1,
+        "changed": 0,
+        "unchanged": 0,
+        "removed": 0,
+        "files_read": 1,
+        "files_reused": 0,
+        "chunks_reused": 0
+      }
+    ],
+    "sqlite_file_snapshot_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.061,
+        "row_count": 0
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.068,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.04,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.079,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.065,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.054,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.07,
+        "row_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.033,
+        "row_count": 1
+      },
+      {
+        "phase": "synthetic_chroma_failure_injection",
+        "elapsed_ms": 0.03,
+        "row_count": 1
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 0.029,
+        "row_count": 1
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 0.045,
+        "row_count": 1
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 0.027,
+        "row_count": 1
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 0.032,
+        "row_count": 1
+      }
+    ],
+    "sqlite_status_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.529,
+        "files": 1,
+        "chunks": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.277,
+        "files": 1,
+        "chunks": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.146,
+        "files": 1,
+        "chunks": 1
+      },
+      {
+        "phase": "synthetic_chroma_failure_injection",
+        "elapsed_ms": 0.119,
+        "files": 1,
+        "chunks": 1
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 0.122,
+        "files": 1,
+        "chunks": 1
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 0.128,
+        "files": 1,
+        "chunks": 1
+      }
+    ],
+    "sqlite_sync_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 5.295,
+        "added": 1,
+        "changed": 0,
+        "removed": 0
+      }
+    ],
+    "sqlite_chunk_iteration_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.15
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.065
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.047
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 0.024
+      },
+      {
+        "phase": "synthetic_chroma_failure_injection",
+        "elapsed_ms": 0.019
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 0.019
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 0.02
+      }
+    ],
+    "sqlite_symbol_search_calls": [
+      {
+        "phase": "synthetic_chroma_failure_injection",
+        "elapsed_ms": 0.126,
+        "result_count": 1
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 0.13,
+        "result_count": 1
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 0.151,
+        "result_count": 1
+      }
+    ],
+    "index_cache": {
+      "hits": 0,
+      "misses": 1,
+      "phases": {
+        "scenario_C2_execution": {
+          "hits": 0,
+          "misses": 1
+        }
+      }
+    },
+    "chroma_consistency_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 2.315,
+        "complete": false,
+        "expected_vectors": 1,
+        "stored_vectors": 0,
+        "missing_vectors": 1,
+        "stale_vectors": 0
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 1.744,
+        "complete": true,
+        "expected_vectors": 1,
+        "stored_vectors": 1,
+        "missing_vectors": 0,
+        "stale_vectors": 0
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 1.928,
+        "complete": true,
+        "expected_vectors": 1,
+        "stored_vectors": 1,
+        "missing_vectors": 0,
+        "stale_vectors": 0
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 1.438,
+        "complete": true,
+        "expected_vectors": 1,
+        "stored_vectors": 1,
+        "missing_vectors": 0,
+        "stale_vectors": 0
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 1.271,
+        "complete": true,
+        "expected_vectors": 1,
+        "stored_vectors": 1,
+        "missing_vectors": 0,
+        "stale_vectors": 0
+      }
+    ],
+    "chroma_sync_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 223.083,
+        "embedded": 1,
+        "unchanged": 0,
+        "removed": 0,
+        "elapsed_seconds": 0.219
+      }
+    ],
+    "chroma_upsert_batches": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 34.139
+      }
+    ],
+    "chroma_search_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 6.732,
+        "result_count": 1
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 2.927,
+        "result_count": 0
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 3.341,
+        "result_count": 1
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 1.918,
+        "result_count": 0
+      }
+    ],
+    "embedding_requests": [
+      {
+        "phase": "scenario_C2_execution",
+        "kind": "documents",
+        "item_count": 1,
+        "elapsed_ms": 182.227
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "kind": "query",
+        "item_count": 1,
+        "elapsed_ms": 178.944
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "kind": "query",
+        "item_count": 1,
+        "elapsed_ms": 182.848
+      }
+    ],
+    "product_retriever_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 231.775,
+        "candidate_count": 1,
+        "unavailable_channels": [],
+        "channels": [
+          "lexical",
+          "vector"
+        ],
+        "candidate_summaries": [
+          {
+            "citation": "synthetic_calculation.py:1-5",
+            "relative_path": "synthetic_calculation.py",
+            "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+            "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+            "channels": [
+              "lexical",
+              "vector"
+            ],
+            "start_line": 1,
+            "end_line": 5
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "elapsed_ms": 8.165,
+        "candidate_count": 1,
+        "unavailable_channels": [],
+        "channels": [
+          "lexical"
+        ],
+        "candidate_summaries": [
+          {
+            "citation": "synthetic_calculation.py:1-5",
+            "relative_path": "synthetic_calculation.py",
+            "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+            "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+            "channels": [
+              "lexical"
+            ],
+            "start_line": 1,
+            "end_line": 5
+          }
+        ]
+      },
+      {
+        "phase": "synthetic_chroma_failure_injection",
+        "elapsed_ms": 2.798,
+        "candidate_count": 2,
+        "unavailable_channels": [
+          "vector",
+          "vector"
+        ],
+        "channels": [
+          "lexical",
+          "symbols"
+        ]
+      },
+      {
+        "phase": "synthetic_embedding_failure_injection",
+        "elapsed_ms": 5.111,
+        "candidate_count": 2,
+        "unavailable_channels": [
+          "vector"
+        ],
+        "channels": [
+          "lexical",
+          "symbols"
+        ]
+      },
+      {
+        "phase": "synthetic_chroma_recovery",
+        "elapsed_ms": 194.393,
+        "candidate_count": 2,
+        "unavailable_channels": [],
+        "channels": [
+          "lexical",
+          "symbols",
+          "vector"
+        ]
+      }
+    ],
+    "agent_tool_search_calls": [
+      {
+        "phase": "scenario_C2_execution",
+        "status": "COMPLETED",
+        "candidate_count": 1,
+        "source_ids": [
+          "E1"
+        ],
+        "elapsed_ms": 8.327
+      }
+    ],
+    "deepseek_chat_events": [
+      {
+        "phase": "scenario_C2_planning",
+        "request_messages_sha256": "bdb07dd7d30d3062ab1763e7c1877e5051cd21e19c29fd7e888104d43b5a4c9e",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 607,
+          "completion_tokens": 295,
+          "total_tokens": 902,
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 223
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "4a644a4262816f88e86d21c9ad5e0a4e447201f1687b93555f8aac1d988afae3",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 815,
+          "completion_tokens": 17,
+          "total_tokens": 832,
+          "prompt_cache_hit_tokens": 128,
+          "prompt_cache_miss_tokens": 687
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "a61b22a5097479250042cd316c6eb792c384d6ae1428b5c79f1f7a44cb1c7418",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 943,
+          "completion_tokens": 82,
+          "total_tokens": 1025,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 431
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "a5edf141f404006f66544a7af8aa2f2353b41ffa030af21fe13a6fcdd82ac38a",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 814,
+          "completion_tokens": 15,
+          "total_tokens": 829,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 558
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "3f26ecda07ee32a6415b62983105f51f2030285f87bb9f08a536774e7e78c2ee",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 879,
+          "completion_tokens": 85,
+          "total_tokens": 964,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 367
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "67b5a6bb8bff6fafcd6358fb8cddbc636986c3079f46c21625ab855e0d75732b",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1172,
+          "completion_tokens": 81,
+          "total_tokens": 1253,
+          "prompt_cache_hit_tokens": 256,
+          "prompt_cache_miss_tokens": 916
+        }
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "request_messages_sha256": "8ec16286b64520e0e458f6871c8658fffaea0736f2044bdb69fc34c20690a2bd",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ],
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "built_context_evidence_count": 0,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_content_recorded": false,
+        "call_status": "RETURNED",
+        "finish_reason": "stop",
+        "usage": {
+          "prompt_tokens": 1237,
+          "completion_tokens": 88,
+          "total_tokens": 1325,
+          "prompt_cache_hit_tokens": 896,
+          "prompt_cache_miss_tokens": 341
+        }
+      }
+    ],
+    "network_request_counts": {
+      "chat": {
+        "attempted": 7,
+        "sent": 7,
+        "succeeded": 7,
+        "failed": 0,
+        "retries": 0
+      },
+      "model_discovery": {
+        "attempted": 0,
+        "sent": 0,
+        "succeeded": 0,
+        "failed": 0
+      }
+    },
+    "network_request_events": [
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_planning",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      },
+      {
+        "kind": "chat",
+        "method": "POST",
+        "phase": "scenario_C2_execution",
+        "attempted": 1,
+        "sent": 1,
+        "succeeded": 1,
+        "failed": 0,
+        "retries": 0,
+        "error_type": null
+      }
+    ],
+    "tool_discovery": [
+      {
+        "phase": "scenario_C2_planning",
+        "permission_scopes": [
+          "repository:read"
+        ],
+        "tools": [
+          {
+            "tool_id": "read",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "search",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "list-symbols",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "permission_scopes": [
+          "agent:execution.read_result",
+          "repository:read"
+        ],
+        "tools": [
+          {
+            "tool_id": "read",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "search",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "list-symbols",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "permission_scopes": [
+          "agent:execution.read_result",
+          "repository:read"
+        ],
+        "tools": [
+          {
+            "tool_id": "read",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "search",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "list-symbols",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "permission_scopes": [
+          "agent:execution.read_result",
+          "repository:read"
+        ],
+        "tools": [
+          {
+            "tool_id": "read",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "search",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          },
+          {
+            "tool_id": "list-symbols",
+            "permission_scope": "repository:read",
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      }
+    ],
+    "tool_schema_loads": [
+      {
+        "phase": "scenario_C2_execution",
+        "tool_ids": [
+          "search",
+          "read"
+        ],
+        "status": "PASS",
+        "input_output_schema_loaded": true
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "tool_ids": [
+          "read"
+        ],
+        "status": "PASS",
+        "input_output_schema_loaded": true
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "tool_ids": [
+          "read"
+        ],
+        "status": "PASS",
+        "input_output_schema_loaded": true
+      }
+    ],
+    "plan_validations": [
+      {
+        "phase": "scenario_C2_execution",
+        "status": "PASS",
+        "calls": [
+          {
+            "tool_id": "search",
+            "task_id": "t1-search",
+            "call_id_hash": "977dadaa4d6e5517",
+            "argument_fields": [
+              "query",
+              "top_k"
+            ],
+            "argument_types": {
+              "query": "string",
+              "top_k": "integer"
+            },
+            "dependency_count": 0,
+            "permission_scope": "repository:read",
+            "permission_granted": true,
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "status": "PASS",
+        "calls": [
+          {
+            "tool_id": "read",
+            "task_id": "t2-read",
+            "call_id_hash": "ad1ccd27d0524c01",
+            "argument_fields": [
+              "end_line",
+              "path",
+              "start_line"
+            ],
+            "argument_types": {
+              "end_line": "integer",
+              "path": "string",
+              "start_line": "integer"
+            },
+            "dependency_count": 1,
+            "permission_scope": "repository:read",
+            "permission_granted": true,
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      },
+      {
+        "phase": "scenario_C2_execution",
+        "status": "PASS",
+        "calls": [
+          {
+            "tool_id": "read",
+            "task_id": "t3-read",
+            "call_id_hash": "75ad3d597d1d2d34",
+            "argument_fields": [
+              "end_line",
+              "path",
+              "start_line"
+            ],
+            "argument_types": {
+              "end_line": "integer",
+              "path": "string",
+              "start_line": "integer"
+            },
+            "dependency_count": 1,
+            "permission_scope": "repository:read",
+            "permission_granted": true,
+            "side_effect": false,
+            "requires_approval": false
+          }
+        ]
+      }
+    ],
+    "scenario_tool_observations": {},
+    "scenario_built_context_evidence": {},
+    "scenario_chat_attempts": 7,
+    "max_scenario_chat_requests": 21,
+    "deepseek_chat_attempts": 7,
+    "max_deepseek_chat_requests": 21
+  },
+  "failure": null,
+  "tool_calling_capability": {
+    "status": "PASS",
+    "provider": "deepseek",
+    "model_id": "deepseek-flash",
+    "verification": "runtime_tool_call_probe",
+    "metadata_supports_tool_calling": null,
+    "finish_reason": "tool_calls",
+    "tool_call_count": 1,
+    "tool_executed": false,
+    "request_count": 1,
+    "automatic_retries": 0,
+    "verified_at": "2026-11-11T12:59:54.952152+00:00",
+    "request_id": "02b143aa-5c66-4f29-ac41-54d39af93e25",
+    "evidence_sha256": "4aca82700450329c1ffc35cd0635a8d45688c42c5dd96ee7fcf8877184810da1",
+    "evidence_file_sha256": "8ffbc9e69b1f57faf5b6fad1068ad5f27f6ecfde31cbda98518cd79ccb166634",
+    "evidence_file": "D:\\agent\\AgentForge\\PHASE5_2_2_3_R4_2_1_CAPABILITY_PROBE_EVIDENCE_20261111_01.json"
+  },
+  "synthetic_scenarios": {
+    "A": {
+      "status": "NOT_MEASURED",
+      "scenario": "A"
+    },
+    "B": {
+      "status": "NOT_MEASURED",
+      "scenario": "B"
+    },
+    "C": {
+      "status": "FAIL",
+      "subscenarios": {
+        "C1": {
+          "status": "NOT_MEASURED",
+          "scenario": "C1"
+        },
+        "C2": {
+          "provider": "deepseek",
+          "model": "deepseek-flash",
+          "repository_id": "c0b598a743981b6af2c8926d07b28cba9dd5daaca60447821ddb07a63496c7f2",
+          "conversation_id": "e76ce6e4-0ed7-4b03-976d-d4deaebcf8b3",
+          "question_sha256": "1997bd0349a38d5c26640befb0d4343bad6b48c6a72f822fda1212915398f824",
+          "plan": {
+            "intent": "hybrid",
+            "planner_source": "llm",
+            "task_types": [
+              "repository",
+              "tool",
+              "general"
+            ],
+            "requires_repository_retrieval": true,
+            "requires_tool_execution": true,
+            "planner_diagnostics": {
+              "phase": "conversation_planner",
+              "model_id": "deepseek-flash",
+              "context_window_tokens": 1048576,
+              "input_budget_tokens": 939622,
+              "requested_output_tokens": 4096,
+              "reserved_output_tokens": 4096,
+              "safety_margin_tokens": 104858,
+              "max_input_tokens": null,
+              "max_output_tokens": 393216,
+              "provider_max_output_tokens": null,
+              "adapter_max_output_tokens": null,
+              "reasoning_token_limit": null,
+              "estimated_input_tokens": 2815,
+              "tokenizer_method": "estimated",
+              "token_estimate_description": "max Unicode character count and ceil(UTF-8 bytes/2); conservative proxy, not exact tokens",
+              "persisted_history_messages": 0,
+              "retained_history_messages": 0,
+              "dropped_history_messages": 0,
+              "summary_included": false,
+              "summary_suppressed_as_duplicate": false,
+              "tool_schema_included": false,
+              "capability_source": "DeepSeek official /models API response; Chat Completions API documents max_tokens as the generated completion limit",
+              "capability_verified_at": "2026-11-11T12:57:16.224682+00:00",
+              "memory": {
+                "status": "disabled",
+                "retrieval_status": "not_requested",
+                "candidate_count": 0,
+                "error_type": null,
+                "injected_count": 0,
+                "fallback_used": false
+              },
+              "usage": {
+                "prompt_tokens": 607,
+                "completion_tokens": 295,
+                "total_tokens": 902,
+                "prompt_cache_hit_tokens": 384,
+                "prompt_cache_miss_tokens": 223
+              },
+              "request_succeeded": true,
+              "planner_request_count": 1,
+              "correction_attempted": false,
+              "initial_validation_status": "passed",
+              "final_validation_status": "passed",
+              "available_tool_count": 3,
+              "available_tool_ids": [
+                "read",
+                "search",
+                "list-symbols"
+              ],
+              "execution_started": true,
+              "correction_attempt": 0,
+              "validation_error_code": null,
+              "task_count": 3,
+              "task_type_counts": {
+                "external": 0,
+                "general": 1,
+                "repository": 1,
+                "tool": 1
+              },
+              "general_task_count": 1,
+              "repository_task_count": 1,
+              "executable_task_count": 1,
+              "intent": "hybrid",
+              "requires_agent_execution": true,
+              "requires_repository": true,
+              "requires_external_data": false
+            }
+          },
+          "retrieval": {},
+          "retrieval_search_count": 2,
+          "orchestrator_retrieval_search_count": 1,
+          "candidate_evidence": [
+            {
+              "citation": "synthetic_calculation.py:1-5",
+              "relative_path": "synthetic_calculation.py",
+              "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+              "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+              "channels": [
+                "lexical",
+                "vector"
+              ],
+              "start_line": 1,
+              "end_line": 5
+            },
+            {
+              "citation": "synthetic_calculation.py:1-5",
+              "relative_path": "synthetic_calculation.py",
+              "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+              "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+              "channels": [
+                "lexical"
+              ],
+              "start_line": 1,
+              "end_line": 5
+            }
+          ],
+          "built_context_evidence": [],
+          "retrieval_to_context_hashes_match": false,
+          "final_answer_request_evidence_markers": {
+            "contains_current_question": true,
+            "contains_synthetic_source_path": true,
+            "contains_synthetic_source_formula": false,
+            "contains_synthetic_function_name": true,
+            "contains_all_built_context_source_ids": false,
+            "contains_all_built_context_citations": false,
+            "contains_no_built_context_evidence": true,
+            "answer_context_evidence_count": null,
+            "answer_context_evidence_sha256": null,
+            "request_messages_sha256": "8ec16286b64520e0e458f6871c8658fffaea0736f2044bdb69fc34c20690a2bd",
+            "message_count": 2,
+            "roles": [
+              "system",
+              "user"
+            ]
+          },
+          "answer_contract_status": null,
+          "answer_contract_reason": null,
+          "contract_evidence": {
+            "items": [],
+            "content_hash_status": "NOT_APPLICABLE",
+            "missing_content_hash_count": 0
+          },
+          "answer_citations": [],
+          "answer_nonempty": false,
+          "answer_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "answer_text_recorded": false,
+          "execution_status": "failed",
+          "session_restore_status": "FAIL",
+          "persisted_message_count_before": 0,
+          "persisted_message_count_after": 0,
+          "planner_elapsed_seconds": 1.76352,
+          "execution_elapsed_seconds": 7.239364,
+          "provider_request_stats_before": {
+            "attempted": 0,
+            "sent": 0,
+            "succeeded": 0,
+            "failed": 0,
+            "retries": 0,
+            "last_http_status": null,
+            "last_failure_phase": null,
+            "last_elapsed_seconds": null,
+            "last_error_code": null,
+            "last_usage": null,
+            "last_request_id": null,
+            "last_requested_output_tokens": null,
+            "last_first_response_ms": null,
+            "last_first_delta_ms": null,
+            "last_reasoning_chars": null,
+            "last_finish_reason": null,
+            "last_response_diagnostic": null,
+            "discovery_attempted": 0,
+            "discovery_succeeded": 0,
+            "discovery_failed": 0,
+            "credential_source": "environment",
+            "last_application_failure_phase": null,
+            "last_application_error_code": null,
+            "output_budget": {
+              "mode": "standard",
+              "requested_tokens": 16384,
+              "effective_tokens": 16384,
+              "model_max_output_tokens": 393216,
+              "provider_max_output_tokens": null,
+              "adapter_max_output_tokens": null,
+              "context_window": 1048576,
+              "safety_margin": 104858,
+              "output_limit_includes_reasoning": true,
+              "source": "application standard preset"
+            }
+          },
+          "provider_request_stats_after": {
+            "attempted": 7,
+            "sent": 7,
+            "succeeded": 7,
+            "failed": 0,
+            "retries": 0,
+            "last_http_status": 200,
+            "last_failure_phase": null,
+            "last_elapsed_seconds": 1.453,
+            "last_error_code": null,
+            "last_usage": {
+              "prompt_tokens": 1237,
+              "completion_tokens": 88,
+              "total_tokens": 1325,
+              "prompt_cache_hit_tokens": 896,
+              "prompt_cache_miss_tokens": 341
+            },
+            "last_request_id": "b3695583-9fb5-4cb5-a91a-7676f0b457b4",
+            "last_requested_output_tokens": 4096,
+            "last_first_response_ms": 140,
+            "last_first_delta_ms": null,
+            "last_reasoning_chars": 0,
+            "last_finish_reason": "stop",
+            "last_response_diagnostic": {
+              "root_type": "dict",
+              "choice_count": 1,
+              "content_chars": 338,
+              "reasoning_chars": null,
+              "tool_call_count": 0
+            },
+            "discovery_attempted": 0,
+            "discovery_succeeded": 0,
+            "discovery_failed": 0,
+            "credential_source": "environment",
+            "last_application_failure_phase": null,
+            "last_application_error_code": null,
+            "last_request_byte_limit": 2000000,
+            "last_response_byte_limit": 2000000,
+            "output_budget": {
+              "mode": "standard",
+              "requested_tokens": 16384,
+              "effective_tokens": 16384,
+              "model_max_output_tokens": 393216,
+              "provider_max_output_tokens": null,
+              "adapter_max_output_tokens": null,
+              "context_window": 1048576,
+              "safety_margin": 104858,
+              "output_limit_includes_reasoning": true,
+              "source": "application standard preset"
+            }
+          },
+          "request_count": 7,
+          "agent_execution": null,
+          "final_answer_tool_observations": [],
+          "effective_evidence_count": 0,
+          "synthetic_repository_registration_status": "PASS",
+          "answer_consistent_with_synthetic_evidence": false,
+          "checks": {
+            "planner_requested_tool_execution": true,
+            "agent_engine_completed": false,
+            "authorized_tool_executed": false,
+            "read_only_scope_preserved": false,
+            "registered_schema_loaded": false,
+            "plan_validator_ran": true,
+            "all_tool_results_completed": false,
+            "observation_reached_final_answer_context": false,
+            "repository_retrieval_ran_once": true,
+            "effective_repository_evidence_found": false,
+            "retrieval_evidence_reached_context": false,
+            "contract_evidence_hash_linked": false,
+            "agent_read_provenance_chain_valid": false,
+            "answer_consistent_with_synthetic_evidence": false,
+            "session_reloaded": false,
+            "synthetic_repository_registration_used": true
+          },
+          "status": "FAIL"
+        }
+      }
+    },
+    "C1": {
+      "status": "NOT_MEASURED",
+      "scenario": "C1"
+    },
+    "C2": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "repository_id": "c0b598a743981b6af2c8926d07b28cba9dd5daaca60447821ddb07a63496c7f2",
+      "conversation_id": "e76ce6e4-0ed7-4b03-976d-d4deaebcf8b3",
+      "question_sha256": "1997bd0349a38d5c26640befb0d4343bad6b48c6a72f822fda1212915398f824",
+      "plan": {
+        "intent": "hybrid",
+        "planner_source": "llm",
+        "task_types": [
+          "repository",
+          "tool",
+          "general"
+        ],
+        "requires_repository_retrieval": true,
+        "requires_tool_execution": true,
+        "planner_diagnostics": {
+          "phase": "conversation_planner",
+          "model_id": "deepseek-flash",
+          "context_window_tokens": 1048576,
+          "input_budget_tokens": 939622,
+          "requested_output_tokens": 4096,
+          "reserved_output_tokens": 4096,
+          "safety_margin_tokens": 104858,
+          "max_input_tokens": null,
+          "max_output_tokens": 393216,
+          "provider_max_output_tokens": null,
+          "adapter_max_output_tokens": null,
+          "reasoning_token_limit": null,
+          "estimated_input_tokens": 2815,
+          "tokenizer_method": "estimated",
+          "token_estimate_description": "max Unicode character count and ceil(UTF-8 bytes/2); conservative proxy, not exact tokens",
+          "persisted_history_messages": 0,
+          "retained_history_messages": 0,
+          "dropped_history_messages": 0,
+          "summary_included": false,
+          "summary_suppressed_as_duplicate": false,
+          "tool_schema_included": false,
+          "capability_source": "DeepSeek official /models API response; Chat Completions API documents max_tokens as the generated completion limit",
+          "capability_verified_at": "2026-11-11T12:57:16.224682+00:00",
+          "memory": {
+            "status": "disabled",
+            "retrieval_status": "not_requested",
+            "candidate_count": 0,
+            "error_type": null,
+            "injected_count": 0,
+            "fallback_used": false
+          },
+          "usage": {
+            "prompt_tokens": 607,
+            "completion_tokens": 295,
+            "total_tokens": 902,
+            "prompt_cache_hit_tokens": 384,
+            "prompt_cache_miss_tokens": 223
+          },
+          "request_succeeded": true,
+          "planner_request_count": 1,
+          "correction_attempted": false,
+          "initial_validation_status": "passed",
+          "final_validation_status": "passed",
+          "available_tool_count": 3,
+          "available_tool_ids": [
+            "read",
+            "search",
+            "list-symbols"
+          ],
+          "execution_started": true,
+          "correction_attempt": 0,
+          "validation_error_code": null,
+          "task_count": 3,
+          "task_type_counts": {
+            "external": 0,
+            "general": 1,
+            "repository": 1,
+            "tool": 1
+          },
+          "general_task_count": 1,
+          "repository_task_count": 1,
+          "executable_task_count": 1,
+          "intent": "hybrid",
+          "requires_agent_execution": true,
+          "requires_repository": true,
+          "requires_external_data": false
+        }
+      },
+      "retrieval": {},
+      "retrieval_search_count": 2,
+      "orchestrator_retrieval_search_count": 1,
+      "candidate_evidence": [
+        {
+          "citation": "synthetic_calculation.py:1-5",
+          "relative_path": "synthetic_calculation.py",
+          "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+          "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+          "channels": [
+            "lexical",
+            "vector"
+          ],
+          "start_line": 1,
+          "end_line": 5
+        },
+        {
+          "citation": "synthetic_calculation.py:1-5",
+          "relative_path": "synthetic_calculation.py",
+          "content_hash": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+          "excerpt_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+          "channels": [
+            "lexical"
+          ],
+          "start_line": 1,
+          "end_line": 5
+        }
+      ],
+      "built_context_evidence": [],
+      "retrieval_to_context_hashes_match": false,
+      "final_answer_request_evidence_markers": {
+        "contains_current_question": true,
+        "contains_synthetic_source_path": true,
+        "contains_synthetic_source_formula": false,
+        "contains_synthetic_function_name": true,
+        "contains_all_built_context_source_ids": false,
+        "contains_all_built_context_citations": false,
+        "contains_no_built_context_evidence": true,
+        "answer_context_evidence_count": null,
+        "answer_context_evidence_sha256": null,
+        "request_messages_sha256": "8ec16286b64520e0e458f6871c8658fffaea0736f2044bdb69fc34c20690a2bd",
+        "message_count": 2,
+        "roles": [
+          "system",
+          "user"
+        ]
+      },
+      "answer_contract_status": null,
+      "answer_contract_reason": null,
+      "contract_evidence": {
+        "items": [],
+        "content_hash_status": "NOT_APPLICABLE",
+        "missing_content_hash_count": 0
+      },
+      "answer_citations": [],
+      "answer_nonempty": false,
+      "answer_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "answer_text_recorded": false,
+      "execution_status": "failed",
+      "session_restore_status": "FAIL",
+      "persisted_message_count_before": 0,
+      "persisted_message_count_after": 0,
+      "planner_elapsed_seconds": 1.76352,
+      "execution_elapsed_seconds": 7.239364,
+      "provider_request_stats_before": {
+        "attempted": 0,
+        "sent": 0,
+        "succeeded": 0,
+        "failed": 0,
+        "retries": 0,
+        "last_http_status": null,
+        "last_failure_phase": null,
+        "last_elapsed_seconds": null,
+        "last_error_code": null,
+        "last_usage": null,
+        "last_request_id": null,
+        "last_requested_output_tokens": null,
+        "last_first_response_ms": null,
+        "last_first_delta_ms": null,
+        "last_reasoning_chars": null,
+        "last_finish_reason": null,
+        "last_response_diagnostic": null,
+        "discovery_attempted": 0,
+        "discovery_succeeded": 0,
+        "discovery_failed": 0,
+        "credential_source": "environment",
+        "last_application_failure_phase": null,
+        "last_application_error_code": null,
+        "output_budget": {
+          "mode": "standard",
+          "requested_tokens": 16384,
+          "effective_tokens": 16384,
+          "model_max_output_tokens": 393216,
+          "provider_max_output_tokens": null,
+          "adapter_max_output_tokens": null,
+          "context_window": 1048576,
+          "safety_margin": 104858,
+          "output_limit_includes_reasoning": true,
+          "source": "application standard preset"
+        }
+      },
+      "provider_request_stats_after": {
+        "attempted": 7,
+        "sent": 7,
+        "succeeded": 7,
+        "failed": 0,
+        "retries": 0,
+        "last_http_status": 200,
+        "last_failure_phase": null,
+        "last_elapsed_seconds": 1.453,
+        "last_error_code": null,
+        "last_usage": {
+          "prompt_tokens": 1237,
+          "completion_tokens": 88,
+          "total_tokens": 1325,
+          "prompt_cache_hit_tokens": 896,
+          "prompt_cache_miss_tokens": 341
+        },
+        "last_request_id": "b3695583-9fb5-4cb5-a91a-7676f0b457b4",
+        "last_requested_output_tokens": 4096,
+        "last_first_response_ms": 140,
+        "last_first_delta_ms": null,
+        "last_reasoning_chars": 0,
+        "last_finish_reason": "stop",
+        "last_response_diagnostic": {
+          "root_type": "dict",
+          "choice_count": 1,
+          "content_chars": 338,
+          "reasoning_chars": null,
+          "tool_call_count": 0
+        },
+        "discovery_attempted": 0,
+        "discovery_succeeded": 0,
+        "discovery_failed": 0,
+        "credential_source": "environment",
+        "last_application_failure_phase": null,
+        "last_application_error_code": null,
+        "last_request_byte_limit": 2000000,
+        "last_response_byte_limit": 2000000,
+        "output_budget": {
+          "mode": "standard",
+          "requested_tokens": 16384,
+          "effective_tokens": 16384,
+          "model_max_output_tokens": 393216,
+          "provider_max_output_tokens": null,
+          "adapter_max_output_tokens": null,
+          "context_window": 1048576,
+          "safety_margin": 104858,
+          "output_limit_includes_reasoning": true,
+          "source": "application standard preset"
+        }
+      },
+      "request_count": 7,
+      "agent_execution": null,
+      "final_answer_tool_observations": [],
+      "effective_evidence_count": 0,
+      "synthetic_repository_registration_status": "PASS",
+      "answer_consistent_with_synthetic_evidence": false,
+      "checks": {
+        "planner_requested_tool_execution": true,
+        "agent_engine_completed": false,
+        "authorized_tool_executed": false,
+        "read_only_scope_preserved": false,
+        "registered_schema_loaded": false,
+        "plan_validator_ran": true,
+        "all_tool_results_completed": false,
+        "observation_reached_final_answer_context": false,
+        "repository_retrieval_ran_once": true,
+        "effective_repository_evidence_found": false,
+        "retrieval_evidence_reached_context": false,
+        "contract_evidence_hash_linked": false,
+        "agent_read_provenance_chain_valid": false,
+        "answer_consistent_with_synthetic_evidence": false,
+        "session_reloaded": false,
+        "synthetic_repository_registration_used": true
+      },
+      "status": "FAIL"
+    }
+  },
+  "selected_scenario_status": "FAIL",
+  "finished_at": "2026-11-11T16:37:50.619644+00:00",
+  "raw_result_file": "PHASE5_2_2_3_HOST_RUN_b20160750dad498283f5a6e4bcb1fe53.json"
+}

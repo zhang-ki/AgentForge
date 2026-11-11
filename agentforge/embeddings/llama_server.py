@@ -105,6 +105,22 @@ class LlamaServerEmbeddingProvider:
     def embed_document(self, text: str):
         return self._embed(text, role="document")
 
+    def embed_documents(self, texts):
+        """Batch document embeddings using the local server's OpenAI-compatible endpoint."""
+        from .base import MAX_EMBEDDING_BATCH_ITEMS
+
+        if isinstance(texts, (str, bytes, bytearray)):
+            raise EmbeddingError("Embedding batch must be a sequence of non-empty texts.")
+        try:
+            values = tuple(texts)
+        except Exception:
+            raise EmbeddingError("Embedding batch must be a sequence of non-empty texts.") from None
+        if not 1 <= len(values) <= MAX_EMBEDDING_BATCH_ITEMS or any(
+            not isinstance(text, str) or not text.strip() for text in values
+        ):
+            raise EmbeddingError("Embedding batch size or text is invalid.")
+        return self._request_embeddings(list(values))
+
     def health(self, *, timeout: float = 2.0) -> str:
         """不执行推理，仅检查该模型对应的 llama.cpp 健康状态合同。"""
         timeout = self._validate_timeout(timeout, "health_timeout")
@@ -157,8 +173,11 @@ class LlamaServerEmbeddingProvider:
         input_text = text
         if role == "query":
             input_text = f"Instruct: {self.query_instruction}\nQuery: {text.strip()}"
+        return self._request_embeddings(input_text)[0]
+
+    def _request_embeddings(self, input_value):
         payload = json.dumps(
-            {"input": input_text, "model": self.api_model, "encoding_format": "float"},
+            {"input": input_value, "model": self.api_model, "encoding_format": "float"},
             ensure_ascii=False,
         ).encode("utf-8")
         connection = HTTPConnection(self._host, self._port, timeout=self.connect_timeout)
@@ -196,15 +215,25 @@ class LlamaServerEmbeddingProvider:
             except (UnicodeDecodeError, json.JSONDecodeError):
                 raise EmbeddingError("Local embedding server returned invalid JSON.") from None
             data = decoded.get("data") if isinstance(decoded, dict) else None
-            if not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], dict):
+            expected_count = 1 if isinstance(input_value, str) else len(input_value)
+            if (not isinstance(data, list) or len(data) != expected_count
+                    or any(not isinstance(item, dict) for item in data)):
                 raise EmbeddingError("Local embedding server returned an invalid embedding response.")
-            vector = data[0].get("embedding")
-            if not isinstance(vector, list) or not vector:
-                raise EmbeddingError("Local embedding server returned an empty embedding.")
-            normalized = normalize_vector(vector, expected_dimension=self.dimension)
+            ordered = [None] * expected_count
+            for position, item in enumerate(data):
+                index = item.get("index", 0 if expected_count == 1 else None)
+                if (isinstance(index, bool) or not isinstance(index, int)
+                        or not 0 <= index < expected_count or ordered[index] is not None):
+                    raise EmbeddingError("Local embedding server returned invalid batch indexes.")
+                vector = item.get("embedding")
+                if not isinstance(vector, list) or not vector:
+                    raise EmbeddingError("Local embedding server returned an empty embedding.")
+                ordered[index] = normalize_vector(vector, expected_dimension=self.dimension)
+            if any(vector is None for vector in ordered):
+                raise EmbeddingError("Local embedding server returned an incomplete embedding batch.")
             self.request_successes += 1
             succeeded = True
-            return normalized
+            return tuple(ordered)
         except socket.timeout:
             raise EmbeddingError("Local embedding request timed out.") from None
         except EmbeddingError:

@@ -205,6 +205,36 @@ class AF011ProductRetrievalTests(LocalTestCase):
         uncertain = router.route("Can a dynamic import resolve this plugin at runtime?")
         self.assertEqual((uncertain.route, uncertain.confidence), ("uncertain", "low"))
 
+    def test_formula_question_with_code_identifiers_is_relevant_but_still_requires_source_match(self):
+        from types import SimpleNamespace
+        from agentforge.evidence_evaluator import assess_evidence
+
+        query = (
+            "Use an authorized read-only tool to open synthetic_calculation.py in this "
+            "repository, then report the formula in calculate_weighted_total and its result "
+            "for amount 100 with fee rate 0.05."
+        )
+        router = ProductIntentRouter()
+        decision = router.route(query)
+        self.assertEqual(("business_implementation", "medium"),
+                         (decision.route, decision.confidence))
+        self.assertEqual("formula_for_code_identifier", decision.rule)
+
+        matching = SimpleNamespace(
+            score=1.0, evidence_roles=("definition",),
+            relative_path="synthetic_calculation.py",
+            text=("def calculate_weighted_total(amount, fee_rate):\n"
+                  "    return round(amount * (1 + fee_rate), 2)"),
+        )
+        unrelated = SimpleNamespace(
+            score=1.0, evidence_roles=("definition",), relative_path="src/unrelated.py",
+            text="def normalize_color(value):\n    return value.casefold()",
+        )
+        self.assertEqual((matching,), assess_evidence(query, decision, (matching,)).relevant_candidates)
+        rejected = assess_evidence(query, decision, (unrelated,))
+        self.assertEqual((), rejected.relevant_candidates)
+        self.assertEqual("NO_DETERMINISTIC_RELEVANCE", rejected.candidate_results[0]["reason_code"])
+
     def test_symbol_relation_reference_and_document_evidence_keep_provenance(self):
         with IndexStore(":memory:") as store:
             retriever = self._retriever(store)
@@ -237,6 +267,53 @@ class AF011ProductRetrievalTests(LocalTestCase):
             docs = retriever.search("Where is the validation policy documented?", top_k=3)
             self.assertEqual(docs.candidates[0].relative_path, "docs/policy.md")
             self.assertEqual(docs.unavailable_channels, ("vector",))
+
+    def test_vector_results_are_not_starved_when_lexical_channel_fills_top_k(self):
+        from agentforge.embeddings.vector_store import VectorCandidate
+        from agentforge.scanner import scan_repository
+
+        for number in range(4):
+            self.write(
+                f"lexical_{number}.py",
+                f"# calc_unique_marker appears in lexical note {number}\nVALUE = {number}\n",
+            )
+        self.write(
+            "semantic.py",
+            "def describe_shipping_fee(base, rate):\n    return base * (1 + rate)\n",
+        )
+
+        class Vectors:
+            def __init__(self, chunk):
+                self.chunk = chunk
+
+            def inspect_consistency(self):
+                return {"complete": True, "expected_vectors": 1,
+                        "stored_vectors": 1, "invalid_vectors": 0}
+
+            def search(self, _query, *, top_k):
+                return [VectorCandidate(
+                    "Fsynthetic", self.chunk["relative_path"], "code",
+                    self.chunk["start_line"], self.chunk["end_line"],
+                    self.chunk["text"], self.chunk["content_hash"],
+                    "synthetic-embedding-model", None, 0.9,
+                )][:top_k]
+
+        with IndexStore(":memory:") as store:
+            index_repository(self.root, store)
+            chunk = next(row for row in store.iter_chunks()
+                         if row["relative_path"] == "semantic.py")
+            outcome = ProductRetriever(
+                store, self.root,
+                vector_retriever=Vectors(dict(chunk)),
+                scan_report=scan_repository(self.root),
+            ).search("calc_unique_marker", top_k=2)
+
+        self.assertEqual(len(outcome.candidates), 2)
+        self.assertTrue(any("lexical" in item.channels for item in outcome.candidates))
+        vector_candidates = [item for item in outcome.candidates if "vector" in item.channels]
+        self.assertEqual(len(vector_candidates), 1)
+        self.assertEqual(vector_candidates[0].relative_path, "semantic.py")
+        self.assertEqual(vector_candidates[0].content_hash, chunk["content_hash"])
 
     def test_cross_file_call_includes_exact_callsite_and_final_definition(self):
         with IndexStore(":memory:") as store:
@@ -503,7 +580,7 @@ class AF011ProductRetrievalTests(LocalTestCase):
             )
         self.assertEqual(outcome.decision.route, "uncertain")
         self.assertIsNotNone(outcome.uncertainty)
-        self.assertEqual(outcome.decision.channels, ("lexical",))
+        self.assertEqual(outcome.decision.channels, ("lexical", "symbols"))
 
     def test_chinese_and_mixed_language_exact_symbol_queries(self):
         self.write("nn.py", (

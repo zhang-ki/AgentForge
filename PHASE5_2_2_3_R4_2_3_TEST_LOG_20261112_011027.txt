@@ -1,0 +1,37 @@
+Phase 5.2.2.3-R4.2.3 Test Log (20261112_011027)
+
+Final current offline regression:
+  Command: project virtualenv python -m unittest discover -s tests
+  Result: Ran 1073; OK; skipped=3; 0 failures; 0 errors.
+  Log: PHASE5_2_2_3_R4_2_3_FULL_OFFLINE_20261112_07.txt
+  SHA256: 29338ce712a2ab863f643e94ec706a8d9154f3847d45b24abad01c2594408491
+
+Related forward regression:
+  Result: 348/348, OK.
+  Log: PHASE5_2_2_3_R4_2_3_RELATED_FORWARD_20261112_07.log
+  SHA256: 399381ccc846ca0150905c5e4ebb9f7c24836a36cdd1aecc187553c10bdd9963
+
+Related reverse regression:
+  Result: 348/348, OK.
+  Log: PHASE5_2_2_3_R4_2_3_RELATED_REVERSE_20261112_07.log
+  SHA256: 5ae648424acdc37b5fc0a1da8808ad988b5724c7281e909f37b7e18056f723cc
+
+Static dependency checks:
+  tests.test_package_relations + tests.test_quality_boundaries: 21/21, PASS.
+
+Compilation:
+  Product package, host Runner, and Python test sources excluding tests/fixtures/: PASS.
+  A broad compileall attempt also visited tests/fixtures/symbol_repo/broken.py, an intentional malformed syntax fixture, and reported its expected SyntaxError. It is excluded from source/test compilation; this is not a product compile failure.
+
+Diff:
+  git diff --check: PASS; Git emitted only LF/CRLF conversion warnings.
+
+Focused C2 runner recovery assertions:
+  PASS: exactly one rejected read followed by a distinct successful read is accepted as bounded recovery.
+  PASS: repeated/unrecovered invalid reads remain rejected.
+  The full current suite also includes these assertions.
+
+Skips:
+  The quiet unittest log reports 3 skipped tests but does not print their names/reasons. Per-test skip reason is NOT_MEASURED; no historical count/reason is substituted.
+
+Earlier incorrect test-discovery invocations and their logs remain preserved; corrected current commands above are the authoritative runs.

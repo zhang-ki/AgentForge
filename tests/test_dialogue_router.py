@@ -76,6 +76,30 @@ class DialogueRouterTests(unittest.TestCase):
         self.assertTrue(plan.use_repository)
         self.assertFalse(plan.use_general_knowledge)
 
+    def test_auto_projects_retrieval_independently_from_legacy_answer_intent(self):
+        import json
+        payload = json.loads(_plan_json("repository"))
+        payload["intent"] = "general"
+        planned = parse_conversation_plan(json.dumps(payload), requested_mode="auto")
+
+        plan = plan_dialogue("auto", "Explain the concept and inspect the current implementation",
+                             planner_result=planned)
+
+        self.assertEqual(DialogueMode.GENERAL, plan.mode)
+        self.assertTrue(plan.use_repository)
+        self.assertFalse(plan.requires_agent_execution)
+
+    def test_tool_execution_flag_does_not_imply_repository_retrieval(self):
+        planned = parse_conversation_plan(
+            _plan_json("general", agent_execution=True), requested_mode="auto",
+        )
+
+        plan = plan_dialogue("auto", "Use the authorized synthetic tool.",
+                             planner_result=planned)
+
+        self.assertFalse(plan.use_repository)
+        self.assertTrue(plan.requires_agent_execution)
+
     def test_auto_preserves_validated_agent_execution_decision(self):
         planned = parse_conversation_plan(
             _plan_json("repository", agent_execution=True), requested_mode="auto",
@@ -315,6 +339,21 @@ class EvidenceEvaluationTests(unittest.TestCase):
         self.assertEqual("unverified", assessment.relevance)
         self.assertEqual((), assessment.relevant_candidates)
         self.assertEqual("unverified", assessment.candidate_results[0]["status"])
+        self.assertEqual("NO_DETERMINISTIC_RELEVANCE",
+                         assessment.candidate_results[0]["reason_code"])
+
+    def test_low_confidence_route_has_stable_rejection_code(self):
+        candidate = SimpleNamespace(score=1.0, evidence_roles=("definition",),
+                                    relative_path="src/weighted_total.py",
+                                    text="def calculate_weighted_total(amount, fee_rate): return amount * fee_rate")
+        assessment = assess_evidence(
+            "What formula does calculate_weighted_total use?",
+            SimpleNamespace(confidence="low"), (candidate,),
+        )
+
+        self.assertEqual((), assessment.relevant_candidates)
+        self.assertEqual("LOW_CONFIDENCE_ROUTE",
+                         assessment.candidate_results[0]["reason_code"])
 
     def test_multiple_directly_matched_sources_can_jointly_cover_required_roles(self):
         callsite = SimpleNamespace(score=2.0, evidence_roles=("callsite",),
@@ -368,6 +407,10 @@ class EvidenceEvaluationTests(unittest.TestCase):
                          [item["status"] for item in assessment.candidate_results])
         self.assertIn("metadata", assessment.candidate_results[0]["reason"])
         self.assertIn("positive retrieval score", assessment.candidate_results[1]["reason"])
+        self.assertEqual(
+            ["CANDIDATE_METADATA_MISSING", "INVALID_RETRIEVAL_SCORE"],
+            [item["reason_code"] for item in assessment.candidate_results],
+        )
 
     def test_chinese_overlap_can_support_a_relevance_signal_but_unmatched_text_cannot(self):
         chinese = SimpleNamespace(
@@ -387,6 +430,9 @@ class EvidenceEvaluationTests(unittest.TestCase):
         self.assertEqual("relevant", assessment.candidate_results[0]["status"])
         self.assertEqual("unverified", assessment.candidate_results[1]["status"])
         self.assertIn("Chinese character pairs", assessment.candidate_results[0]["reason"])
+        self.assertEqual("RELEVANCE_SIGNAL", assessment.candidate_results[0]["reason_code"])
+        self.assertEqual("NO_DETERMINISTIC_RELEVANCE",
+                         assessment.candidate_results[1]["reason_code"])
 
     def test_internal_forward_flow_with_definition_reaches_answer_provider(self):
         from agentforge.conversation_orchestrator import (
@@ -558,6 +604,27 @@ class ProviderDialogueModeTests(unittest.TestCase):
         )
         system = client.chat.call_args.args[0][0]["content"]
         self.assertIn("Do not imply that live data was checked", system)
+
+    def test_deepseek_general_answer_can_state_repository_evidence_is_unavailable(self):
+        descriptor = ModelDescriptor(
+            provider_id="deepseek", model_id="test-model", display_name="test",
+            model_type="cloud", context_window=4096, max_output_tokens=256,
+            supports_streaming=False, supports_thinking=False,
+        )
+        client = DeepSeekClient("test-key")
+        client.chat = Mock(return_value=DeepSeekCompletion(
+            "Convolution applies a learned kernel over local input regions.", None,
+            "stop", (), {}, None,
+        ))
+        provider = DeepSeekProvider(client, "test-model", descriptor=descriptor)
+        provider.answer_general(
+            BuiltContext("How does convolution work?", (), "", 0, 1000),
+            repository_evidence_unavailable=True,
+        )
+        system = client.chat.call_args.args[0][0]["content"]
+        self.assertIn("produced no verified source evidence", system)
+        self.assertIn("Do not claim what this repository implements", system)
+        self.assertIn("answer any general principle", system)
 
 
 if __name__ == "__main__":

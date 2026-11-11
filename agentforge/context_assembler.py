@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from .conversation_context import (
     ContextBudgetExceeded, plan_context,
@@ -305,10 +306,53 @@ def _tool_observations_text(context):
         return ""
     if not isinstance(observations, tuple) or len(observations) > 8:
         raise ValueError("Tool observation context is invalid or exceeds its limit.")
+    required_fields = {
+        "tool_id", "status", "output_preview", "result_ref", "error_code", "truncated",
+    }
+    optional_fields = {
+        "call_id", "observation_id", "task_id",
+        "verified_evidence_source_ids", "result_page",
+    }
+
+    def valid_identity(value):
+        return value is None or (
+            isinstance(value, str) and 0 < len(value) <= 128
+            and not any(ord(char) < 32 for char in value)
+        )
+
+    def valid_result_page(value):
+        if not isinstance(value, dict) or not value or len(value) > 9:
+            return False
+        allowed = {
+            "result_ref", "source_call_id", "source_sha256", "page_sha256",
+            "page_number", "offset", "next_offset", "total_chars", "complete",
+        }
+        if set(value) - allowed:
+            return False
+        for key in ("result_ref", "source_call_id"):
+            if key in value and not valid_identity(value[key]):
+                return False
+        for key in ("source_sha256", "page_sha256"):
+            if key in value and (
+                not isinstance(value[key], str)
+                or re.fullmatch(r"[0-9a-f]{64}", value[key]) is None
+            ):
+                return False
+        for key in ("page_number", "offset", "next_offset", "total_chars"):
+            if key in value and (
+                isinstance(value[key], bool) or not isinstance(value[key], int)
+                or value[key] < 0 or value[key] > 10_000_000
+            ):
+                return False
+        if "complete" in value and not isinstance(value["complete"], bool):
+            return False
+        return True
+
     rows = []
     for item in observations:
         if (not isinstance(item, dict)
-                or set(item) != {"tool_id", "status", "output_preview", "result_ref", "error_code", "truncated"}
+                or not required_fields.issubset(item)
+                or set(item) - required_fields - optional_fields
                 or not isinstance(item.get("tool_id"), str) or len(item["tool_id"]) > 128
                 or not isinstance(item.get("status"), str) or len(item["status"]) > 32
                 or not isinstance(item.get("output_preview"), str) or len(item["output_preview"]) > 2_000
@@ -316,8 +360,21 @@ def _tool_observations_text(context):
                     not isinstance(item.get("result_ref"), str) or len(item["result_ref"]) > 160)
                 or item.get("error_code") is not None and (
                     not isinstance(item.get("error_code"), str) or len(item["error_code"]) > 64)
-                or not isinstance(item.get("truncated"), bool)):
+                or not isinstance(item.get("truncated"), bool)
+                or any(key in item and not valid_identity(item[key])
+                       for key in ("call_id", "observation_id", "task_id"))
+                or "verified_evidence_source_ids" in item and (
+                    not isinstance(item["verified_evidence_source_ids"], (list, tuple))
+                    or len(item["verified_evidence_source_ids"]) > 8
+                    or any(not isinstance(source_id, str)
+                           or re.fullmatch(r"E[1-9]\d{0,5}", source_id) is None
+                           for source_id in item["verified_evidence_source_ids"])
+                )
+                or "result_page" in item and not valid_result_page(item["result_page"])):
             raise ValueError("Tool observation context does not match the bounded data shape.")
+        # Execution IDs and provenance remain request-local metadata. The model
+        # receives only the bounded, untrusted result projection below; verified
+        # source evidence is injected through context.evidence separately.
         rows.append({key: item[key] for key in (
             "tool_id", "status", "output_preview", "result_ref", "error_code", "truncated")})
     encoded = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
+import hashlib
+from pathlib import Path, PurePosixPath
+import re
+import sqlite3
 
 from .answer_contract import (
     build_general_contract, build_offline_contract, build_planner_stop_contract, validate_answer_contract,
@@ -11,16 +15,24 @@ from .answer_contract import (
 from .context import MAX_INTERMEDIATE_EVIDENCE_BYTES, build_context
 from .conversation_context import ContextBudgetExceeded
 from .dialogue_retrieval import _context_candidates, _conversation_retrieval
-from .errors import ProviderError
+from .errors import ProviderError, ScanError, StoreError
 from .evidence_roles import required_evidence_roles, role_coverage
-from .models import Answer, BuiltContext
+from .index_lifecycle import IndexLifecycle, IndexLifecycleState, derive_index_lifecycle
+from .models import Answer, BuiltContext, EvidenceProvenance
+from .agent_loop import ReadOnlyToolbox
+from .chunker import split_source_lines
 from .providers.offline import OfflineProvider
-from .product_retrieval import ProductRetriever
+from .product_retrieval import (
+    PRODUCT_ROUTE_VERSION, ProductIntentRouter, ProductRetrievalOutcome,
+    ProductRetriever, RepositoryEvidenceUnavailable,
+    _content_hash as _retrieval_content_hash,
+)
 from .dialogue_router import DialogueMode, plan_dialogue
 from .evidence_evaluator import assess_evidence
 from .planner import LLMPlanner, PlanningError
 from .session_service import SessionService
 from .streaming import ConversationCancelled, StreamingManager
+from .observability import current_lifecycle, lifecycle_stage
 
 
 @dataclass(frozen=True)
@@ -87,6 +99,7 @@ class ConversationDependencies:
     planner: object | None = None
     session_service: object | None = None
     agent_executor: object | None = None
+    repository_preparer: object | None = None
 
 
 @dataclass(frozen=True)
@@ -156,6 +169,9 @@ class ConversationOrchestrator:
             )
         requested = DialogueMode(request.mode)
         if requested not in {DialogueMode.AUTO, DialogueMode.HYBRID}:
+            tracker = current_lifecycle()
+            if tracker is not None:
+                tracker.skip("planner", "explicit_mode_compatibility")
             return plan_dialogue(requested, request.query)
         provider = state.provider or self._create_provider(request)
         state.provider = provider
@@ -205,24 +221,60 @@ class ConversationOrchestrator:
                 "agent_execution_available": execution_available,
                 "available_tools": tool_catalog,
             })
-        try:
-            result = self.planner.plan(provider, request.query, **planner_options)
-        except PlanningError as exc:
-            # Preserve only structured, bounded planner diagnostics on the failure.
-            # This lets the CLI explain schema rejection without logging query text.
-            if isinstance(self.planner, LLMPlanner):
-                details = dict(exc.diagnostic_details or {})
-                details["planner_diagnostics"] = self.planner.last_request_diagnostics or {}
-                exc.diagnostic_details = details
-            raise
+        with lifecycle_stage("planner", metadata={
+            "provider": request.provider_id, "model": request.model_id,
+        }) as planner_stage:
+            try:
+                result = self.planner.plan(provider, request.query, **planner_options)
+            except PlanningError as exc:
+                if planner_stage is not None:
+                    diagnostics = getattr(self.planner, "last_request_diagnostics", None)
+                    planner_stage.finish("FAILED", error_code=exc.diagnostic_code or "planning_error",
+                                         metadata={
+                                             "corrections": ((diagnostics or {}).get("correction_attempt", 0)
+                                                             if isinstance(diagnostics, dict) else 0),
+                                             "plan_valid": False,
+                                         })
+                # Preserve only structured, bounded planner diagnostics on the failure.
+                # This lets the CLI explain schema rejection without logging query text.
+                if isinstance(self.planner, LLMPlanner):
+                    details = dict(exc.diagnostic_details or {})
+                    details["planner_diagnostics"] = self.planner.last_request_diagnostics or {}
+                    exc.diagnostic_details = details
+                raise
+            diagnostics = getattr(self.planner, "last_request_diagnostics", None)
+            if planner_stage is not None:
+                planner_stage.finish("COMPLETED", metadata={
+                    "corrections": ((diagnostics or {}).get("correction_attempt", 0)
+                                    if isinstance(diagnostics, dict) else 0),
+                    "plan_valid": True,
+                    "requires_repository_retrieval": bool(getattr(result, "requires_repository_retrieval", False)),
+                    "requires_tool_execution": bool(getattr(result, "requires_agent_execution", False)),
+                    "correction_status": (diagnostics or {}).get("correction_status")
+                    if isinstance(diagnostics, dict) else None,
+                    "final_validation_status": (diagnostics or {}).get("final_validation_status")
+                    if isinstance(diagnostics, dict) else None,
+                })
         state.phase_diagnostics["planner"] = self.planner.last_request_diagnostics
         return plan_dialogue(requested, request.query, planner_result=result)
 
     def run(self, request: ConversationRequest, *, index_store=None, vector_retriever=None,
             session: ConversationSession | None = None, on_content=None, on_event=None,
             cancel_event=None, planned_plan=None) -> ConversationResult:
+        tracker = current_lifecycle()
+        event_sink = on_event
+        if tracker is not None:
+            def event_sink(event):
+                try:
+                    tracker.record_stream_event(event)
+                except Exception:
+                    pass
+                if on_event is None:
+                    return
+                publish = getattr(on_event, "publish", None)
+                publish(event) if callable(publish) else on_event(event)
         streaming = StreamingManager(
-            on_event=on_event, on_content=on_content, enabled=request.stream,
+            on_event=event_sink, on_content=on_content, enabled=request.stream,
             cancel_event=cancel_event,
         )
         streaming.start()
@@ -261,112 +313,249 @@ class ConversationOrchestrator:
             return self._planner_stop(request, state, dialogue_plan,
                 "This request needs live external data, but AgentForge has no authorized external-data tool.",
                 streaming)
-        agent_execution = None
-        if dialogue_plan.requires_agent_execution:
-            if isinstance(planner_diagnostics, dict):
-                planner_diagnostics["execution_started"] = True
-            agent_execution = self._run_agent_execution(
-                request, state, dialogue_plan, index_store=index_store,
-                streaming=streaming, cancel_event=streaming.cancel_event,
-            )
-            if isinstance(agent_execution, ConversationResult):
-                return agent_execution
-            report = agent_execution.report
-            state.phase_diagnostics["agent_execution"] = {
-                "execution_id": report.execution_id,
-                "status": report.status,
-                "state": report.execution_state,
-                "rounds": report.execution_rounds,
-                "tool_call_count": len(report.execution_results),
-                "planner_request_count": len(report.planner_request_diagnostics),
-                "observation_count": len(report.execution_results),
-                "tool_results": [{key: item.get(key) for key in (
-                    "call_id", "task_id", "tool_id", "status", "error_code", "provenance",
-                )} for item in report.execution_results],
-            }
-        if dialogue_plan.mode is DialogueMode.GENERAL:
-            return self._run_general(request, state, dialogue_plan, streaming=streaming,
-                                     agent_execution=agent_execution)
-        if index_store is None:
-            raise ValueError("Repository and Hybrid dialogue require an explicitly selected repository index.")
-        conversation = state.conversation
-        retriever = self.dependencies.retriever_factory(
-            index_store, request.repository, vector_retriever=vector_retriever,
+        scan_report = None
+        retrieval_failure_code = None
+        repository_bound = (
+            isinstance(request.repository, str)
+            and bool(request.repository.strip())
+            and request.repository.strip().casefold() != "stateless"
         )
-        repo_tasks = [task for task in dialogue_plan.tasks if task.task_type == "repository"]
-        retrieval_queries = []
-        for task in repo_tasks:
-            task_queries = task.search_queries or (task.question,)
-            for query in task_queries:
-                if query not in retrieval_queries:
-                    retrieval_queries.append(query)
-        if not retrieval_queries:
-            raise PlanningError("Repository plan contains no retrieval query.")
-        if len(retrieval_queries) > 6:
-            raise PlanningError("Repository plan exceeds the bounded retrieval-query limit.")
+        if repository_bound and index_store is None:
+            retrieval_failure_code = "repository_index_not_selected"
+            tracker = current_lifecycle()
+            if tracker is not None:
+                tracker.skip("repository_preparation", "repository_index_not_selected")
+        elif repository_bound:
+            preparer = self.dependencies.repository_preparer
+            if callable(preparer):
+                with lifecycle_stage("repository_preparation", metadata={
+                    "provider": request.provider_id, "model": request.model_id,
+                }) as preparation_stage:
+                    try:
+                        prepared = preparer(index_store, request, vector_retriever)
+                    except (RepositoryEvidenceUnavailable, StoreError, sqlite3.Error, OSError, ScanError) as exc:
+                        retrieval_failure_code = _retrieval_failure_code(exc)
+                        if preparation_stage is not None:
+                            preparation_stage.finish("DEGRADED", error_code=retrieval_failure_code,
+                                                     metadata={"error_type": type(exc).__name__})
+                    else:
+                        if not isinstance(prepared, dict):
+                            raise PlanningError("Repository preparation returned an invalid result.")
+                        vector_retriever = prepared.get("vector_retriever", vector_retriever)
+                        scan_report = prepared.get("scan_report")
+                        if preparation_stage is not None:
+                            preparation_stage.finish("COMPLETED", metadata={
+                                "index_state": "prepared",
+                            })
+            else:
+                tracker = current_lifecycle()
+                if tracker is not None:
+                    tracker.skip("repository_preparation", "no_preparer_configured")
+        agent_execution = None
 
+        def execute_agent_if_requested():
+            nonlocal agent_execution
+            if dialogue_plan.requires_agent_execution:
+                if isinstance(planner_diagnostics, dict):
+                    planner_diagnostics["execution_started"] = True
+                agent_execution = self._run_agent_execution(
+                    request, state, dialogue_plan, index_store=index_store,
+                    streaming=streaming, cancel_event=streaming.cancel_event,
+                )
+                if isinstance(agent_execution, ConversationResult):
+                    return agent_execution
+                report = agent_execution.report
+                state.phase_diagnostics["agent_execution"] = {
+                    "execution_id": report.execution_id,
+                    "status": report.status,
+                    "state": report.execution_state,
+                    "rounds": report.execution_rounds,
+                    "tool_call_count": len(report.execution_results),
+                    "planner_request_count": len(report.planner_request_diagnostics),
+                    "observation_count": len(report.execution_results),
+                    "tool_results": [_safe_agent_tool_result(item)
+                                     for item in report.execution_results],
+                }
+                return None
+            tracker = current_lifecycle()
+            if tracker is not None:
+                tracker.skip("agent_execution", "planner_did_not_request_tool_execution")
+            return None
+
+        if not repository_bound:
+            stopped = execute_agent_if_requested()
+            if stopped is not None:
+                return stopped
+            tracker = current_lifecycle()
+            if tracker is not None:
+                tracker.skip("repository_retrieval", "no_repository_bound_to_session")
+            return self._run_general(request, state, dialogue_plan, streaming=streaming,
+                                     agent_execution=agent_execution, index_store=index_store)
+        # A bound repository is optional context for every turn. Planner task
+        # shape controls tool execution only; its route/search-task prediction
+        # cannot suppress this independent lookup or make lookup failure fatal.
+        retrieval_queries = [request.query]
+
+        conversation = state.conversation
         outcomes = []
         selections = []
         followup_symbols = []
-        for position, query in enumerate(retrieval_queries, 1):
-            streaming.check_cancelled()
-            streaming.retrieval_progress(position - 1, len(retrieval_queries))
-            outcome_item = retriever.search(query, top_k=request.top_k)
+        retriever = None
+        with lifecycle_stage("repository_retrieval", metadata={
+            "retrieval_query_count": len(retrieval_queries),
+        }) as repository_stage:
+            if retrieval_failure_code is not None:
+                if repository_stage is not None:
+                    repository_stage.finish("DEGRADED", error_code=retrieval_failure_code,
+                                            metadata={"evidence_count": 0})
+            else:
+                try:
+                    retriever_options = {"vector_retriever": vector_retriever}
+                    if scan_report is not None:
+                        retriever_options["scan_report"] = scan_report
+                    retriever = self.dependencies.retriever_factory(
+                        index_store, request.repository, **retriever_options,
+                    )
+                    for position, query in enumerate(retrieval_queries, 1):
+                        streaming.check_cancelled()
+                        streaming.retrieval_progress(position - 1, len(retrieval_queries))
+                        with lifecycle_stage("repository_search_query", metadata={
+                            "operation": "search", "retrieval_query_count": position,
+                        }):
+                            outcome_item = retriever.search(query, top_k=request.top_k)
 
-            class Arguments:
-                pass
-            arguments = Arguments()
-            arguments.query = query
-            arguments.top_k = request.top_k
-            outcome_item, followup_symbol = self.dependencies.retrieval_refiner(
-                outcome_item, retriever, conversation, arguments, index_store,
-                state.rows if conversation is not None else (),
-            )
-            outcomes.append(outcome_item)
-            selections.extend(self.dependencies.candidate_selector(
-                outcome_item, conversation, store=index_store, retriever=retriever,
-            ))
-            if followup_symbol:
-                followup_symbols.append(followup_symbol)
-        streaming.retrieval_progress(len(retrieval_queries), len(retrieval_queries))
-        streaming.check_cancelled()
+                        class Arguments:
+                            pass
+                        arguments = Arguments()
+                        arguments.query = query
+                        arguments.top_k = request.top_k
+                        with lifecycle_stage("retrieval_refinement", metadata={
+                            "operation": "rerank_and_select",
+                        }):
+                            outcome_item, followup_symbol = self.dependencies.retrieval_refiner(
+                                outcome_item, retriever, conversation, arguments, index_store,
+                                state.rows if conversation is not None else (),
+                            )
+                            outcomes.append(outcome_item)
+                            selections.extend(self.dependencies.candidate_selector(
+                                outcome_item, conversation, store=index_store, retriever=retriever,
+                            ))
+                        if followup_symbol:
+                            followup_symbols.append(followup_symbol)
+                    streaming.retrieval_progress(len(retrieval_queries), len(retrieval_queries))
+                    streaming.check_cancelled()
+                    if repository_stage is not None:
+                        repository_stage.finish("COMPLETED", metadata={"candidate_count": len(selections)})
+                except (RepositoryEvidenceUnavailable, StoreError, sqlite3.Error, OSError, ScanError) as exc:
+                    retrieval_failure_code = _retrieval_failure_code(exc)
+                    outcomes.clear()
+                    selections.clear()
+                    followup_symbols.clear()
+                    if repository_stage is not None:
+                        repository_stage.finish("DEGRADED", error_code=retrieval_failure_code,
+                                                metadata={"candidate_count": 0})
 
+        # Repository lookup is a turn-level context step. It must complete (or
+        # explicitly degrade) before an independently planned tool execution,
+        # so a missing tool authorization cannot suppress the bound-repository
+        # retrieval path for this turn.
+        stopped = execute_agent_if_requested()
+        if stopped is not None:
+            return stopped
+
+        verified_tool_reads = ()
+        tool_evidence_by_hash = {}
+        verified_tool_candidates_by_citation = {}
+        agent_read_source_diagnostics = []
+        agent_read_relevance_diagnostics = []
+        agent_read_search_route_confidences = []
+        user_query_route_confidence = None
         if agent_execution is not None:
-            # Agent tool searches are still only candidates. The normal evidence
-            # evaluator decides relevance and the existing Answer Contract owns
-            # the final citation decision.
-            selections.extend(agent_execution.toolbox.last_candidate_by_citation.values())
+            # Search results and tool output are untrusted observations until a
+            # completed read exactly matches the indexed SQLite source chunk.
+            verified_tool_reads = _verified_agent_read_sources(
+                agent_execution, index_store, state.repository_id, request.repository,
+                diagnostics=agent_read_source_diagnostics,
+            )
+            # The planner's search phrase is a retrieval hint, not the user's
+            # question. A broad but valid search phrase may route with low
+            # confidence; it must not downgrade an exact SQLite-verified read
+            # that is relevant to the current user request.
+            user_query_route = ProductIntentRouter().route(request.query)
+            user_query_route_confidence = user_query_route.confidence
+            for candidate, provenance, search_query in verified_tool_reads:
+                search_route = ProductIntentRouter().route(search_query)
+                agent_read_search_route_confidences.append(search_route.confidence)
+                assessment = assess_evidence(request.query, user_query_route, (candidate,))
+                if candidate in assessment.relevant_candidates:
+                    tool_evidence_by_hash[candidate.content_hash] = provenance
+                    # A RAG candidate and an exact, SQLite-verified Agent read
+                    # can describe the same path/range with distinct hash
+                    # scopes. AnswerContract indexes evidence by citation, so
+                    # retain the verified read as the canonical source for that
+                    # citation instead of presenting an ambiguous duplicate.
+                    verified_tool_candidates_by_citation[candidate.citation] = candidate
+                elif assessment.candidate_results:
+                    agent_read_relevance_diagnostics.append({
+                        "stage": "user_query_relevance",
+                        "reason_code": assessment.candidate_results[0]["reason_code"],
+                    })
 
-        outcome = _merge_retrieval_outcomes(request.query, outcomes)
-        candidates = _merge_candidates(selections)
+        with lifecycle_stage("retrieval_merge", metadata={
+            "candidate_count": len(selections), "retrieval_query_count": len(outcomes),
+        }) as merge_stage:
+            outcome = (_merge_retrieval_outcomes(request.query, outcomes) if outcomes else
+                       _unavailable_retrieval_outcome(
+                           request.query, state.repository_id, retrieval_failure_code or "repository_unavailable",
+                           sqlite_unavailable=(retrieval_failure_code == "sqlite_index_unavailable"),
+                       ))
+            candidates = _merge_candidates(selections)
+            if merge_stage is not None:
+                merge_stage.finish("COMPLETED", metadata={"candidate_count": len(candidates)})
         followup_symbol = followup_symbols[0] if followup_symbols else None
         # Pronoun follow-ups may omit the symbol in the latest question. The
         # resolver supplies only a unique symbol grounded in prior session
         # turns and current index; do not use arbitrary planner search text as
         # relevance proof for its own retrieval results.
         evidence_query = (request.query + " " + followup_symbol) if followup_symbol else request.query
-        evidence_assessment = assess_evidence(evidence_query, outcome.decision, candidates)
-        selected = evidence_assessment.relevant_candidates
-        results = [item.as_search_result() for item in selected]
+        with lifecycle_stage("evidence_validation", metadata={"candidate_count": len(candidates)}):
+            evidence_assessment = assess_evidence(evidence_query, outcome.decision, candidates)
+        repository_candidates = tuple(
+            candidate for candidate in evidence_assessment.relevant_candidates
+            if candidate.citation not in verified_tool_candidates_by_citation
+        )
+        selected = _merge_candidates((
+            *repository_candidates, *verified_tool_candidates_by_citation.values(),
+        ))
+        results = [replace(item.as_search_result(),
+                           provenance=tool_evidence_by_hash.get(item.content_hash))
+                   for item in selected]
         model_budget = self.dependencies.model_budget_resolver(
             state.provider, _resolved_answer_output(state.provider, request), request.context_budget,
             provider_id=request.provider_id, model_id=request.model_id,
         )
         required_roles = required_evidence_roles(request.query)
-        context = build_context(
-            request.query, results,
-            max_candidates=max(request.top_k, len(required_roles)),
-            budget=(model_budget["input_budget"] if isinstance(state.provider, OfflineProvider)
-                    else MAX_INTERMEDIATE_EVIDENCE_BYTES),
-        )
+        with lifecycle_stage("context_build", metadata={"evidence_count": len(results)}):
+            context = build_context(
+                request.query, results,
+                max_candidates=max(request.top_k, len(required_roles)),
+                budget=(model_budget["input_budget"] if isinstance(state.provider, OfflineProvider)
+                        else MAX_INTERMEDIATE_EVIDENCE_BYTES),
+            )
         if dialogue_plan.planner_source == "llm":
             context = replace(context, planned_tasks=tuple({
                 "task_id": task.task_id, "task_type": task.task_type,
                 "question": task.question, "dependencies": task.dependencies,
             } for task in dialogue_plan.tasks))
         if agent_execution is not None:
-            context = replace(context,
-                              tool_observations=_tool_observation_context(agent_execution.report))
+            evidence_source_ids_by_call_id = {
+                source.result.provenance.tool_call_id: source.source_id
+                for source in context.evidence
+                if isinstance(source.result.provenance, EvidenceProvenance)
+            }
+            context = replace(context, tool_observations=_tool_observation_context(
+                agent_execution.report, evidence_source_ids_by_call_id,
+            ))
         if results and not context.evidence:
             required_bytes = sum(len(item.text.encode("utf-8")) for item in results)
             raise ContextBudgetExceeded({
@@ -387,6 +576,11 @@ class ConversationOrchestrator:
             if any(item.resolution_status in {"uncertain", "unresolved", "ambiguous"}
                    for item in selected) else None
         )
+        if not context.evidence and not uncertainty:
+            uncertainty = (
+                "No verified current repository evidence is available; repository-specific facts "
+                "cannot be confirmed for this turn."
+            )
         available_roles = (role for source in context.evidence
                            for role in source.result.evidence_roles)
         initial_role_audit = role_coverage(request.query, available_roles)
@@ -395,30 +589,28 @@ class ConversationOrchestrator:
             uncertainty = (
                 "The available evidence does not cover required source roles: "
                 + ", ".join(initial_role_audit["missing_available_roles"])
-                + ". No model answer was requested."
+                + ". Repository-specific conclusions must remain limited to what the verified excerpts support."
             )
-        evidence_gate_refusal = bool(
-            not context.evidence or role_gate_failure
+        use_optional_evidence_answer = bool(
+            dialogue_plan.mode is DialogueMode.HYBRID
+            or not context.evidence
+            or role_gate_failure
             or (outcome.decision.confidence == "low" and uncertainty)
+            or dialogue_plan.mode is DialogueMode.GENERAL
         )
-        if dialogue_plan.mode is DialogueMode.HYBRID:
-            # Hybrid keeps the general component available when repository
-            # evidence is missing or incomplete; the contract gates only its
-            # repository section.
-            evidence_gate_refusal = False
 
         provider = state.provider
-        if not evidence_gate_refusal and provider is None:
+        if provider is None:
             provider = self._create_provider(request)
             state.provider = provider
 
-        if state.store is not None and not evidence_gate_refusal:
+        if state.store is not None:
             if conversation is None:
                 conversation = {"repository_id": state.repository_id}
                 state.conversation = conversation
             self._prepare_history(request, state, provider)
             conversation = state.conversation
-        elif not evidence_gate_refusal and not isinstance(conversation, dict):
+        elif not isinstance(conversation, dict):
             # Request-local diagnostics are retained even for stateless asks;
             # this mapping is never written to PostgreSQL without a store.
             conversation = {"repository_id": state.repository_id}
@@ -426,77 +618,112 @@ class ConversationOrchestrator:
         if isinstance(conversation, dict):
             conversation["input_token_budget_override"] = model_budget["input_budget"]
 
-        if evidence_gate_refusal:
-            answer = OfflineProvider().answer(context)
-            contract = build_offline_contract(
-                answer, context, route=outcome.decision.route,
-                route_confidence=outcome.decision.confidence,
-                candidate_by_citation=candidate_map, uncertainty=uncertainty,
-                force_refusal_reason=uncertainty if role_gate_failure else None,
-            )
-            provider_mode = "evidence_gate_refusal"
-        else:
-            if isinstance(provider, OfflineProvider):
-                answer = provider.answer(context)
-            else:
-                answer_method = (provider.answer_hybrid
-                                 if dialogue_plan.mode is DialogueMode.HYBRID else provider.answer)
-                answer_kwargs = {"conversation": conversation, "settings": conversation}
-                if dialogue_plan.mode is DialogueMode.HYBRID:
-                    answer_kwargs["external_data_unavailable"] = dialogue_plan.requires_external_data
-                if request.stream:
-                    answer_kwargs["on_content"] = streaming.capture_provider_delta
-                streaming.check_cancelled()
-                answer = answer_method(context, **answer_kwargs)
-            if answer.offline:
-                contract = build_offline_contract(
-                    answer, context, route=outcome.decision.route,
-                    route_confidence=outcome.decision.confidence,
-                    candidate_by_citation=candidate_map, uncertainty=uncertainty,
-                )
-                provider_mode = "offline" if request.provider_id == "offline" else "offline_no_evidence"
-            else:
-                try:
-                    if dialogue_plan.mode is DialogueMode.HYBRID:
-                        contract = verify_hybrid_answer(
-                            answer, context, candidate_by_citation=candidate_map,
-                            route_confidence=outcome.decision.confidence,
+        with lifecycle_stage("final_answer", metadata={
+            "provider": request.provider_id, "model": request.model_id,
+        }) as answer_stage:
+            try:
+                if isinstance(provider, OfflineProvider):
+                    answer = provider.answer(context)
+                else:
+                    # Retrieval is independent from answer shape. When a bound
+                    # repository produced no verified evidence, use the
+                    # provider's general-answer contract so an empty
+                    # Repository section cannot reject an otherwise useful
+                    # general response. The general prompt still forbids
+                    # unverified claims about this repository.
+                    no_repository_evidence = not context.evidence
+                    answer_method = (
+                        getattr(provider, "answer_general", None)
+                        if no_repository_evidence else
+                        getattr(provider, "answer_hybrid", None)
+                        if use_optional_evidence_answer else
+                        getattr(provider, "answer", None)
+                    )
+                    if not callable(answer_method):
+                        raise ProviderError(
+                            "The selected provider cannot safely answer with optional repository evidence."
                         )
-                    else:
-                        contract = verify_generated_answer(
-                            answer, context, route=outcome.decision.route,
-                            route_confidence=outcome.decision.confidence,
-                            candidate_by_citation=candidate_map, uncertainty=uncertainty,
-                        )
-                except ProviderError as exc:
-                    recorder = getattr(getattr(provider, "client", None), "record_application_failure", None)
-                    if callable(recorder):
-                        recorder("answer_contract", getattr(exc, "code", "answer_contract_failed"),
-                                 getattr(exc, "diagnostic", None))
-                    raise
-                provider_mode = getattr(provider, "provider_id", "unknown")
-        validate_answer_contract(contract, context)
+                    answer_kwargs = {"conversation": conversation, "settings": conversation}
+                    if use_optional_evidence_answer or no_repository_evidence:
+                        answer_kwargs["external_data_unavailable"] = dialogue_plan.requires_external_data
+                    if no_repository_evidence:
+                        answer_kwargs["repository_evidence_unavailable"] = bool(repository_bound)
+                    if request.stream:
+                        answer_kwargs["on_content"] = streaming.capture_provider_delta
+                    streaming.check_cancelled()
+                    answer = answer_method(context, **answer_kwargs)
+            except Exception as exc:
+                if answer_stage is not None:
+                    answer_stage.finish("TIMEOUT" if isinstance(exc, TimeoutError) else "FAILED",
+                                        error_code=getattr(exc, "code", type(exc).__name__))
+                raise
+            if answer_stage is not None:
+                answer_stage.finish("COMPLETED", metadata={"answer_produced": bool(getattr(answer, "text", ""))})
+        with lifecycle_stage("answer_contract", metadata={"evidence_count": len(context.evidence)}) as contract_stage:
+            try:
+                if answer.offline:
+                    contract = build_offline_contract(
+                        answer, context, route=outcome.decision.route,
+                        route_confidence=outcome.decision.confidence,
+                        candidate_by_citation=candidate_map, uncertainty=uncertainty,
+                    )
+                    provider_mode = "offline" if request.provider_id == "offline" else "offline_no_evidence"
+                else:
+                    try:
+                        if not context.evidence:
+                            contract = build_general_contract(answer)
+                        elif use_optional_evidence_answer:
+                            contract = verify_hybrid_answer(
+                                answer, context, candidate_by_citation=candidate_map,
+                                route_confidence=outcome.decision.confidence,
+                            )
+                        else:
+                            contract = verify_generated_answer(
+                                answer, context, route=outcome.decision.route,
+                                route_confidence=outcome.decision.confidence,
+                                candidate_by_citation=candidate_map, uncertainty=uncertainty,
+                            )
+                    except ProviderError as exc:
+                        recorder = getattr(getattr(provider, "client", None), "record_application_failure", None)
+                        if callable(recorder):
+                            recorder("answer_contract", getattr(exc, "code", "answer_contract_failed"),
+                                     getattr(exc, "diagnostic", None))
+                        raise
+                    provider_mode = getattr(provider, "provider_id", "unknown")
+                validate_answer_contract(contract, context)
+            except Exception as exc:
+                if contract_stage is not None:
+                    contract_stage.finish("FAILED", error_code=getattr(exc, "code", type(exc).__name__),
+                                          metadata={"answer_contract_status": "rejected",
+                                                    "answer_produced": bool(getattr(answer, "text", ""))})
+                raise
+            if contract_stage is not None:
+                contract_stage.finish("COMPLETED", metadata={
+                    "answer_contract_status": getattr(contract, "status", "unknown"),
+                    "answer_produced": bool(getattr(answer, "text", "")),
+                })
         request_stats = (provider.request_stats()
                          if callable(getattr(provider, "request_stats", None)) else None)
         request_diagnostics = _phase_diagnostics(state, conversation, request_stats)
         if state.store is not None:
-            if agent_execution is not None:
-                agent_report = agent_execution.report
-                phases = _phase_diagnostics(state, conversation, request_stats)
-                phases["agent_execution"] = state.phase_diagnostics["agent_execution"]
-                phases.update({f"agent_planner_{position}": diagnostic
-                    for position, diagnostic in enumerate(agent_report.planner_request_diagnostics, 1)
-                    if isinstance(diagnostic, dict)})
-                self.session_service.commit_execution_turn(
-                    state.store, request.conversation_id, state.repository_id,
-                    agent_report.execution_id, request.query, answer, provider,
-                    request_diagnostics=phases,
-                )
-            else:
-                self.session_service.commit_completed_turn(
-                    state.store, request.conversation_id, state.repository_id,
-                    request.query, answer, provider, request_diagnostics=request_diagnostics,
-                )
+            with lifecycle_stage("session_persistence"):
+                if agent_execution is not None:
+                    agent_report = agent_execution.report
+                    phases = _phase_diagnostics(state, conversation, request_stats)
+                    phases["agent_execution"] = state.phase_diagnostics["agent_execution"]
+                    phases.update({f"agent_planner_{position}": diagnostic
+                        for position, diagnostic in enumerate(agent_report.planner_request_diagnostics, 1)
+                        if isinstance(diagnostic, dict)})
+                    self.session_service.commit_execution_turn(
+                        state.store, request.conversation_id, state.repository_id,
+                        agent_report.execution_id, request.query, answer, provider,
+                        request_diagnostics=phases,
+                    )
+                else:
+                    self.session_service.commit_completed_turn(
+                        state.store, request.conversation_id, state.repository_id,
+                        request.query, answer, provider, request_diagnostics=request_diagnostics,
+                    )
         streaming.complete_validated(
             answer.text, usage=request_stats.get("last_usage") if isinstance(request_stats, dict) else None,
         )
@@ -529,6 +756,15 @@ class ConversationOrchestrator:
              "requires_external_data": dialogue_plan.requires_external_data,
              "requires_agent_execution": dialogue_plan.requires_agent_execution,
              "tasks": [_task_payload(task) for task in dialogue_plan.tasks],
+             "retrieval_status": (
+                 "unavailable" if retrieval_failure_code else
+                 "degraded" if outcome.unavailable_channels else
+                 "evidence_available" if context.evidence else "no_evidence"
+             ),
+             "candidate_count": evidence_assessment.candidate_count,
+             "evidence_count": len(context.evidence),
+             "verified_tool_read_evidence_count": len(tool_evidence_by_hash),
+             "retrieval_failure_code": retrieval_failure_code,
              "evidence_assessment": {
                  "candidate_count": evidence_assessment.candidate_count,
                  "relevant_candidate_count": len(evidence_assessment.relevant_candidates),
@@ -541,13 +777,25 @@ class ConversationOrchestrator:
                  "candidate_decisions": [
                      {"citation": item["candidate"].citation,
                       "status": item["status"],
-                      "matched_terms": list(item["matched_terms"]),
-                      "reason": item["reason"]}
+                      "reason_code": item["reason_code"]}
                      for item in evidence_assessment.candidate_results
                  ],
                  "semantic_entailment_verified": False,
              },
+             "agent_read_validation": {
+                 "verified_read_count": len(verified_tool_reads),
+                 "accepted_read_count": len(tool_evidence_by_hash),
+                 "source_rejection_reason_codes": [
+                     item["reason_code"] for item in agent_read_source_diagnostics
+                 ],
+                 "relevance_rejection_reason_codes": [
+                     item["reason_code"] for item in agent_read_relevance_diagnostics
+                 ],
+                 "user_query_route_confidence": user_query_route_confidence,
+                 "search_route_confidences": list(agent_read_search_route_confidences),
+             },
              "uncertainty": uncertainty, "unavailable_channels": list(outcome.unavailable_channels),
+             "index_lifecycle": outcome.index_lifecycle,
              "conversation_lookup_symbol": followup_symbol}
         if agent_execution is not None:
             retrieval_payload["agent_execution"] = dict(state.phase_diagnostics["agent_execution"])
@@ -599,8 +847,6 @@ class ConversationOrchestrator:
             raise PlanningError(
                 "The selected plan requests tools, but no authorized tool registry is available for this intent."
             )
-        if index_store is None and dialogue_plan.use_repository:
-            raise ValueError("The selected plan requires an explicitly selected repository index.")
         provider = state.provider or self._create_provider(request)
         state.provider = provider
         conversation = state.conversation
@@ -612,12 +858,27 @@ class ConversationOrchestrator:
             conversation["input_token_budget_override"] = budget["input_budget"]
             self._prepare_history(request, state, provider)
             conversation = state.conversation
-        execution = executor.execute(
-            request, session=state, index_store=index_store,
-            dialogue_plan=dialogue_plan, streaming=streaming,
-            cancel_event=cancel_event,
-        )
-        report = execution.report
+        with lifecycle_stage("agent_execution", metadata={
+            "provider": request.provider_id, "model": request.model_id,
+        }) as execution_stage:
+            execution = executor.execute(
+                request, session=state, index_store=index_store,
+                dialogue_plan=dialogue_plan, streaming=streaming,
+                cancel_event=cancel_event,
+            )
+            report = execution.report
+            execution_status = getattr(report, "status", "failed")
+            stage_status = {
+                "completed": "COMPLETED", "waiting_approval": "PENDING",
+                "waiting_user_input": "PENDING", "cancelled": "CANCELLED",
+            }.get(execution_status, "FAILED")
+            if execution_stage is not None:
+                execution_stage.finish(stage_status,
+                                       error_code=(getattr(report, "error_code", None)
+                                                   if stage_status == "FAILED" else None),
+                                       metadata={"execution_status": execution_status,
+                                                 "tool_call_count": len(getattr(report, "execution_results", ())),
+                                                 "observation_count": len(getattr(report, "execution_results", ()))})
         provider = execution.provider
         state.provider = provider
         stats = (provider.request_stats()
@@ -633,13 +894,8 @@ class ConversationOrchestrator:
             "state": report.execution_state,
             "rounds": report.execution_rounds,
             "tool_call_count": len(report.execution_results),
-            "results": [{
-                **{key: item.get(key) for key in (
-                    "call_id", "task_id", "tool_id", "status", "error_code", "provenance",
-                )},
-                "failure_phase": ((item.get("execution_metadata") or {}).get("stage")
-                                  if isinstance(item.get("execution_metadata"), dict) else None),
-            } for item in report.execution_results],
+            "results": [_safe_agent_tool_result(item)
+                        for item in report.execution_results],
             "pending_approval": _pending_approval_identity(report.pending_approval),
             "user_input_required": bool(report.user_input_request),
             "planner_request_count": len(planner_diagnostics),
@@ -708,18 +964,25 @@ class ConversationOrchestrator:
         text = ("需要补充问题信息后才能继续。" if dialogue_plan.clarification_required else
                 "当前问题需要实时外部信息，但 AgentForge 尚未配置经授权的外部数据工具，无法代查。")
         answer = Answer(text, (), True)
-        contract = build_planner_stop_contract(
-            answer, route=dialogue_plan.mode.value, reason=reason,
-            origin="general" if dialogue_plan.clarification_required else "external",
-        )
+        with lifecycle_stage("answer_contract", metadata={"answer_produced": True}) as contract_stage:
+            contract = build_planner_stop_contract(
+                answer, route=dialogue_plan.mode.value, reason=reason,
+                origin="general" if dialogue_plan.clarification_required else "external",
+            )
+            if contract_stage is not None:
+                contract_stage.finish("COMPLETED", metadata={
+                    "answer_contract_status": getattr(contract, "status", "unknown"),
+                    "answer_produced": True,
+                })
         stats = (state.provider.request_stats()
                  if callable(getattr(state.provider, "request_stats", None)) else None)
         request_diagnostics = _phase_diagnostics(state, state.conversation, stats)
         if state.store is not None:
-            self.session_service.commit_completed_turn(
-                state.store, request.conversation_id, state.repository_id,
-                request.query, answer, state.provider, request_diagnostics=request_diagnostics,
-            )
+            with lifecycle_stage("session_persistence"):
+                self.session_service.commit_completed_turn(
+                    state.store, request.conversation_id, state.repository_id,
+                    request.query, answer, state.provider, request_diagnostics=request_diagnostics,
+                )
         streaming.complete_validated(
             answer.text, usage=stats.get("last_usage") if isinstance(stats, dict) else None,
         )
@@ -749,7 +1012,8 @@ class ConversationOrchestrator:
             thinking=request.thinking, effort=request.effort, stream=request.stream,
         )
 
-    def _run_general(self, request, state, dialogue_plan, *, streaming, agent_execution=None):
+    def _run_general(self, request, state, dialogue_plan, *, streaming, index_store=None,
+                     agent_execution=None):
         provider = state.provider or self._create_provider(request)
         state.provider = provider
         model_budget = self.dependencies.model_budget_resolver(
@@ -775,53 +1039,86 @@ class ConversationOrchestrator:
             _tool_observation_context(agent_execution.report) if agent_execution is not None else (),
         )
         answer_method = getattr(provider, "answer_general", None)
-        if isinstance(provider, OfflineProvider) or not callable(answer_method):
-            answer = OfflineProvider().answer(context)
-        else:
-            kwargs = {"conversation": conversation, "settings": conversation,
-                      "external_data_unavailable": dialogue_plan.requires_external_data}
-            if request.stream:
-                kwargs["on_content"] = streaming.capture_provider_delta
-            streaming.check_cancelled()
-            answer = answer_method(context, **kwargs)
-        try:
-            contract = build_general_contract(answer)
-            validate_answer_contract(contract, context)
-        except ProviderError as exc:
-            recorder = getattr(getattr(provider, "client", None), "record_application_failure", None)
-            if callable(recorder):
-                recorder("answer_contract", getattr(exc, "code", "answer_contract_failed"),
-                         getattr(exc, "diagnostic", None))
-            raise
+        with lifecycle_stage("final_answer", metadata={
+            "provider": request.provider_id, "model": request.model_id,
+        }) as answer_stage:
+            try:
+                if isinstance(provider, OfflineProvider) or not callable(answer_method):
+                    answer = OfflineProvider().answer(context)
+                else:
+                    kwargs = {"conversation": conversation, "settings": conversation,
+                              "external_data_unavailable": dialogue_plan.requires_external_data}
+                    if request.stream:
+                        kwargs["on_content"] = streaming.capture_provider_delta
+                    streaming.check_cancelled()
+                    answer = answer_method(context, **kwargs)
+            except Exception as exc:
+                if answer_stage is not None:
+                    status = "CANCELLED" if isinstance(exc, ConversationCancelled) else (
+                        "TIMEOUT" if isinstance(exc, TimeoutError) else "FAILED")
+                    answer_stage.finish(status, error_code=getattr(exc, "code", type(exc).__name__))
+                raise
+            if answer_stage is not None:
+                answer_stage.finish("COMPLETED", metadata={"answer_produced": bool(getattr(answer, "text", ""))})
+        with lifecycle_stage("answer_contract", metadata={"evidence_count": 0}) as contract_stage:
+            try:
+                contract = build_general_contract(answer)
+                validate_answer_contract(contract, context)
+            except ProviderError as exc:
+                recorder = getattr(getattr(provider, "client", None), "record_application_failure", None)
+                if callable(recorder):
+                    recorder("answer_contract", getattr(exc, "code", "answer_contract_failed"),
+                             getattr(exc, "diagnostic", None))
+                if contract_stage is not None:
+                    contract_stage.finish("FAILED", error_code=getattr(exc, "code", "answer_contract_failed"),
+                                          metadata={"answer_contract_status": "rejected",
+                                                    "answer_produced": bool(getattr(answer, "text", ""))})
+                raise
+            if contract_stage is not None:
+                contract_stage.finish("COMPLETED", metadata={
+                    "answer_contract_status": getattr(contract, "status", "unknown"),
+                    "answer_produced": bool(getattr(answer, "text", "")),
+                })
         stats = provider.request_stats() if callable(getattr(provider, "request_stats", None)) else None
         request_diagnostics = _phase_diagnostics(state, conversation, stats)
         if state.store is not None:
-            if agent_execution is not None:
-                agent_report = agent_execution.report
-                phases = dict(request_diagnostics)
-                phases["agent_execution"] = state.phase_diagnostics["agent_execution"]
-                phases.update({f"agent_planner_{position}": diagnostic
-                    for position, diagnostic in enumerate(agent_report.planner_request_diagnostics, 1)
-                    if isinstance(diagnostic, dict)})
-                self.session_service.commit_execution_turn(
-                    state.store, request.conversation_id, state.repository_id,
-                    agent_report.execution_id, request.query, answer, provider,
-                    request_diagnostics=phases,
-                )
-            else:
-                self.session_service.commit_completed_turn(
-                    state.store, request.conversation_id, state.repository_id,
-                    request.query, answer, provider, request_diagnostics=request_diagnostics,
-                )
+            with lifecycle_stage("session_persistence"):
+                if agent_execution is not None:
+                    agent_report = agent_execution.report
+                    phases = dict(request_diagnostics)
+                    phases["agent_execution"] = state.phase_diagnostics["agent_execution"]
+                    phases.update({f"agent_planner_{position}": diagnostic
+                        for position, diagnostic in enumerate(agent_report.planner_request_diagnostics, 1)
+                        if isinstance(diagnostic, dict)})
+                    self.session_service.commit_execution_turn(
+                        state.store, request.conversation_id, state.repository_id,
+                        agent_report.execution_id, request.query, answer, provider,
+                        request_diagnostics=phases,
+                    )
+                else:
+                    self.session_service.commit_completed_turn(
+                        state.store, request.conversation_id, state.repository_id,
+                        request.query, answer, provider, request_diagnostics=request_diagnostics,
+                    )
         streaming.complete_validated(
             answer.text, usage=stats.get("last_usage") if isinstance(stats, dict) else None,
         )
         memory_context = _injected_memory_metadata(conversation)
+        index_lifecycle = (
+            derive_index_lifecycle(repository_id=None).to_dict()
+            if index_store is None else
+            IndexLifecycle(IndexLifecycleState.NOT_REQUIRED, state.repository_id,
+                           "not_used", "not_used", "general_route_skips_repository_index").to_dict()
+        )
         return ConversationResult(
             answer, contract, "offline" if isinstance(provider, OfflineProvider)
             else getattr(provider, "provider_id", "unknown"),
             {"mode": "general", "route": ("agent_execution" if agent_execution is not None else "general"),
              "rule": "dialogue_plan",
+             "retrieval_status": "not_required",
+             "retrieval_failure_code": None,
+             "retrieval_reason_code": "no_repository_bound_to_session",
+             "evidence_count": 0,
              "reason": dialogue_plan.reason, "planner_source": dialogue_plan.planner_source,
              "planner_confidence": dialogue_plan.confidence,
              "answer_strategy": dialogue_plan.answer_strategy,
@@ -829,7 +1126,8 @@ class ConversationOrchestrator:
              "requires_external_data": dialogue_plan.requires_external_data,
              "tasks": [_task_payload(task) for task in dialogue_plan.tasks],
              "confidence": "not_applicable", "uncertainty": None,
-             "unavailable_channels": [], "conversation_lookup_symbol": None,
+              "unavailable_channels": [], "index_lifecycle": index_lifecycle,
+              "conversation_lookup_symbol": None,
              **({"agent_execution": state.phase_diagnostics["agent_execution"]}
                 if agent_execution is not None else {})},
             {"estimated_units": ((conversation.get("token_budget_diagnostics") or {}).get("estimated_input_tokens", 0)
@@ -876,11 +1174,45 @@ class ConversationOrchestrator:
         summary_callback = None
         if summarizer and callable(self.dependencies.summary_callback_factory):
             summary_callback = self.dependencies.summary_callback_factory(provider)
-        restored = self.session_service.restore_context(
-            state.store, request.conversation_id, state.repository_id,
-            summarizer=summary_callback,
-            summary_model=getattr(provider, "model", None) if summary_callback else None,
-        )
+        fallback_codes = {
+            "semantic_summary_turn_input_too_large",
+            "semantic_summary_no_complete_turn_fits",
+            "semantic_summary_response_invalid",
+            "semantic_summary_merged_output_too_large",
+            "semantic_summary_fact_protection_overflow",
+            "semantic_summary_storage_budget_exceeded",
+        }
+        with lifecycle_stage("session_context_preparation", metadata={
+            "provider": getattr(provider, "provider_id", None),
+            "model": getattr(provider, "model", None),
+        }) as context_stage:
+            try:
+                restored = self.session_service.restore_context(
+                    state.store, request.conversation_id, state.repository_id,
+                    summarizer=summary_callback,
+                    summary_model=getattr(provider, "model", None) if summary_callback else None,
+                )
+            except Exception as exc:
+                diagnostics = getattr(state.store, "last_summary_diagnostics", ())
+                failure_code = (diagnostics[-1].get("failure_code")
+                                if diagnostics and isinstance(diagnostics[-1], dict) else None)
+                if failure_code not in fallback_codes:
+                    raise
+                # Compaction is an optional request-context optimization. Keep
+                # the authoritative raw messages and existing summary intact,
+                # then let the normal model context assembler select recent
+                # turns under the active model's budget. Scope/database errors
+                # do not carry one of these summary-only codes and still fail.
+                restored = self.session_service.load_context(
+                    state.store, request.conversation_id, state.repository_id,
+                )
+                if context_stage is not None:
+                    context_stage.finish("DEGRADED", error_code="semantic_summary_overflow",
+                                         metadata={
+                                             "error_type": type(exc).__name__,
+                                             "reason_code": failure_code,
+                                             "fallback_used": True,
+                                         })
         conversation["history"] = restored.history
         from .conversation_context import ConversationTurn
         conversation["persisted_history"] = tuple(ConversationTurn(
@@ -914,10 +1246,269 @@ def _agent_execution_available(executor, request):
     return callable(getattr(executor, "execute", None))
 
 
-def _tool_observation_context(report):
-    """Project execution results into a small, non-citable answer context."""
+def _verified_agent_read_sources(agent_execution, index_store, repository_id, repository, *,
+                                diagnostics=None):
+    """Return only read observations exactly matched to request-local SQLite chunks.
+
+    Search output and read output are both treated as untrusted. The internal
+    read-only toolbox must have produced a registered search candidate, the
+    search result must carry that toolbox's request-local source identity, and
+    the subsequent read must match the exact indexed SQLite chunk or a bounded
+    subset of its lines. Anything else remains an ordinary observation.
+    """
+    def reject(reason_code):
+        if isinstance(diagnostics, list) and len(diagnostics) < 64:
+            diagnostics.append({
+                "stage": "sqlite_source_resolution",
+                "reason_code": reason_code,
+            })
+
+    if (index_store is None
+            or not isinstance(repository_id, str) or not repository_id.strip()
+            or not isinstance(repository, str) or not repository.strip()):
+        reject("SOURCE_RESOLUTION_FAILED")
+        return ()
+    toolbox = getattr(agent_execution, "toolbox", None)
+    if not isinstance(toolbox, ReadOnlyToolbox):
+        reject("SOURCE_RESOLUTION_FAILED")
+        return ()
+    report = getattr(agent_execution, "report", None)
+    execution_id = getattr(report, "execution_id", None)
+    raw_results = tuple(getattr(report, "execution_results", ()) or ())
+    if (not isinstance(execution_id, str) or not execution_id.strip()
+            or not isinstance(getattr(report, "status", None), str)
+            or getattr(report, "status", None) != "completed"):
+        reject("SOURCE_RESOLUTION_FAILED")
+        return ()
+    try:
+        root = Path(repository).resolve(strict=True)
+        metadata = index_store.metadata()
+        indexed_root = Path(metadata.get("repository", "")).resolve(strict=True)
+    except (AttributeError, OSError, RuntimeError, TypeError, ValueError, StoreError, sqlite3.Error):
+        reject("SOURCE_RESOLUTION_FAILED")
+        return ()
+    try:
+        metadata_version = int(metadata.get("index_version"))
+        store_version = getattr(index_store, "schema_version", None)
+    except (TypeError, ValueError):
+        reject("INDEX_VERSION_MISMATCH")
+        return ()
+    if (isinstance(store_version, bool) or not isinstance(store_version, int)
+            or metadata_version != store_version):
+        reject("INDEX_VERSION_MISMATCH")
+        return ()
+    if root != indexed_root:
+        reject("REPO_ID_MISMATCH")
+        return ()
+    try:
+        from .repositories import repository_identity
+        if repository_identity(root) != repository_id:
+            reject("REPO_ID_MISMATCH")
+            return ()
+    except (OSError, RuntimeError, TypeError, ValueError):
+        reject("REPO_ID_MISMATCH")
+        return ()
+
+    candidates_by_citation = getattr(toolbox, "last_candidate_by_citation", None)
+    source_ids_by_hash = getattr(toolbox, "last_evidence_source_ids", None)
+    if not isinstance(candidates_by_citation, dict) or not isinstance(source_ids_by_hash, dict):
+        reject("CANDIDATE_METADATA_MISSING")
+        return ()
+
+    def _valid_call(result, expected_tool):
+        if not isinstance(result, dict) or result.get("tool_id") != expected_tool:
+            return False
+        if result.get("status") != "completed":
+            return False
+        call_id = result.get("call_id")
+        provenance = result.get("provenance")
+        return (isinstance(call_id, str) and bool(call_id.strip())
+                and isinstance(provenance, dict)
+                and provenance.get("repository_id") == repository_id)
+
+    def _valid_path(value):
+        if not isinstance(value, str) or not value or "\\" in value or ":" in value:
+            return False
+        path = PurePosixPath(value)
+        parts = value.split("/")
+        return (not path.is_absolute() and ".." not in path.parts
+                and all(part not in ("", ".", "..") for part in parts))
+
+    verified = []
+    seen = set()
+    call_ids = [item.get("call_id") for item in raw_results if isinstance(item, dict)]
+    if (len(call_ids) != len(raw_results)
+            or any(not isinstance(value, str) or not value.strip() for value in call_ids)
+            or len(call_ids) != len(set(call_ids))):
+        reject("SOURCE_RESOLUTION_FAILED")
+        return ()
+    for read_position, read_result in enumerate(raw_results):
+        if not _valid_call(read_result, "read"):
+            if isinstance(read_result, dict) and read_result.get("tool_id") == "read":
+                reject("REPO_ID_MISMATCH" if read_result.get("status") == "completed"
+                       else "SOURCE_RESOLUTION_FAILED")
+            continue
+        read_output = read_result.get("output")
+        if not isinstance(read_output, dict):
+            reject("CANDIDATE_METADATA_MISSING")
+            continue
+        read_path = read_output.get("path")
+        read_start = read_output.get("start_line")
+        read_end = read_output.get("end_line")
+        read_text = read_output.get("text")
+        if (not _valid_path(read_path)
+                or isinstance(read_start, bool) or not isinstance(read_start, int)
+                or isinstance(read_end, bool) or not isinstance(read_end, int)
+                or not isinstance(read_text, str) or not read_text
+                or read_start < 1 or read_end < read_start):
+            reject("LINE_RANGE_INVALID" if (
+                isinstance(read_start, int) and not isinstance(read_start, bool)
+                and isinstance(read_end, int) and not isinstance(read_end, bool)
+            ) else "CANDIDATE_METADATA_MISSING")
+            continue
+        matched_prior_search = False
+        for search_result in raw_results[:read_position]:
+            if not isinstance(search_result, dict) or search_result.get("tool_id") != "search":
+                continue
+            if search_result.get("status") != "completed":
+                continue
+            if not _valid_call(search_result, "search"):
+                reject("REPO_ID_MISMATCH")
+                continue
+            if search_result.get("call_id") == read_result.get("call_id"):
+                continue
+            search_output = search_result.get("output")
+            if not isinstance(search_output, dict):
+                reject("CANDIDATE_METADATA_MISSING")
+                continue
+            search_query = search_output.get("query")
+            source_rows = search_output.get("results")
+            if (not isinstance(search_query, str) or not search_query.strip()
+                    or len(search_query) > 512 or not isinstance(source_rows, list)):
+                reject("CANDIDATE_METADATA_MISSING")
+                continue
+            matched_prior_search = True
+            if not source_rows:
+                reject("SOURCE_NOT_FOUND")
+            for source_row in source_rows:
+                if not isinstance(source_row, dict):
+                    reject("CANDIDATE_METADATA_MISSING")
+                    continue
+                citation = source_row.get("citation")
+                candidate = candidates_by_citation.get(citation) if isinstance(citation, str) else None
+                if candidate is None:
+                    reject("CHUNK_ID_MISMATCH")
+                    continue
+                path = getattr(candidate, "relative_path", None)
+                start = getattr(candidate, "start_line", None)
+                end = getattr(candidate, "end_line", None)
+                text = getattr(candidate, "text", None)
+                content_hash = getattr(candidate, "content_hash", None)
+                source_id = source_row.get("source_id")
+                expected_source_id = source_ids_by_hash.get(content_hash)
+                source_repository = source_row.get("repository")
+                candidate_repository = getattr(candidate, "repository", None)
+                try:
+                    source_root = Path(source_repository).resolve(strict=True)
+                    candidate_root = Path(candidate_repository).resolve(strict=True)
+                except (OSError, RuntimeError, TypeError, ValueError):
+                    reject("CANDIDATE_METADATA_MISSING")
+                    continue
+                source_start = source_row.get("start_line")
+                source_end = source_row.get("end_line")
+                if source_root != root or candidate_root != root:
+                    reject("REPO_ID_MISMATCH")
+                    continue
+                if (not _valid_path(path) or citation != getattr(candidate, "citation", None)
+                        or read_path != path or source_row.get("relative_path") != path):
+                    reject("PATH_MISMATCH")
+                    continue
+                if (isinstance(source_start, bool) or not isinstance(source_start, int)
+                        or source_start != start
+                        or isinstance(source_end, bool) or not isinstance(source_end, int)
+                        or source_end != end
+                        or isinstance(start, bool) or not isinstance(start, int)
+                        or isinstance(end, bool) or not isinstance(end, int)
+                        or start < 1 or end < start):
+                    reject("LINE_RANGE_INVALID")
+                    continue
+                if (source_row.get("text") != text
+                        or source_row.get("content_hash") != content_hash
+                        or not isinstance(content_hash, str)
+                        or not re.fullmatch(r"[0-9a-f]{64}", content_hash)
+                        or not isinstance(text, str)):
+                    reject("CONTENT_HASH_MISMATCH")
+                    continue
+                if (not isinstance(source_id, str)
+                        or source_id != expected_source_id
+                        or re.fullmatch(r"E[1-9]\d*", source_id) is None):
+                    reject("CHUNK_ID_MISMATCH")
+                    continue
+                try:
+                    chunk = index_store.get_chunk(path, start, end)
+                except (AttributeError, OSError, StoreError, sqlite3.Error, TypeError, ValueError):
+                    reject("SOURCE_RESOLUTION_FAILED")
+                    continue
+                # ProductCandidate hashes have two established forms: SQLite
+                # chunk hashes (raw text) and retrieval identity hashes
+                # (path + line range + text). Validate the search record using
+                # its own hash contract, then anchor trusted evidence to the
+                # authoritative SQLite content hash.
+                try:
+                    retrieval_hash = _retrieval_content_hash(path, start, end, text)
+                    sqlite_content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+                except (AttributeError, TypeError, UnicodeError):
+                    reject("CONTENT_HASH_MISMATCH")
+                    continue
+                if not isinstance(chunk, dict):
+                    reject("SOURCE_NOT_FOUND")
+                    continue
+                if (chunk.get("relative_path") != path
+                        or chunk.get("start_line") != start
+                        or chunk.get("end_line") != end):
+                    reject("PATH_MISMATCH" if chunk.get("relative_path") != path
+                           else "LINE_RANGE_INVALID")
+                    continue
+                if chunk.get("text") != text:
+                    reject("SOURCE_STALE")
+                    continue
+                if (chunk.get("content_hash") != sqlite_content_hash
+                        or content_hash not in {retrieval_hash, sqlite_content_hash}):
+                    reject("CONTENT_HASH_MISMATCH")
+                    continue
+                if read_start < start or read_end > end:
+                    reject("LINE_RANGE_INVALID")
+                    continue
+                lines = split_source_lines(text)
+                expected_read = "\n".join(lines[read_start - start:read_end - start + 1])
+                if read_text != expected_read:
+                    reject("CONTENT_HASH_MISMATCH")
+                    continue
+                key = (sqlite_content_hash, read_result.get("call_id"), search_result.get("call_id"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                verified_candidate = replace(candidate, content_hash=sqlite_content_hash)
+                verified.append((verified_candidate, EvidenceProvenance(
+                    source_kind="verified_agent_read",
+                    repository_id=repository_id,
+                    content_hash=sqlite_content_hash,
+                    execution_id=execution_id,
+                    search_call_id=search_result["call_id"],
+                    tool_call_id=read_result["call_id"],
+                    observation_id=read_result["call_id"],
+                    tool_source_id=source_id,
+                ), search_query))
+        if not matched_prior_search:
+            reject("SOURCE_NOT_FOUND")
+    return tuple(verified)
+
+
+def _tool_observation_context(report, evidence_source_ids_by_call_id=None):
+    """Project tool results as observations and link only verified reads to evidence IDs."""
     import json
 
+    evidence_source_ids_by_call_id = evidence_source_ids_by_call_id or {}
     output = []
     for result in tuple(getattr(report, "execution_results", ()) or ())[-8:]:
         if not isinstance(result, dict):
@@ -952,6 +1543,9 @@ def _tool_observation_context(report):
             boundary = prefix.rfind("\n")
             preview = prefix[:boundary] if boundary >= 600 else prefix
         item = {
+            "call_id": result.get("call_id") if isinstance(result.get("call_id"), str) else None,
+            "observation_id": result.get("call_id") if isinstance(result.get("call_id"), str) else None,
+            "task_id": result.get("task_id") if isinstance(result.get("task_id"), str) else None,
             "tool_id": tool_id[:128], "status": status[:32],
             "output_preview": preview,
             "result_ref": result_ref if isinstance(result_ref, str) else None,
@@ -959,6 +1553,9 @@ def _tool_observation_context(report):
                            if isinstance(result.get("error_code"), str) else None),
             "truncated": truncated,
         }
+        call_id = result.get("call_id")
+        if isinstance(call_id, str) and call_id in evidence_source_ids_by_call_id:
+            item["verified_evidence_source_ids"] = [evidence_source_ids_by_call_id[call_id]]
         if is_result_page:
             item["result_page"] = {
                 key: raw_output[key] for key in (
@@ -978,6 +1575,37 @@ def _pending_approval_identity(value):
         return {"status": "pending"}
     return {key: request[key] for key in ("call_id", "task_id", "tool_id")
             if isinstance(request.get(key), str)}
+
+
+def _safe_agent_tool_result(item):
+    """Expose bounded execution outcome metadata without tool argument values."""
+    if not isinstance(item, dict):
+        return {}
+    result = {key: item.get(key) for key in (
+        "call_id", "task_id", "tool_id", "status", "error_code", "provenance",
+    )}
+    metadata = item.get("execution_metadata")
+    if isinstance(metadata, dict):
+        safe_metadata = {}
+        stage = metadata.get("stage")
+        if isinstance(stage, str) and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", stage):
+            safe_metadata["stage"] = stage
+            result["failure_phase"] = stage
+        diagnostic_code = metadata.get("diagnostic_code")
+        if isinstance(diagnostic_code, str) and re.fullmatch(
+                r"[a-z][a-z0-9_]{0,63}", diagnostic_code):
+            safe_metadata["diagnostic_code"] = diagnostic_code
+        argument_diagnostic = metadata.get("argument_diagnostic")
+        if isinstance(argument_diagnostic, dict):
+            # AgentExecutionEngine's sanitizer keeps stable codes, field names,
+            # types and bounded numeric constraints, never parameter values.
+            from .agent_execution import _safe_argument_diagnostic_details
+            safe_diagnostic = _safe_argument_diagnostic_details(argument_diagnostic)
+            if safe_diagnostic:
+                safe_metadata["argument_diagnostic"] = safe_diagnostic
+        if safe_metadata:
+            result["execution_metadata"] = safe_metadata
+    return result
 
 
 def _agent_failure_metadata(report, planner_diagnostics):
@@ -1012,6 +1640,48 @@ def _merge_retrieval_outcomes(question, outcomes):
     return replace(best, query=question, candidates=candidates,
                    unavailable_channels=unavailable, parse_failures=failures,
                    uncertainty="; ".join(uncertainties) if uncertainties else None)
+
+
+def _retrieval_failure_code(error):
+    """Return a bounded failure category; never expose exception text as evidence."""
+    if isinstance(error, (StoreError, sqlite3.Error)):
+        return "sqlite_index_unavailable"
+    if isinstance(error, RepositoryEvidenceUnavailable):
+        return "repository_evidence_unverified"
+    if isinstance(error, ScanError):
+        return "repository_scan_unavailable"
+    if isinstance(error, OSError):
+        return "repository_source_unavailable"
+    return "repository_retrieval_unavailable"
+
+
+def _unavailable_retrieval_outcome(question, repository_id, reason_code, *,
+                                   sqlite_unavailable=False):
+    """Represent a failed optional lookup with zero evidence and safe diagnostics."""
+    decision = ProductIntentRouter().route(question)
+    not_selected = reason_code == "repository_index_not_selected"
+    stale_source = reason_code in {
+        "repository_scan_unavailable", "repository_source_unavailable",
+        "repository_evidence_unverified",
+    }
+    lifecycle = derive_index_lifecycle(
+        repository_id=repository_id,
+        sqlite_available=not sqlite_unavailable,
+        indexed=not not_selected,
+        stale=stale_source,
+        reason_code=reason_code,
+    ).to_dict()
+    return ProductRetrievalOutcome(
+        query=question,
+        route_version=PRODUCT_ROUTE_VERSION,
+        decision=decision,
+        candidates=(),
+        unavailable_channels=("sqlite" if sqlite_unavailable else "repository_index",),
+        parse_failures=(),
+        uncertainty=("Current repository evidence is unavailable for this turn; "
+                     "repository-specific facts cannot be confirmed."),
+        index_lifecycle=lifecycle,
+    )
 
 
 def _merge_candidates(candidates):

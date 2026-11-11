@@ -5,9 +5,12 @@ from unittest.mock import Mock, patch
 
 from agentforge.embeddings.chroma_index import ChromaCodeIndex
 from agentforge.embeddings.chroma_store import delete_repository_vectors
-from agentforge.cli import _repository_command, parser
+from agentforge.cli import _prepare_repository_index, _repository_command, parser
+from agentforge.index_lifecycle import IndexLifecycleState, UnavailableVectorRetriever
 from agentforge.indexer import index_repository
+from agentforge.product_retrieval import ProductRetriever
 from agentforge.repositories import RepositoryRegistry, open_index_for_repository, repository_identity
+from agentforge.store import IndexStore
 from tests.support import LocalTestCase
 
 
@@ -224,28 +227,98 @@ class RepositoryLifecycleTests(LocalTestCase):
         self.assertEqual("", next(iter(collection.records.values()))["document"])
         self.assertEqual(document, service.search("legacy", top_k=1)[0].text)
 
-    def test_registered_unindexed_repository_can_be_target_indexed_from_cli(self):
+    def test_repository_registration_indexes_sqlite_and_chroma_without_external_service(self):
         self.write("same.py", "def identical_name():\n    return 'first repository'\n")
         with self._isolated_storage():
-            registered = _repository_command(SimpleNamespace(
-                repo_action="register", path=str(self.root), name="First"))
-            repository_id = registered["repository"]["repository_id"]
-            parsed = parser().parse_args(["repo", "index", repository_id])
-            self.assertEqual(repository_id, parsed.repository)
-            indexed = _repository_command(SimpleNamespace(
-                repo_action="index", repository=repository_id))
-            self.assertTrue(indexed["active"])
-            self.assertEqual(1, indexed["files"])
-            with RepositoryRegistry(readonly=True) as registry:
-                self.assertEqual(repository_id, registry.active_id())
-                self.assertTrue(registry.get(repository_id)["indexed_at"])
+            unavailable = {
+                "embedding_provider": None, "collection": None,
+                "vector_retriever": UnavailableVectorRetriever(
+                    "embedding_service_unavailable", "TimeoutError"),
+                "readiness_seconds": None,
+                "failure": {"reason_code": "embedding_service_unavailable",
+                            "error_type": "TimeoutError"},
+            }
+            with patch("agentforge.cli._initialize_optional_chroma", return_value=unavailable), \
+                    patch("agentforge.cli._synchronize_optional_chroma",
+                          side_effect=lambda _store, retriever: retriever):
+                registered = _repository_command(SimpleNamespace(
+                    repo_action="register", path=str(self.root), name="First"))
+                repository_id = registered["repository"]["repository_id"]
+                self.assertTrue(registered["indexed"])
+                self.assertEqual("DEGRADED_LEXICAL_ONLY",
+                                 registered["index_lifecycle"]["state"])
+                parsed = parser().parse_args(["repo", "index", repository_id])
+                self.assertEqual(repository_id, parsed.repository)
+                indexed = _repository_command(SimpleNamespace(
+                    repo_action="index", repository=repository_id))
+                self.assertTrue(indexed["active"])
+                self.assertEqual(1, indexed["files"])
+                with RepositoryRegistry(readonly=True) as registry:
+                    self.assertEqual(repository_id, registry.active_id())
+                    self.assertTrue(registry.get(repository_id)["indexed_at"])
 
-            # 强制重建会重新解析目标仓库，同时保留其身份和
-            # 当前注册信息不变。
-            rebuilt = _repository_command(SimpleNamespace(
-                repo_action="rebuild", repository=repository_id))
-            self.assertEqual("rebuild", rebuilt["operation"])
-            self.assertEqual(repository_id, rebuilt["repository_id"])
+                # 强制重建会重新解析目标仓库，同时保留其身份和
+                # 当前注册信息不变。
+                rebuilt = _repository_command(SimpleNamespace(
+                    repo_action="rebuild", repository=repository_id))
+                self.assertEqual("rebuild", rebuilt["operation"])
+                self.assertEqual(repository_id, rebuilt["repository_id"])
+
+    def test_repository_preparation_indexes_first_use_and_refreshes_changed_files(self):
+        source = self.write("queue.py", "def read_queue():\n    return 'before'\n")
+        with self._isolated_storage():
+            store = open_index_for_repository(self.root, readonly=False)
+            self.addCleanup(self._cleanup_index, Path(store.database))
+            self.addCleanup(store.close)
+            request = SimpleNamespace(repository=str(self.root))
+
+            prepared = _prepare_repository_index(store, request, None)
+            first = list(store.iter_chunks())
+            self.assertTrue(prepared["scan_report"].complete)
+            self.assertIn("before", "\n".join(row["text"] for row in first))
+
+            source.write_text("def read_queue():\n    return 'after'\n", encoding="utf-8")
+            _prepare_repository_index(store, request, None)
+            second = list(store.iter_chunks())
+            self.assertIn("after", "\n".join(row["text"] for row in second))
+            self.assertNotIn("before", "\n".join(row["text"] for row in second))
+            with RepositoryRegistry(readonly=True) as registry:
+                registration = registry.get(repository_identity(self.root))
+                self.assertTrue(registration["indexed_at"])
+
+    def test_embedding_failure_keeps_verified_lexical_results_and_exposes_degradation(self):
+        self.write("queue.py", "def queue_state():\n    return 'durable queue'\n")
+        with IndexStore(":memory:") as store:
+            index_repository(self.root, store)
+            retriever = ProductRetriever(
+                store, self.root,
+                vector_retriever=UnavailableVectorRetriever(
+                    "embedding_service_unavailable", "TimeoutError"),
+            )
+            outcome = retriever.search("How does the queue implementation work?", top_k=4)
+
+        self.assertEqual(IndexLifecycleState.DEGRADED_LEXICAL_ONLY.value,
+                         outcome.index_lifecycle["state"])
+        self.assertIn("vector", outcome.unavailable_channels)
+        self.assertTrue(outcome.candidates)
+        self.assertTrue(all("lexical" in item.channels for item in outcome.candidates))
+        self.assertTrue(all(item.content_hash for item in outcome.candidates))
+
+    def test_chroma_hash_mismatch_marks_derived_index_stale(self):
+        self.write("queue.py", "def queue_state():\n    return 'durable queue'\n")
+        with IndexStore(":memory:") as store:
+            index_repository(self.root, store)
+            collection = _InMemoryChromaCollection()
+            service = ChromaCodeIndex(store, collection, _SyntheticEmbeddingProvider())
+            service.sync()
+            self.assertTrue(service.inspect_consistency()["complete"])
+
+            record = next(iter(collection.records.values()))
+            record["metadata"]["content_hash"] = "0" * 64
+            state = service.inspect_consistency()
+
+        self.assertFalse(state["complete"], state)
+        self.assertEqual(1, state["stale_vectors"])
 
     def test_registry_keeps_stable_identity_and_requires_completed_index_to_switch(self):
         with self._isolated_storage():

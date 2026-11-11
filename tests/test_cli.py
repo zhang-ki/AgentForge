@@ -22,7 +22,10 @@ from tests.test_context import result
 
 def invoke(arguments, **kwargs):
     output, errors = io.StringIO(), io.StringIO()
-    with redirect_stdout(output), redirect_stderr(errors):
+    def no_repository_setup(store, _request, vector_retriever):
+        return {"scan_report": None, "vector_retriever": vector_retriever}
+    with (redirect_stdout(output), redirect_stderr(errors),
+          patch("agentforge.cli._prepare_repository_index", side_effect=no_repository_setup)):
         code = main(arguments, **kwargs)
     return code, output.getvalue(), errors.getvalue()
 
@@ -35,7 +38,12 @@ class CliTests(LocalTestCase):
         ])
 
         self.assertEqual("auto", default_args.mode)
+        self.assertTrue(default_args.use_chroma)
         self.assertEqual("repository", repository_override.mode)
+        no_vector_args = parser().parse_args([
+            "ask", "inspect this source", "--no-chroma",
+        ])
+        self.assertFalse(no_vector_args.use_chroma)
 
     def test_agent_memory_flag_requires_an_explicit_model_provider(self):
         from agentforge.cli import _run_selected_agent
@@ -159,9 +167,83 @@ class CliTests(LocalTestCase):
                     ])
                 self.assertEqual((code, errors), (0, ""))
                 self.assertEqual("limited", json.loads(output)["answer_contract"]["status"])
-                self.assertEqual("general", json.loads(output)["retrieval"]["mode"])
+                payload = json.loads(output)
+                self.assertEqual("general", payload["retrieval"]["mode"])
+                self.assertEqual("UNREGISTERED", payload["retrieval"]["index_lifecycle"]["state"])
                 self.assertEqual((), provider.context.evidence)
                 open_index.assert_not_called()
+
+    def test_auto_repository_plan_without_active_index_still_answers_without_source_claims(self):
+        class RepositoryQuestionProvider:
+            provider_id = "llama-server"
+            model = "qwen3.5-4b"
+            descriptor = LOCAL_QWEN
+
+            def plan_completion(self, _messages, **_kwargs):
+                return json.dumps({
+                    "intent": "general",
+                    "tasks": [{"task_id": "r1", "task_type": "repository",
+                               "question": "Inspect this project's implementation.",
+                               "requires_retrieval": True,
+                               "search_queries": ["project implementation"],
+                               "dependencies": []}],
+                    "requires_repository": True, "requires_external_data": False,
+                    "requires_agent_execution": False,
+                    "answer_strategy": "direct", "clarification_required": False,
+                    "confidence": 0.9, "reason": "The question refers to project behavior.",
+                })
+
+            def answer_hybrid(self, context, **_kwargs):
+                self.context = context
+                return Answer(
+                    "General knowledge:\nA general explanation remains available.\n\n"
+                    "Repository evidence:\nI cannot confirm this project's implementation "
+                    "from the current evidence.", (), False,
+                )
+
+            def answer_general(self, context, **_kwargs):
+                self.context = context
+                return Answer(
+                    "A general explanation remains available; the current project implementation "
+                    "cannot be confirmed without a bound repository.", (), False,
+                )
+
+        provider = RepositoryQuestionProvider()
+        with (
+            patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
+            patch("agentforge.cli.create_provider", return_value=provider),
+            patch("agentforge.cli._has_active_repository_index", return_value=False),
+            patch("agentforge.cli._open_current_index") as open_index,
+        ):
+            code, output, errors = invoke([
+                "ask", "How does this project implement the feature?",
+                "--provider", "llama-server", "--base-url", "http://127.0.0.1:32123",
+                "--model", "qwen3.5-4b",
+            ])
+
+        self.assertEqual((code, errors), (0, ""))
+        payload = json.loads(output)
+        self.assertEqual("not_required", payload["retrieval"]["retrieval_status"])
+        self.assertEqual("no_repository_bound_to_session",
+                         payload["retrieval"]["retrieval_reason_code"])
+        self.assertIsNone(payload["retrieval"]["retrieval_failure_code"])
+        self.assertEqual((), provider.context.evidence)
+        self.assertEqual("limited", payload["answer_contract"]["status"])
+        open_index.assert_not_called()
+
+    def test_session_current_is_available_before_any_repository_is_registered(self):
+        from types import SimpleNamespace
+        from agentforge.cli import _session_command
+
+        with (
+            patch("agentforge.cli._conversation_engine", return_value=Mock()),
+            patch("agentforge.cli.REPOSITORY_CATALOG_PATH",
+                  self.sandbox / "not-created" / "repositories.sqlite3"),
+            patch("agentforge.cli.DATABASE_PATH", self.sandbox / "not-created" / "index.sqlite3"),
+        ):
+            result = _session_command(SimpleNamespace(session_action="current"))
+
+        self.assertEqual({"repository": None, "result": None}, result)
 
     def test_hybrid_cli_keeps_general_answer_when_repository_evidence_exists(self):
         store = Mock()
@@ -530,27 +612,25 @@ class CliTests(LocalTestCase):
         self.assertIn("applicable current evidence ID", messages[0]["content"])
         self.assertEqual(fake_client.chat.call_args.kwargs["model"], "synthetic-model")
 
-    def test_low_confidence_missing_symbol_is_refused_before_model_request(self):
+    def test_low_confidence_missing_symbol_allows_safe_model_answer_without_repository_claim(self):
         store = Mock()
         store.metadata.return_value = {"repository": str(self.root)}
         store_scope = Mock()
         store_scope.__enter__ = Mock(return_value=store)
         store_scope.__exit__ = Mock(return_value=False)
-        source = result()
-        candidate = ProductCandidate(
-            source.repository, source.relative_path, source.start_line, source.end_line,
-            source.text, source.content_hash, source.score, ("lexical",),
-            (("lexical", source.score),), resolution_status="not_applicable",
-        )
         outcome = ProductRetrievalOutcome(
             "missing_symbol", "test-route", RouteDecision(
                 "exact_symbol", ("symbols", "lexical"), "bare_identifier",
                 "No exact symbol is present; lexical matches remain unverified.", "low",
-            ), (candidate,), (), (), "No exact symbol is present.",
+            ), (), (), (), "No exact symbol is present.",
         )
         retriever = Mock()
         retriever.search.return_value = outcome
         fake_client = Mock()
+        fake_client.chat.return_value = (
+            "General knowledge:\nA function with this name would depend on its implementation.\n\n"
+            "Repository evidence:\nI cannot confirm a definition in the current source evidence."
+        )
         with (
             patch.dict("os.environ", {"AGENTFORGE_LLAMA_API_KEY": "test-only-key"}),
             patch("agentforge.cli._open_current_index", return_value=store_scope),
@@ -564,10 +644,12 @@ class CliTests(LocalTestCase):
             ])
         self.assertEqual((code, errors), (0, ""))
         payload = json.loads(output)
-        self.assertEqual(payload["provider"], "evidence_gate_refusal")
-        self.assertEqual(payload["answer_contract"]["status"], "refused")
-        self.assertIsNone(payload["answer"])
-        fake_client.chat.assert_not_called()
+        self.assertEqual(payload["provider"], "llama-server")
+        self.assertEqual(payload["answer_contract"]["status"], "limited")
+        self.assertIn("A function with this name", payload["answer"])
+        self.assertIn("cannot confirm", payload["answer"])
+        self.assertEqual([], payload["answer_contract"]["evidence"])
+        fake_client.chat.assert_called_once()
 
     def test_llama_configuration_or_connection_errors_never_fall_back_to_success(self):
         store = Mock()

@@ -77,15 +77,24 @@ def assess_evidence(question: str, decision, candidates) -> EvidenceAssessment:
         valid_score = (isinstance(score, (int, float)) and not isinstance(score, bool)
                        and score > 0)
         matched, reason = _relevance_signal(question, candidate)
+        reason_code = "RELEVANCE_SIGNAL"
         status = "relevant" if valid_score and matched and confidence != "low" else "unverified"
         if not valid_score:
             reason = "candidate has no valid positive retrieval score"
+            reason_code = "INVALID_RETRIEVAL_SCORE"
+            status = "unverified"
+        elif reason == "candidate lacks verifiable text or path metadata":
+            reason_code = "CANDIDATE_METADATA_MISSING"
             status = "unverified"
         elif confidence == "low":
             reason = "low-confidence retrieval route; lexical overlap is not promoted"
+            reason_code = "LOW_CONFIDENCE_ROUTE"
             status = "unverified"
+        elif not matched:
+            reason_code = "NO_DETERMINISTIC_RELEVANCE"
         results.append({"candidate": candidate, "status": status,
-                        "matched_terms": matched, "reason": reason})
+                        "matched_terms": matched, "reason": reason,
+                        "reason_code": reason_code})
         if status == "relevant":
             relevant.append(candidate)
 

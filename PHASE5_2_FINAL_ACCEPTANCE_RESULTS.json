@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-12",
+  "project": "AgentForge",
+  "overall_status": "PASS_WITH_KNOWN_LIMITATIONS",
+  "phase_5_2": "CLOSED",
+  "v0_1_review": "FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS",
+  "answer_contract": {
+    "status": "LIMITED",
+    "accepted_for_v0_1": true,
+    "semantic_entailment_independently_verified": false
+  },
+  "git_baseline": {
+    "branch": "feature/auto-chroma-hybrid",
+    "initial_head": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "protection_tag": "v0.1.0-rc1",
+    "protection_tag_peeled_commit": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "initial_worktree_entries": 75,
+    "initial_staged_entries": 0,
+    "baseline_snapshot_sha256": "7eaba5c7c7fbe6d1f895eebdd67bfae73c60e609541768327d7df2c3fc84b8a3"
+  },
+  "r4_2_3_historical_host_acceptance": {
+    "evidence_status": "HISTORICAL_VERIFIED_WITH_LIMITATION",
+    "raw_acceptance_status": "PARTIAL",
+    "attempts": [
+      {
+        "run_id": "3de6d934ea19477fa24d7dac3e85adca",
+        "chat_requests": 5,
+        "succeeded": 5,
+        "failed": 0,
+        "effective_evidence_count": 0,
+        "execution_status": "completed",
+        "session_restore": "PASS",
+        "raw_status": "PARTIAL",
+        "selected_c2_status": "FAIL"
+      },
+      {
+        "run_id": "b20160750dad498283f5a6e4bcb1fe53",
+        "chat_requests": 7,
+        "succeeded": 7,
+        "failed": 0,
+        "execution_status": "failed",
+        "session_restore": "FAIL",
+        "raw_status": "PARTIAL",
+        "selected_c2_status": "FAIL"
+      },
+      {
+        "run_id": "e502f6bfd9c04e7ea877e42c36315b1c",
+        "chat_requests": 9,
+        "succeeded": 9,
+        "failed": 0,
+        "effective_evidence_count": 1,
+        "execution_status": "completed_after_bounded_recovery",
+        "tool_calls": 3,
+        "observations": 3,
+        "rounds": 4,
+        "planner_requests": 7,
+        "source": "synthetic_calculation.py:1-5",
+        "content_sha256": "ab0cd7c85abf3ccb0ec3d27dd3fd05442aa95cf169a07f9111bf0d134c6a68ed",
+        "final_answer_nonempty": true,
+        "session_restore": "PASS",
+        "answer_contract": "LIMITED",
+        "raw_status": "PARTIAL",
+        "selected_c2_status": "FAIL"
+      }
+    ],
+    "total_chat_requests": 21,
+    "total_succeeded": 21,
+    "total_failed": 0,
+    "automatic_retries": 0,
+    "model_discovery_requests": 0,
+    "final_execution_predicates_offline_reevaluation": "PASS",
+    "raw_host_results_modified": false,
+    "acceptance_results_sha256": "c2e7aa106fafcf406d5e81c7d746ad909b458f330e66ca4522f2742019ec0607",
+    "final_raw_host_result_sha256": "887cf4a6e69b7586a5b0f3e30cdac8256099459e1b2c98e5a568c40c6b43e64a",
+    "final_raw_host_trace_sha256": "612ebb4b8d09e225b8b069be8c4647974e53c917c3f1dce8a328d3d799ba22c1",
+    "artifact_hash_audit": {
+      "declared_artifacts": 11,
+      "missing": [],
+      "unchanged_hash_matches": 8,
+      "changed_after_closure_append": [
+        {
+          "file": "STATUS.md",
+          "recorded_r4_sha256": "f2dc7d5ef57e9d2443bff04988150cd03e87e35ac46154da7afd722fa36e293f",
+          "current_sha256": "e4d561b8ec351c2b3098ae79c07f5e92805b5d66c631eaefec1665ab4e97389d",
+          "reason": "Phase 5.2 closure addendum appended after the historical run; original R4 hash remains in the immutable R4 results JSON"
+        },
+        {
+          "file": "ROADMAP.md",
+          "recorded_r4_sha256": "572910a0d0d46bc00d8e8002db797f2a2d9ad3bdb60a471e00d522984b1305f2",
+          "current_sha256": "a0ebeef051028fbd633d7d5cb3f478cfbf8f36951bee5b81f576138684e5c123",
+          "reason": "Phase 5.2 closure addendum appended after the historical run; original R4 hash remains in the immutable R4 results JSON"
+        },
+        {
+          "file": "ARCHITECTURE.md",
+          "recorded_r4_sha256": "524c3335a27ac4cc64e331db12116ebdd05f2743643ec7c20ba3a0424e30f4fc",
+          "current_sha256": "640bb16eba9d0770a59892349dec9d3027c6aa0fd22ef0d53ea27337485c4b4a",
+          "reason": "Phase 5.2 closure addendum appended after the historical run; original R4 hash remains in the immutable R4 results JSON"
+        }
+      ],
+      "note": "All run-specific reports, raw C2 results, and trace artifacts retain their recorded R4 hashes."
+    },
+    "selected_evidence_sha256": {
+      "PHASE5_2_2_3_R4_2_3_ROOT_CAUSE_REPORT_20261112_011027.md": "146269679c9e3bceecfa03bf8bda8befdf9e210b8edf9d2999bd534fab4b8d70",
+      "PHASE5_2_2_3_R4_2_3_IMPLEMENTATION_REPORT_20261112_011027.md": "1275ecfe57a09cc18ce22cd3e531743d5fb17f25464b80c9dcacd1a7253fc55e",
+      "PHASE5_2_2_3_R4_2_3_ACCEPTANCE_RESULTS_20261112_011027.json": "c2e7aa106fafcf406d5e81c7d746ad909b458f330e66ca4522f2742019ec0607",
+      "PHASE5_2_2_3_R4_2_3_SCENARIO_MATRIX_20261112_011027.md": "db7c1dd788fd9ff1714c5fb6b65c8927ca6c2d7ea7f4fa4ebfeff7fe3fa1376c",
+      "PHASE5_2_2_3_R4_2_3_TEST_LOG_20261112_011027.txt": "9c5cf03089de4c799ffa3368ff2bad1f2049708cff99a3020f10bd51e54b9cee",
+      "PHASE5_2_2_3_R4_2_3_HOST_TRACE_LOG_20261112_011027.txt": "0a3bc8009a583d7afb52c3f3883d1e70a9f02c3895ce4c50cdc3421c52a3030d",
+      "PHASE5_2_2_3_R4_2_3_DATA_PROTECTION_REPORT_20261112_011027.md": "0a8244b34cd7bbeccddcd70f43afd8bb3deddc77f4e40bbfad08e58bd279edbf",
+      "PHASE5_2_2_3_HOST_RUN_3de6d934ea19477fa24d7dac3e85adca.json": "8621ad076c130a4fb2c0db05c932094086c90ad1bafeeb97bd7fa0ac0b219d09",
+      "PHASE5_2_2_3_HOST_RUN_b20160750dad498283f5a6e4bcb1fe53.json": "c3bdce833ee70cf7e112ab6623c642673c76fec87162494d057774474b273d7e",
+      "PHASE5_2_2_3_HOST_RUN_e502f6bfd9c04e7ea877e42c36315b1c.json": "887cf4a6e69b7586a5b0f3e30cdac8256099459e1b2c98e5a568c40c6b43e64a",
+      "PHASE5_2_2_3_HOST_TRACE_e502f6bfd9c04e7ea877e42c36315b1c.jsonl": "612ebb4b8d09e225b8b069be8c4647974e53c917c3f1dce8a328d3d799ba22c1"
+    }
+  },
+  "offline_regression": {
+    "status": "PASS_WITH_SKIPS",
+    "tests_run": 1073,
+    "passed": 1070,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 3,
+    "skips": [
+      {
+        "test": "test_scanner.ScannerTests.test_directory_symbolic_link_escape_and_link_root",
+        "reason": "WinError 1314: directory symbolic link creation is not permitted"
+      },
+      {
+        "test": "test_scanner.ScannerTests.test_file_symbolic_link_escape",
+        "reason": "WinError 1314: file symbolic link creation is not permitted"
+      },
+      {
+        "test": "test_scanner.ScannerTests.test_link_substitution_after_scan_is_rejected",
+        "reason": "WinError 1314: substitution symbolic link creation is not permitted"
+      }
+    ],
+    "current_log_sha256": "b93497891abd09d2f5ae7002cde93e9572ab43e2b986bc7e6517707ae65b167b",
+    "current_static_dependency_tests": "PASS_21_OF_21",
+    "current_python_compile": "PASS_155_FILES",
+    "current_git_diff_check": "PASS",
+    "related_forward_reverse": {
+      "status": "HISTORICAL_PASS",
+      "forward": "348/348",
+      "reverse": "348/348"
+    },
+    "command": ".agentforge\\af012-venv\\Scripts\\python.exe -m unittest discover -s tests -v"
+  },
+  "formal_data_protection": {
+    "status": "PASS_CURRENT_READ_ONLY",
+    "snapshot_sha256": "cdb1b3c1261511b2a04fe8b0dc40b2cddf924d122c985a9be39129f71363e4bd",
+    "snapshot_local_only": true,
+    "chroma_collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+    "chroma_vectors_reference": 599,
+    "chroma_vectors_current": 599,
+    "chroma_digest_matches_reference": true,
+    "sqlite_indexed_files": 195,
+    "sqlite_chunks": 599,
+    "sqlite_digest_matches_reference": true,
+    "repository_registry_entries": 7,
+    "registry_digest_matches_reference": true,
+    "postgresql_listener": "PASS",
+    "postgresql_application_read_only": "PASS",
+    "postgresql_table_count": 12,
+    "postgresql_snapshot_matches_reference": true,
+    "synthetic_resources_absent": true,
+    "windows_service_manager_query": "NOT_MEASURED_ACCESS_DENIED"
+  },
+  "capabilities": {
+    "deepseek_flash_synthetic_c2_execution_chain": "HISTORICAL_VERIFIED_WITH_LIMITATION",
+    "general_and_repository_offline_paths": "OFFLINE_VERIFIED",
+    "sqlite_chroma_mixed_retrieval_and_source_validation": "HISTORICAL_VERIFIED_PHASE_5_1",
+    "session_persistence_and_restore": "HISTORICAL_VERIFIED",
+    "provider_native_streaming": "NOT_MEASURED",
+    "fresh_full_15_scenario_host_matrix": "NOT_MEASURED",
+    "real_repository_source_sent_to_cloud": false
+  },
+  "git_delivery": {
+    "local_commit": "PENDING",
+    "github_push": "BLOCKED_REMOTE_UNREACHABLE",
+    "reason": "GitHub port 443 was unreachable through Git transport; remote branch divergence could not be checked.",
+    "github_app_repository_access": "PASS_READ_WRITE",
+    "target_branch_search": "NOT_FOUND_BY_GITHUB_BRANCH_SEARCH",
+    "git_transport": "BLOCKED_PORT_443_UNREACHABLE"
+  }
+}

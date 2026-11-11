@@ -65,6 +65,47 @@ class AgentPlanner(Protocol):
         """返回下一条结构化调用；规划完成时返回 None。"""
 
 
+class _ReadToolArgumentError(ValueError):
+    """ValueError-compatible read rejection with value-free diagnostics."""
+
+    def __init__(self, message: str, reason_code: str, details: dict | None = None):
+        super().__init__(message)
+        self.reason_code = reason_code
+        self.diagnostic_details = dict(details or {})
+
+
+def _safe_value_type(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, dict):
+        return "object"
+    return "unknown"
+
+
+def _read_line_number(value: Any, label: str, line_count: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise _ReadToolArgumentError(
+            f"{label} must be an integer.", "INVALID_FIELD_TYPE",
+            {"field": label, "expected_type": "integer", "actual_type": _safe_value_type(value)},
+        )
+    if not 1 <= value <= line_count:
+        raise _ReadToolArgumentError(
+            f"{label} is outside the source line range.", "LINE_RANGE_OUT_OF_BOUNDS",
+            {"field": label, "line_count": line_count},
+        )
+    return value
+
+
 def _strict_arguments(
     arguments: Any, *, required: set[str], optional: set[str]
 ) -> dict[str, Any]:
@@ -187,24 +228,80 @@ class ReadOnlyToolbox:
         }
 
     def _tool_read(self, raw: Any) -> dict:
-        arguments = _strict_arguments(raw, required={"path"}, optional={"start_line", "end_line"})
-        relative_path = _normalized_relative_path(arguments["path"])
+        try:
+            arguments = _strict_arguments(raw, required={"path"}, optional={"start_line", "end_line"})
+        except ValueError as exc:
+            if not isinstance(raw, dict):
+                reason_code, details = "ARGUMENTS_NOT_OBJECT", {}
+            else:
+                keys = set(raw)
+                missing = {"path"} - keys
+                unexpected = keys - {"path", "start_line", "end_line"}
+                if missing:
+                    reason_code, details = "MISSING_REQUIRED_FIELD", {"missing_fields": sorted(missing)}
+                elif unexpected:
+                    reason_code, details = "UNEXPECTED_FIELD", {"unexpected_fields": sorted(unexpected)}
+                else:
+                    reason_code, details = "INVALID_ARGUMENTS", {}
+            raise _ReadToolArgumentError(str(exc), reason_code, details) from None
+
+        supplied_path = arguments["path"]
+        citation = (re.fullmatch(r"(.+):([1-9][0-9]{0,7})-([1-9][0-9]{0,7})", supplied_path)
+                    if isinstance(supplied_path, str) else None)
+        if citation:
+            if "start_line" in arguments or "end_line" in arguments:
+                raise _ReadToolArgumentError(
+                    "A citation path cannot be combined with explicit line bounds.",
+                    "CONFLICTING_LINE_RANGE_ARGUMENTS",
+                    {"field": "path", "conflicting_fields": [
+                        key for key in ("start_line", "end_line") if key in arguments
+                    ]},
+                )
+            supplied_path = citation.group(1)
+            arguments = {
+                "path": supplied_path,
+                "start_line": int(citation.group(2)),
+                "end_line": int(citation.group(3)),
+            }
+        try:
+            relative_path = _normalized_relative_path(supplied_path)
+        except ValueError as exc:
+            reason_code = "INVALID_FIELD_TYPE" if not isinstance(supplied_path, str) else "INVALID_PATH"
+            raise _ReadToolArgumentError(
+                str(exc), reason_code,
+                {"field": "path", "expected_type": "string",
+                 "actual_type": _safe_value_type(supplied_path)},
+            ) from None
         report = scan_repository(self.repository, self.limits)
         if not report.complete:
-            raise ValueError("Repository scan is incomplete; read is refused.")
+            raise _ReadToolArgumentError(
+                "Repository scan is incomplete; read is refused.", "REPOSITORY_SCAN_INCOMPLETE",
+                {"issue_count": len(report.issues)},
+            )
         candidates = {item.relative_path: item for item in report.candidates}
         candidate = candidates.get(relative_path)
         if candidate is None:
-            raise ValueError("path is not an allowed readable source file.")
+            raise _ReadToolArgumentError(
+                "path is not an allowed readable source file.", "PATH_NOT_ALLOWED",
+                {"field": "path"},
+            )
         text = read_candidate(candidate, report.root, self.limits.max_file_bytes)
         lines = split_source_lines(text)
         if not lines:
             return {"path": relative_path, "start_line": 0, "end_line": 0, "text": ""}
-        start = _bounded_integer(arguments.get("start_line", 1), "start_line", 1, len(lines))
+        start = _read_line_number(arguments.get("start_line", 1), "start_line", len(lines))
         default_end = min(len(lines), start + MAX_AGENT_READ_LINES - 1)
-        end = _bounded_integer(arguments.get("end_line", default_end), "end_line", start, len(lines))
+        end = _read_line_number(arguments.get("end_line", default_end), "end_line", len(lines))
+        if end < start:
+            raise _ReadToolArgumentError(
+                "end_line must be greater than or equal to start_line.", "INVALID_LINE_RANGE",
+                {"field": "end_line", "minimum": start},
+            )
         if end - start + 1 > MAX_AGENT_READ_LINES:
-            raise ValueError(f"read cannot exceed {MAX_AGENT_READ_LINES} lines.")
+            raise _ReadToolArgumentError(
+                f"read cannot exceed {MAX_AGENT_READ_LINES} lines.", "LINE_RANGE_TOO_LARGE",
+                {"max_read_lines": MAX_AGENT_READ_LINES},
+            )
         return {
             "path": relative_path,
             "start_line": start,

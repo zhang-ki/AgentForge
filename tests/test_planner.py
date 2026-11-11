@@ -173,37 +173,43 @@ class PlanSchemaTests(unittest.TestCase):
         self.assertEqual("passed_after_correction",
                          planner.last_request_diagnostics["final_validation_status"])
 
-    def test_intent_task_mismatch_has_safe_specific_diagnostics(self):
-        invalid = []
-        general_with_repository = plan_payload("repository")
-        general_with_repository["intent"] = "general"
-        invalid.append((general_with_repository, "general", ["repository"], ["general"]))
-
-        repository_without_repository = plan_payload("general")
-        repository_without_repository["intent"] = "repository"
-        invalid.append((repository_without_repository, "repository", ["general"], ["repository"]))
-
-        hybrid_without_general = plan_payload("repository")
-        hybrid_without_general["intent"] = "hybrid"
-        invalid.append((hybrid_without_general, "hybrid", [], ["general"]))
-
-        hybrid_without_repository = plan_payload("general")
-        hybrid_without_repository["intent"] = "hybrid"
-        invalid.append((hybrid_without_repository, "hybrid", [], ["repository"]))
-
-        for payload, intent, forbidden, missing in invalid:
-            with self.subTest(intent=intent, forbidden=forbidden, missing=missing):
-                with self.assertRaises(PlanningError) as raised:
-                    parse_conversation_plan(encoded(payload), requested_mode="auto")
-                error = raised.exception
-                self.assertEqual("intent_task_mismatch", error.diagnostic_code)
-                self.assertEqual(intent, error.diagnostic_details["intent"])
-                self.assertEqual(forbidden, error.diagnostic_details["forbidden_task_types_present"])
-                self.assertEqual(missing, error.diagnostic_details["missing_task_types"])
-                self.assertEqual({"external": 0, "general": 0, "repository": 1, "tool": 0}
-                                 if payload["tasks"][0]["task_type"] == "repository"
-                                 else {"external": 0, "general": 1, "repository": 0, "tool": 0},
-                                 error.diagnostic_details["task_type_counts"])
+    def test_intent_retrieval_and_tool_execution_are_independent_axes(self):
+        for intent in ("general", "repository", "hybrid"):
+            for needs_retrieval in (False, True):
+                for needs_tool in (False, True):
+                    with self.subTest(intent=intent, retrieval=needs_retrieval, tool=needs_tool):
+                        tasks = []
+                        if not needs_retrieval:
+                            tasks.append({"task_id": "general", "task_type": "general",
+                                          "question": "Explain the requested concept.",
+                                          "requires_retrieval": False, "search_queries": [],
+                                          "dependencies": []})
+                        else:
+                            tasks.append({"task_id": "repository", "task_type": "repository",
+                                          "question": "Inspect the current implementation.",
+                                          "requires_retrieval": True,
+                                          "search_queries": ["implementation"],
+                                          "dependencies": []})
+                        if needs_tool:
+                            tasks.append({"task_id": "tool", "task_type": "tool",
+                                          "question": "Run the explicitly authorized read tool.",
+                                          "requires_retrieval": False, "search_queries": [],
+                                          "dependencies": []})
+                        payload = {
+                            "intent": intent, "tasks": tasks,
+                            "requires_repository": needs_retrieval,
+                            "requires_external_data": False,
+                            "requires_agent_execution": needs_tool,
+                            "answer_strategy": "compose" if needs_retrieval else "direct",
+                            "clarification_required": False, "confidence": 0.9,
+                            "reason": "Independent retrieval and tool decisions.",
+                        }
+                        parsed = parse_conversation_plan(
+                            encoded(payload), requested_mode="auto",
+                            agent_execution_available=needs_tool,
+                        )
+                        self.assertEqual(needs_retrieval, parsed.needs_repository_retrieval)
+                        self.assertEqual(needs_tool, parsed.requires_tool_execution)
 
     def test_agent_execution_flag_is_independent_of_answer_intent(self):
         payload = plan_payload("repository", agent_execution=True)
@@ -385,13 +391,14 @@ class LLMPlannerTests(unittest.TestCase):
                          planner.last_request_diagnostics["final_validation_status"])
         self.assertEqual(4, planner.last_request_diagnostics["initial_query_shape"]["query_count"])
 
-    def test_prompt_and_validator_share_intent_task_rules(self):
+    def test_prompt_and_validator_define_retrieval_and_tools_independently(self):
         provider = FakePlanningProvider(encoded(plan_payload("general")))
         LLMPlanner().plan(provider, "Explain attention")
         prompt = provider.calls[0][0][0]["content"]
-        self.assertIn("general=general, forbid:repository", prompt)
-        self.assertIn("repository=repository, forbid:general", prompt)
-        self.assertIn("hybrid=general+repository, forbid:none", prompt)
+        self.assertIn("Answer intent (general/repository/hybrid) is compatibility metadata", prompt)
+        self.assertIn("Decide repository retrieval and tool execution separately", prompt)
+        self.assertIn("requires_repository=(has repository task)", prompt)
+        self.assertIn("requires_agent_execution=(has tool task)", prompt)
 
     def test_prompt_routes_repository_facts_and_delegates_iteration_to_react_agent(self):
         provider = FakePlanningProvider(encoded(plan_payload("general")))
@@ -401,9 +408,9 @@ class LLMPlannerTests(unittest.TestCase):
         LLMPlanner().plan(provider, "Inspect the repository", agent_execution_available=True,
                           available_tools=(tool,))
         prompt = provider.calls[0][0][0]["content"]
-        self.assertIn("Intent rules (same as validator)", prompt)
-        self.assertIn("A source lookup/citation requires repository task(s)", prompt)
-        self.assertIn("tool use alone does not change intent", prompt)
+        self.assertIn("Answer intent (general/repository/hybrid) is compatibility metadata", prompt)
+        self.assertIn("A repository task requests fresh source lookup", prompt)
+        self.assertIn("a tool task requests authorized Agent execution", prompt)
         self.assertIn("retrieve fresh evidence rather than reuse old citation labels", prompt)
         payload = json.loads(provider.calls[0][0][-1]["content"])
         self.assertEqual(["read"], [item["tool_id"] for item in payload["available_tools"]])
@@ -474,35 +481,19 @@ class LLMPlannerTests(unittest.TestCase):
         self.assertIn("Agent execution unavailable: do not create tool tasks", prompt)
         self.assertNotIn("An Agent execution service is available", prompt)
 
-    def test_corrects_intent_task_mismatch_once_with_concrete_error(self):
-        invalid = plan_payload("repository")
-        invalid["intent"] = "hybrid"
-        invalid["tasks"][0]["question"] = "PRIVATE_MODEL_ONLY_TASK_TEXT"
-        provider = FakePlanningProvider([
-            encoded(invalid), encoded(plan_payload("hybrid")),
-        ])
+    def test_legacy_intent_and_task_mix_is_accepted_without_correction(self):
+        mixed = plan_payload("repository")
+        mixed["intent"] = "general"
+        provider = FakePlanningProvider(encoded(mixed))
         planner = LLMPlanner()
 
-        result = planner.plan(provider, "Explain general behavior and inspect the repository")
+        result = planner.plan(provider, "Inspect the repository", requested_mode="auto")
 
-        self.assertEqual("hybrid", result.intent)
-        self.assertEqual({"general", "repository"}, {task.task_type for task in result.tasks})
-        self.assertEqual(2, len(provider.calls))
-        first_messages, second_messages = provider.calls[0][0], provider.calls[1][0]
-        self.assertEqual("Explain general behavior and inspect the repository",
-                         json.loads(first_messages[-1]["content"])["question"])
-        correction = second_messages[-1]["content"]
-        self.assertIn("intent_task_mismatch", correction)
-        self.assertIn("intent=hybrid", correction)
-        self.assertIn("repository=1", correction)
-        self.assertIn("missing=general", correction)
-        self.assertIn("preserve request/subtasks", correction)
-        self.assertNotIn("PRIVATE_MODEL_ONLY_TASK_TEXT", json.dumps(second_messages))
-        self.assertEqual(2, planner.last_request_diagnostics["planner_request_count"])
-        self.assertTrue(planner.last_request_diagnostics["correction_attempted"])
-        self.assertEqual("accepted", planner.last_request_diagnostics["correction_status"])
-        self.assertEqual("intent_task_mismatch", planner.last_request_diagnostics[
-            "initial_validation_failure"]["diagnostic_code"])
+        self.assertEqual("general", result.intent)
+        self.assertTrue(result.needs_repository_retrieval)
+        self.assertEqual(1, len(provider.calls))
+        self.assertFalse(planner.last_request_diagnostics["correction_attempted"])
+        self.assertEqual("passed", planner.last_request_diagnostics["final_validation_status"])
 
     def test_corrects_retrieval_flag_mismatch_once_without_reclassifying_the_task(self):
         invalid = plan_payload("general")
@@ -544,43 +535,6 @@ class LLMPlannerTests(unittest.TestCase):
         self.assertEqual("rejected", raised.exception.diagnostic_details["correction_status"])
         self.assertEqual("task_retrieval_type_mismatch", raised.exception.diagnostic_code)
         self.assertEqual("failed", planner.last_request_diagnostics["final_validation_status"])
-
-    def test_intent_correction_timeout_fails_closed_and_keeps_initial_diagnostic(self):
-        invalid = plan_payload("repository")
-        invalid["intent"] = "hybrid"
-        provider = FakePlanningProvider(
-            [encoded(invalid), encoded(plan_payload("hybrid"))],
-            error=[None, TimeoutError("private timeout detail")],
-        )
-        planner = LLMPlanner()
-
-        with self.assertRaises(PlanningError) as raised:
-            planner.plan(provider, "Explain and inspect")
-
-        self.assertEqual("planner_correction_request_failed", raised.exception.diagnostic_code)
-        self.assertEqual(2, len(provider.calls))
-        self.assertEqual(LLMPlanner.TIMEOUT_SECONDS, provider.calls[1][2])
-        self.assertEqual("intent_task_mismatch", raised.exception.diagnostic_details[
-            "initial_validation_failure"]["diagnostic_code"])
-        self.assertNotIn("private timeout detail", str(raised.exception))
-
-    def test_intent_mismatch_correction_remains_bounded_after_second_rejection(self):
-        invalid = plan_payload("repository")
-        invalid["intent"] = "hybrid"
-        still_invalid = plan_payload("general")
-        still_invalid["intent"] = "hybrid"
-        provider = FakePlanningProvider([encoded(invalid), encoded(still_invalid)])
-        planner = LLMPlanner()
-
-        with self.assertRaises(PlanningError) as raised:
-            planner.plan(provider, "Preserve both parts of this request")
-
-        self.assertEqual(2, len(provider.calls))
-        self.assertEqual("intent_task_mismatch", raised.exception.diagnostic_code)
-        self.assertEqual(2, raised.exception.diagnostic_details["planner_request_count"])
-        self.assertEqual("rejected", raised.exception.diagnostic_details["correction_status"])
-        self.assertEqual("intent_task_mismatch", raised.exception.diagnostic_details[
-            "initial_validation_failure"]["diagnostic_code"])
 
     def test_invalid_corrected_search_query_fails_closed_after_one_correction(self):
         invalid_first = plan_payload("repository")
@@ -676,6 +630,27 @@ class LLMPlannerTests(unittest.TestCase):
         self.assertEqual("user", messages[-1]["role"])
         self.assertLess(len(messages), 4)
         self.assertEqual("general", plan.intent)
+
+    def test_repository_followup_plan_receives_prior_turns_and_fresh_retrieval_decision(self):
+        payload = plan_payload("repository")
+        payload["intent"] = "general"
+        provider = FakePlanningProvider(encoded(payload))
+        history = [
+            {"role": "user", "content": "What is retrieval-augmented generation?"},
+            {"role": "assistant", "content": "It combines retrieval with generation."},
+        ]
+
+        plan = LLMPlanner().plan(
+            provider, "Which approach does this project use?", history=history,
+        )
+
+        messages = provider.calls[0][0]
+        history_text = "\n".join(item["content"] for item in messages[:-1])
+        self.assertIn("What is retrieval-augmented generation?", history_text)
+        self.assertIn("It combines retrieval with generation.", history_text)
+        current = json.loads(messages[-1]["content"])
+        self.assertEqual("Which approach does this project use?", current["question"])
+        self.assertTrue(plan.needs_repository_retrieval)
 
     def test_invalid_output_or_provider_failure_does_not_fallback(self):
         for provider in (FakePlanningProvider("{}"),
@@ -853,15 +828,15 @@ class PlannerOrchestratorFlowTests(unittest.TestCase):
         payload = json.loads(provider.calls[0][0][-1]["content"])
         self.assertEqual("synthetic_action", payload["available_tools"][0]["tool_id"])
 
-    def test_invalid_corrected_plan_never_enters_agent_executor(self):
+    def test_invalid_corrected_capability_plan_never_enters_agent_executor(self):
         from agentforge.conversation_orchestrator import (
             ConversationDependencies, ConversationOrchestrator, ConversationRequest,
         )
 
         invalid = plan_payload("repository")
-        invalid["intent"] = "hybrid"
-        invalid_again = plan_payload("general")
-        invalid_again["intent"] = "hybrid"
+        invalid["requires_repository"] = False
+        invalid_again = plan_payload("repository")
+        invalid_again["requires_repository"] = False
         provider = self.Provider([encoded(invalid), encoded(invalid_again)])
         executor = Mock()
         orchestrator = ConversationOrchestrator(ConversationDependencies(
@@ -910,7 +885,7 @@ class PlannerOrchestratorFlowTests(unittest.TestCase):
         executor.execute.assert_not_called()
         self.assertEqual(0, provider.answer_calls)
 
-    def test_cancellation_during_intent_correction_stops_before_agent_execution(self):
+    def test_cancellation_during_bounded_plan_correction_stops_before_agent_execution(self):
         from agentforge.conversation_orchestrator import (
             ConversationDependencies, ConversationOrchestrator, ConversationRequest,
         )
@@ -918,8 +893,8 @@ class PlannerOrchestratorFlowTests(unittest.TestCase):
 
         cancelled = threading.Event()
         invalid = plan_payload("repository")
-        invalid["intent"] = "hybrid"
-        valid = plan_payload("hybrid")
+        invalid["requires_repository"] = False
+        valid = plan_payload("repository")
 
         class CancelDuringCorrection(self.Provider):
             def plan_completion(self, messages, **kwargs):

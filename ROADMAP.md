@@ -1,5 +1,30 @@
 # AgentForge Roadmap
 
+## Phase 5.1 final closure (2026-11-10)
+
+- [x] R1-01 through R1-07 retained as historical PASS evidence from run `d4bb36e0dcb1450a9c720f8a27e40cdd`.
+- [x] R1-08 fresh-process reopen and semantic retrieval passed against AgentForge's actual persistent Chroma path.
+- [x] R1-09 Embedding/Chroma failure degradation and recovery passed against the same persistent store using a unique acceptance Collection.
+- [x] Formal Collection before/after summaries match; the acceptance Collection and synthetic repository were removed.
+- [x] Production-file hashes match the pre-R1 Phase 5.1 snapshots; branch, HEAD, and `v0.1.0-rc1` are unchanged.
+
+Phase 5.1 is **PASS_WITH_HISTORICAL_EVIDENCE**. R1-01..07 and R1-08..09 are distinctly labeled historical/current; this is not one atomic run. The corrected R2 cleanup aggregate is derived from existing cleanup evidence. Phase 5.2 has not started.
+
+See `PHASE5_1_FINAL_CLOSURE_REPORT.md` and `PHASE5_1_FINAL_CLOSURE_RESULTS.json`.
+
+## Phase 5.1 implementation record (historical, pre-host)
+
+- [x] Make vector retrieval the console default while retaining `/chroma on|off` as an explicit maintenance/debug override.
+- [x] Confirm Chroma is embedded (`PersistentClient`) and avoid starting an extra Chroma service process.
+- [x] Have `Start-AgentForge.cmd` check PostgreSQL and ensure the local Embedding endpoint is ready; keep Qwen Chat optional for the DeepSeek-first launcher.
+- [x] Automatically build the initial SQLite index and synchronize Chroma on repository registration; scan and incrementally refresh before Repository/Hybrid turns.
+- [x] Preserve SQLite as source of truth; validate vector candidates against SQLite/source hashes and expose lexical-only degradation when vector retrieval is unavailable.
+- [x] Keep General turns independent from repository/index availability; preserve Repository evidence requirements and Hybrid partial-answer behavior.
+- [x] Run the 209-test related suite in forward and reverse order, plus launcher, compile, PowerShell syntax, diff, and static import-cycle checks.
+- [x] At the time of this implementation snapshot, real host behavior was NOT_MEASURED. Later host acceptance is documented in the Phase 5.1 final closure above.
+
+This historical entry records the offline implementation boundary only. It is superseded by the final closure above. Hybrid answer quality and later Phase 5.2 work remain separate; no Phase 5.2 work is started automatically.
+
 ## Phase 4.3 — tool discovery and generic execution boundary (2026-11-08)
 
 - [x] Build conversation-Planner tool metadata from the same ToolRegistry and explicit authorization policy used by execution; do not expose schemas or permissions merely because a tool is registered.
@@ -89,7 +114,7 @@ The release is frozen for publication. No new retrieval algorithm or production 
 - The 1.1 branch can ask the explicitly configured local model to summarize older turns when evidence gates allow it; otherwise it retains a labeled deterministic extract. The byte budget is not an exact model-token count.
 - Static Python analysis has limits around dynamic imports and runtime behavior.
 - Citation validation proves that citations map to current supplied evidence, but does not establish that every natural-language claim is semantically entailed.
-- Chroma is optional, local, and rebuildable; vectors require explicit indexing and are validated against authoritative records.
+- Chroma is local and rebuildable. On the Phase 5 development path, vector retrieval is enabled by default and vectors synchronize automatically; SQLite remains authoritative and candidates are source/hash validated. The frozen MVP 1.0 behavior is unchanged.
 - AF-010 research found no stable reason to make RRF a default. RRF, reranking, and production score-based refusal remain deferred.
 - Host acceptance covers bounded scenarios. Long-context quality and broad production reliability are not certified.
 
@@ -270,3 +295,156 @@ See `PHASE4_4_4_2_FINAL_IMPLEMENTATION_REPORT.md` and its results JSON.
 - [x] Reconsider release decision after the targeted result: **RELEASE_CANDIDATE** for the declared v0.1 scope; the 15-scenario matrix is not claimed as passed.
 
 Historical full-host results remain separate and are not rolled into a new combined PASS. Full regression and coverage were not repeated; the accepted Phase 4.4.4.4 measurements are preserved as historical baselines. The interactive first-session launch flow has offline tests and remains a recommended manual smoke before broad distribution.
+
+
+
+## Phase 5.2.2 — Planner and retrieval decoupling (2026-11-10)
+
+- [x] Keep Planner answer intent as compatibility metadata; independently validate repository retrieval and tool execution flags.
+- [x] Make repository evidence optional to final generation when no index, no relevant evidence, or safe retrieval failure occurs.
+- [x] Preserve current source/hash validation and fail closed on fabricated or unverified evidence.
+- [x] Preserve SQLite lexical fallback and report vector degradation without marking it ready.
+- [x] Keep Agent execution on the existing authorization and validation path; do not refactor AgentExecutionEngine or widen permissions.
+- [x] Pass 14 focused tests and 194 related tests in both forward and reverse order; static AST, compile, and diff checks passed.
+- [ ] Real DeepSeek, Embedding, PostgreSQL, and Chroma behavior remains NOT_MEASURED; full suite was not run.
+
+Phase 5.2.2 is complete for its offline scope. General/Repository/Hybrid provider methods and their temporary answer formatting remain; their unification belongs to Phase 5.2.3.
+
+## Phase 5.2.2.1 — runtime observability (2026-11-10)
+
+- [x] Add a request lifecycle ID, monotonic stage timing, JSONL progress events, bounded file rotation, and a final stage/outcome summary.
+- [x] Keep progress on stderr and answer output on stdout; sanitize events through an explicit metadata allowlist.
+- [x] Instrument Planner validation/correction, session restore and persistence, memory/embedding/vector retrieval, repository/evidence/context, tools/approval/observations, provider response timing and usage, and Answer Contract status.
+- [x] Audit existing deadlines without changing them; document missing whole-request and embedding/Chroma operation deadlines.
+- [x] Focused observability tests passed 21/21; affected modules passed 187/187 forward and 187/187 reverse; AST dependency and compile checks passed; `git diff --check` passed.
+- [ ] Full offline suite and live model/service behavior were intentionally not run and remain NOT_MEASURED.
+
+No commit or push. No Phase 5.2.3 work was started.
+
+## Phase 5.2.2.2 — Repository retrieval performance and UX
+
+- [x] Make retrieval run for a bound repository independently of Planner retrieval flags, while keeping tool execution on its existing validated path.
+- [x] Add bounded warm index snapshots and unchanged-file reuse; preserve incremental add/change/delete synchronization and source/hash checks.
+- [x] Batch embedding/Chroma synchronization and skip unchanged vectors.
+- [x] Fall back from the known summary-overflow case without deleting persisted history or current-turn content.
+- [x] Default to concise console progress and retain explicit debug detail plus allowlisted lifecycle JSONL.
+- [x] Full offline regression: 1,025 run, 1,019 passed, 0 failed, 0 errors, 6 skipped (not counted as passes).
+- [ ] Live host reacceptance BLOCKED: PostgreSQL and Qwen Embedding were not listening; three DeepSeek scenarios and post-change timing remain NOT_MEASURED.
+
+Phase 5.2.2.2 is complete for offline scope only. Do not infer live Chroma or DeepSeek acceptance and do not begin Phase 5.2.3 from this result.
+
+## Phase 5.2.2.2 — Repository retrieval performance and UX
+
+- [x] Make retrieval run for a bound repository independently of Planner retrieval flags, while keeping tool execution on its existing validated path.
+- [x] Add bounded warm index snapshots and unchanged-file reuse; preserve incremental add/change/delete synchronization and source/hash checks.
+- [x] Batch embedding/Chroma synchronization and skip unchanged vectors.
+- [x] Fall back from the known summary-overflow case without deleting persisted history or current-turn content.
+- [x] Default to concise console progress and retain explicit debug detail plus allowlisted lifecycle JSONL.
+- [x] Full offline regression: 1,025 run, 1,019 passed, 0 failed, 0 errors, 6 skipped (not counted as passes).
+- [ ] Live host reacceptance BLOCKED: PostgreSQL and Qwen Embedding were not listening; three DeepSeek scenarios and post-change timing remain NOT_MEASURED.
+
+Phase 5.2.2.2 is complete for offline scope only. Do not infer live Chroma or DeepSeek acceptance and do not begin Phase 5.2.3 from this result.
+
+## Phase 5.2.2.3 — hot index and reliable answer
+
+- [x] Attribute the historical 202 embedding events by role and stage; preserve the original evidence.
+- [x] Verify unchanged-index reuse, incremental changes, bounded Chroma batches, combined SQLite/vector candidates, and hash/source validation offline.
+- [x] Verify one primary repository search for a bound-repository turn even when Planner does not request retrieval.
+- [x] Verify summary-overflow fallback assembles a bounded current request while retaining raw persisted history and required Observation.
+- [x] Complete offline regression: 1,026 run / 1,020 passed / 0 failed / 0 errors / 6 skipped; static boundary and compile checks passed.
+- [ ] Measure current-host warm index, real persistent Chroma semantic retrieval, and DeepSeek answers. BLOCKED: PostgreSQL and Qwen Embedding listeners unavailable; no service was started.
+- [ ] Revisit end-to-end turn deadline before claiming bounded total request time; current provider and sub-operation limits do not constitute one absolute whole-turn deadline.
+
+Phase 5.2.2.3 remains PARTIAL. Do not infer real host PASS from offline tests. Phase 5.2.3 has not started.
+
+## Phase 5.2.2.3 closure — 2026-11-11
+
+- [x] Confirm host services ready without starting or stopping them.
+- [x] Measure warm index reuse: 0.220831 s; 195 files and 599 chunks reused; 0 document embeddings.
+- [x] Correct lexical top-k starvation of semantic candidates; 122 related tests passed in both execution orders.
+- [x] Validate repaired retrieval locally against the actual persistent Chroma collection and SQLite source/hash authority.
+- [x] Observe semantic-summary overflow fallback continue through final answer and session persistence on one synthetic DeepSeek host run.
+- [x] Full offline regression: 1,029 run, 1,023 pass, 0 fail, 0 errors, 6 environment skips.
+- [ ] Repaired vector evidence in a post-fix DeepSeek answer: NOT_MEASURED; no additional cloud request sent.
+- [ ] Runner result extraction AttributeError after completed application lifecycle: unresolved; exact exception location not captured.
+- [ ] Current full repository index readiness: FAIL/STALE because one file size differs from its SQLite snapshot.
+- [ ] Pure repaired retrieval latency: NOT_MEASURED; collected 4.599116 s includes diagnostics snapshot.
+- [ ] Provider-native streaming and tool execution lifecycle: NOT_MEASURED in this run.
+
+Phase status: PARTIAL. Stop here; Phase 5.2.3 has not started.
+
+## Phase 5.2.2.3-R1 — final defect convergence (2026-11-11)
+
+- [x] Repair raw disk-size persistence for BOM-prefixed UTF-8 files; exact SQLite metadata correction kept the normalized content hash and all seven source chunks unchanged.
+- [x] Full offline run: 1,033 tests, 1,027 passed, 0 failed, 0 errors, 6 Windows permission skips; focused tests passed forward and reverse; compile, AST dependency, and diff checks passed.
+- [x] Real-host warm index and local mixed retrieval measured; no unchanged-file document embeddings; persistent Chroma summary unchanged; synthetic resources cleaned.
+- [x] Summary overflow used bounded fallback and the session was persisted/restored.
+- [ ] No-evidence general question: FAIL; answer contract refused an uncited Hybrid repository claim. Preserve the contract; correct the no-evidence response strategy before claiming this behavior.
+- [ ] Synthetic repository evidence answer: PARTIAL (contract `limited`; runner assertion also incorrectly required literal citation/path inside model prompt).
+- [ ] Third synthetic scenario: NOT_MEASURED; Runner stopped after B. Runner aggregate request counter undercounts event-level calls (2 reported vs 4 observed).
+
+Phase 5.2.2.3-R1 remains PARTIAL. Do not mark ACCEPTED or start Phase 5.2.3 from this result. See the R1 reports and immutable raw host evidence.
+
+## Phase 5.2.2.3-R2 — final host convergence (2026-11-11)
+
+- [x] Full offline regression and static checks passed; 6 Windows link-permission skips remain disclosed.
+- [x] One DeepSeek Flash A/B/C synthetic host matrix completed: 11/11 Chat requests succeeded, no retry.
+- [x] Bound-repository search is independent of Planner retrieval intent; B returned a normal answer without evidence or fabricated citations.
+- [x] Active repository warm preparation and hybrid retrieval measured; official persistent Chroma digest and formal vector count remained unchanged.
+- [x] Synthetic Chroma/Embedding failure fallback and recovery passed; temporary resources cleaned.
+- [ ] A/C1 Answer Contract remains limited without independent semantic entailment validation.
+- [ ] C2 tool-observation provenance is not mapped into formal Answer Contract evidence.
+- [ ] Runner has evidence-count, literal-citation, and cross-layer retrieval-count assertion defects; preserved without post-run fixes.
+
+Phase status: PARTIAL. No Phase 5.2.3 work started.
+
+## Phase 5.2.2.3-R3 closure (2026-11-11)
+
+R3 is **PARTIAL**. Evidence provenance mapping, Runner false-negative corrections, and request telemetry aggregation passed focused offline checks. Forward/reverse related regression passed 167/167 each. The single full suite run was environment-blocked by 14 temporary-path permission errors and had 6 skipped tests. The R3 DeepSeek C2 host reacceptance remains NOT_MEASURED and no cloud request was sent. Do not advance to Phase 5.2.3 or declare the v0.1 release frozen based on this result.
+
+## Phase 5.2.2.3-R3.1 — final acceptance repair (2026-11-11)
+
+- [x] Root-caused all 14 prior errors to default system-temp use in seven tests; moved only that fixture to a unique project-local temp root.
+- [x] Affected module 12/12; focused provenance/contract/telemetry 16/16; related suite 167/167 forward and reverse.
+- [x] One complete offline run: 1,047 run, 1,041 passed, 0 failed, 0 errors, 6 Windows link-security skips with explicit reasons.
+- [x] Compilation and static dependency scan passed; the test temp root was cleaned.
+- [ ] Current DeepSeek C2 host acceptance and real persistent Chroma before/after digest: BLOCKED / NOT_MEASURED because the current process reports `CODEX_SANDBOX_NETWORK_DISABLED=1`; zero cloud requests were sent.
+
+Phase status: **PARTIAL_HOST_BLOCKED**. The offline suite is clean within the six disclosed platform skips, but C2 has not been demonstrated against the current worktree. Do not freeze v0.1 or enter Phase 5.2.3 until the host evidence is obtained.
+
+## Phase 5.2.2.3-R4 — root-cause gate (2026-11-11)
+
+R4 is BLOCKED at read-only diagnosis. Original evidence lacks the Read argument shape and duplicate-call diagnostic code, so no repair was attempted and no test or DeepSeek host run was started. Continue only after a scoped diagnostic can emit sanitized argument field/type/error category and duplicate validator code/call-id hash. Do not treat R3.1 historical evidence as R4 current PASS.
+
+## Phase 5.2.2.3-R4.1 C2 host gate — 2026-11-11
+
+Offline regression and static gates passed. The sole authorized C2 host attempt was blocked before Planner/Tool execution because cached deepseek-flash capability metadata was stale. No model refresh or second host attempt was performed; Chat/discovery/retry counts were all zero. Current C2 final acceptance remains BLOCKED, and v0.1 freeze is not established by this run. Preserve the host result and reports with run ID 130550ad9b274d4c907d31cf92f4a949.
+
+## Phase 5.2.2.3-R4.2 — 2026-11-11
+
+Blocked before refresh and C2. The current provider exposes only whole-list GET /models refresh, incompatible with the specified per-model refresh and zero-discovery budget. No refresh, model request, or test suite was run. Continue only if an already-supported model-specific capability source is available or the refresh constraints are explicitly revised.
+
+## Phase 5.2.2.3-R4.2.1 — 2026-11-11
+
+The revised controlled-refresh gate and 117 focused offline tests passed. Runtime Tool Calling was demonstrated by one harmless synthetic probe. The sole C2 host run failed at the explicit authorization-registry guard before Search/Read dispatch; no retry or code repair followed. C2 and v0.1 freeze remain blocked by a recorded FAIL, not by network availability. Preserve the raw host evidence and diagnose the Planner/Runner/product registry wiring before any later authorized attempt. Do not treat this phase as final acceptance.
+
+## Phase 5.2.2.3-R4.2.2 — 2026-11-11
+
+R4.2.2 is **FAIL** for the required final C2 acceptance. The default bound-repository read-only tool integration and strict Observation metadata shape are repaired and offline-tested. The one post-fix DeepSeek C2 attempt passed tool discovery/schema/permission checks, completed AgentExecutionEngine and restored the Session, but did not map the Read to verified SQLite evidence; effective evidence count was zero and Answer Contract returned `limited`. One Read invocation failed `INVALID_ARGUMENTS` before a later successful Read. Preserve both raw runs and do not retry or enter Phase 5.2.3. v0.1 freeze remains **NOT_READY**. Formal Chroma and synthetic cleanup passed; active SQLite and formal registration post-run comparisons are not measured.
+
+
+## Phase 5.2.2.3-R4.2.3 — 20261112_011027
+
+**Status: PARTIAL; v0.1 freeze NOT_READY.** The three authorized synthetic DeepSeek Flash C2 attempts are complete (21/21 Chat requests succeeded, 0 retries/discovery). The final host run completed mixed retrieval, one SQLite/hash-verified evidence item, Search, a safely rejected out-of-range Read followed by bounded recovery using a distinct call ID, answer generation and Session restore. Official Chroma (599 vectors), PostgreSQL snapshot, repository registry (7) and active SQLite (195) were unchanged; synthetic resources were removed. The Answer Contract remains **LIMITED** because semantic entailment was not independently verified; it is not counted as PASS. No fourth C2 attempt was made. Full offline suite: 1,073 run / 1,070 passed / 0 failed / 0 errors / 3 skipped; related forward/reverse 348/348 each; dependency 21/21. See the timestamped R4.2.3 root cause, implementation, results, matrix, test, host trace and data protection artifacts.
+
+## Phase 5.2 closure (2026-11-12)
+
+Phase 5.2 is closed for the declared v0.1 scope. The release review is FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS, not an unrestricted feature-completeness claim.
+
+Accepted limitation: Answer Contract remains LIMITED without independent claim-level semantic entailment verification. Provider-native streaming and a fresh full 15-scenario DeepSeek host matrix are NOT_MEASURED. The current final offline run has 0 failures/errors and 3 Windows symbolic-link permission skips. No new development phase was opened by this closure.
+
+## Phase 5.2 closure (2026-11-12)
+
+Phase 5.2 is closed for the declared v0.1 scope. The release review is FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS, not an unrestricted feature-completeness claim.
+
+Accepted limitation: Answer Contract remains LIMITED without independent claim-level semantic entailment verification. Provider-native streaming and a fresh full 15-scenario DeepSeek host matrix are NOT_MEASURED. The current final offline run has 0 failures/errors and 3 Windows symbolic-link permission skips. No new development phase was opened by this closure.

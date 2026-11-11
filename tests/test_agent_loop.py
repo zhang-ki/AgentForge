@@ -90,6 +90,39 @@ class ReadOnlyAgentLoopTests(LocalTestCase):
                 with self.subTest(call=call), self.assertRaises(ValueError):
                     toolbox.execute(call)
 
+    def test_read_accepts_search_citation_as_bounded_relative_path_range(self):
+        self.write("src/safe.py", "first_marker\nsecond_marker\nthird_marker\n")
+        with IndexStore(":memory:") as store:
+            toolbox = ReadOnlyToolbox(self.root, store)
+            result = toolbox.execute(ToolCall(
+                "read", {"path": "src/safe.py:2-3"}, "synthetic_test",
+            ))
+        self.assertEqual({"path": "src/safe.py", "start_line": 2, "end_line": 3,
+                          "text": "second_marker\nthird_marker"}, result)
+
+    def test_read_diagnostics_identify_bounds_and_reject_unsafe_citation_paths(self):
+        self.write("safe.py", "line_one\nline_two\n")
+        with IndexStore(":memory:") as store:
+            toolbox = ReadOnlyToolbox(self.root, store)
+            with self.assertRaises(ValueError) as bounds:
+                toolbox.execute(ToolCall("read", {"path": "safe.py:1-9"}, "synthetic_test"))
+            self.assertEqual("LINE_RANGE_OUT_OF_BOUNDS", bounds.exception.reason_code)
+            self.assertEqual({"field": "end_line", "line_count": 2},
+                             bounds.exception.diagnostic_details)
+            for path in ("../outside.py:1-2", str(self.root / "safe.py:1-2"), "missing.py:1-2"):
+                with self.subTest(path_kind=path.split(":")[-1]), self.assertRaises(ValueError):
+                    toolbox.execute(ToolCall("read", {"path": path}, "synthetic_test"))
+
+    def test_read_citation_rejects_conflicting_explicit_line_bounds(self):
+        self.write("safe.py", "line_one\nline_two\n")
+        with IndexStore(":memory:") as store:
+            toolbox = ReadOnlyToolbox(self.root, store)
+            with self.assertRaises(ValueError) as rejected:
+                toolbox.execute(ToolCall("read", {
+                    "path": "safe.py:1-2", "start_line": 1,
+                }, "synthetic_test"))
+        self.assertEqual("CONFLICTING_LINE_RANGE_ARGUMENTS", rejected.exception.reason_code)
+
     def test_step_budget_and_timeout_stop_without_retry(self):
         self.write("safe.py", "safe token\n")
         with IndexStore(":memory:") as store:

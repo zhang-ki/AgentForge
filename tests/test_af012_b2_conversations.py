@@ -814,10 +814,11 @@ class LongContextLifecycleTests(unittest.TestCase):
 @unittest.skipUnless(importlib.util.find_spec("sqlalchemy") and importlib.util.find_spec("alembic"),
                      "AF-012 SQLAlchemy/Alembic dependencies unavailable")
 class OfflineConsoleIntegrationTests(LocalTestCase):
-    def test_no_evidence_refusal_does_not_compact_long_history(self):
+    def test_no_evidence_answer_preserves_raw_long_history(self):
         import json
         from sqlalchemy import create_engine
         from agentforge.conversation_migrations import upgrade
+        from agentforge.cli import _repository_id
         from agentforge.conversation_store import ConversationStore
         from agentforge.indexer import index_repository
         from agentforge.store import IndexStore
@@ -833,15 +834,38 @@ class OfflineConsoleIntegrationTests(LocalTestCase):
         def index_scope(*_args, **_kwargs):
             yield index
         with (patch("agentforge.cli._conversation_engine", side_effect=lambda: create_engine(sqlite_url)),
-              patch("agentforge.cli._open_current_index", side_effect=index_scope),
-              patch.object(ConversationStore, "prepare_history", side_effect=AssertionError("unexpected compaction"))):
+              patch("agentforge.cli._open_current_index", side_effect=index_scope)):
             cid = json.loads(invoke(["session", "create", "refusal"])[1])["result"]["id"]
+            repository_id = _repository_id(index.metadata()["repository"])
+            store_engine = create_engine(sqlite_url)
+            store = ConversationStore(store_engine)
+            self.addCleanup(store_engine.dispose)
+            for number in range(8):
+                store.append_turn(
+                    cid, repository_id,
+                    f"historical question marker-{number}",
+                    f"historical answer marker-{number}",
+                )
+            before = [(row["sequence"], row["role"], row["content"])
+                      for row in store.get_messages(cid, repository_id)]
+            self.assertEqual(16, len(before))
             code, output, error = invoke([
                 "ask", "What does function nonexistent_zephyr_941 return?",
-                "--conversation-id", cid, "--mode", "repository",
+                "--conversation-id", cid, "--mode", "repository", "--provider", "offline",
             ])
             self.assertEqual((0, ""), (code, error))
-            self.assertEqual("refused", json.loads(output)["answer_contract"]["status"])
+            result = json.loads(output)
+            self.assertEqual("refused", result["answer_contract"]["status"])
+            after = [(row["sequence"], row["role"], row["content"])
+                     for row in store.get_messages(cid, repository_id)]
+            self.assertEqual(before, after[:len(before)],
+                             "context preparation must not rewrite raw session messages")
+            self.assertEqual(18, len(after), "the no-evidence turn should still be persisted")
+            self.assertEqual(
+                [(17, "user", "What does function nonexistent_zephyr_941 return?"),
+                 (18, "assistant", result["refused_output"])],
+                after[-2:],
+            )
 
     def test_cli_session_lifecycle_health_and_unavailable_database(self):
         from sqlalchemy import create_engine

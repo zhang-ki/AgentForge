@@ -10,6 +10,8 @@ from ..errors import ProviderError
 from ..context_assembler import ContextAssembler
 from ..models import Answer, BuiltContext
 from ..model_types import LOCAL_QWEN
+from ..observability import (current_lifecycle, current_stage, finish_provider_stage,
+                             lifecycle_stage)
 from ..token_budget import ContextBudgetManager
 from .dialogue_protocol import (
     _ANSWER_SYSTEM_PROMPT, _GENERAL_SYSTEM_PROMPT, _HYBRID_SYSTEM_PROMPT,
@@ -76,6 +78,7 @@ class LlamaServerClient:
             "last_elapsed_seconds": None, "last_response_chars": None,
             "last_usage": None, "last_request_id": None,
             "last_requested_output_tokens": None,
+            "last_first_response_ms": None,
             "last_finish_reason": None, "last_had_reasoning_content": False,
             "last_error_code": None, "last_response_diagnostic": None,
             "last_application_failure_phase": None, "last_application_error_code": None,
@@ -105,8 +108,26 @@ class LlamaServerClient:
         timeout = self.total_timeout if timeout_seconds is None else validate_timeout(
             timeout_seconds, "request timeout", 10, self.total_timeout, inclusive_minimum=True,
         )
-        return _chat_request(self, messages, model, output_tokens=output_tokens,
-                             timeout_seconds=timeout)
+        if current_lifecycle() is None:
+            return _chat_request(self, messages, model, output_tokens=output_tokens,
+                                 timeout_seconds=timeout)
+        before = self.request_stats()
+        parent_stage = current_stage()
+        with lifecycle_stage("provider_request", metadata={
+            "provider": "llama-server", "model": model,
+        }) as request_stage:
+            try:
+                result = _chat_request(self, messages, model, output_tokens=output_tokens,
+                                       timeout_seconds=timeout)
+            except BaseException as exc:
+                finish_provider_stage(request_stage, provider="llama-server", model=model,
+                                      before=before, after=self.request_stats(), error=exc,
+                                      parent_stage=parent_stage)
+                raise
+            finish_provider_stage(request_stage, provider="llama-server", model=model,
+                                  before=before, after=self.request_stats(),
+                                  parent_stage=parent_stage)
+            return result
 
 
 
@@ -196,10 +217,19 @@ class LlamaServerProvider:
 
     def answer_general(self, context: BuiltContext, *, conversation=None,
                        settings=None, on_content=None,
-                       external_data_unavailable=False) -> Answer:
+                       external_data_unavailable=False,
+                       repository_evidence_unavailable=False) -> Answer:
+        prompt = _external_data_unavailable_prompt(
+            _GENERAL_SYSTEM_PROMPT, external_data_unavailable,
+        )
+        if repository_evidence_unavailable:
+            prompt += (
+                " A repository search was attempted but produced no verified source evidence. "
+                "Do not claim what this repository implements. State that repository behavior cannot be "
+                "confirmed, while still answering any general principle in the question."
+            )
         messages = _model_messages(context, conversation, [
-            {"role": "system", "content": _external_data_unavailable_prompt(
-                _GENERAL_SYSTEM_PROMPT, external_data_unavailable)},
+            {"role": "system", "content": prompt},
             {"role": "user", "content": with_planner_task_outline(
                 context, "Question:\n" + context.question)},
         ], descriptor=self.descriptor,
@@ -277,6 +307,7 @@ def _chat_request(
             "last_http_status": None, "last_failure_phase": None,
             "last_elapsed_seconds": None, "last_response_chars": None,
             "last_usage": None, "last_request_id": None,
+            "last_first_response_ms": None,
             "last_requested_output_tokens": output_tokens,
             "last_finish_reason": None, "last_had_reasoning_content": False,
             "last_error_code": None, "last_response_diagnostic": None,
@@ -322,6 +353,15 @@ def _chat_request(
             timeout_phase = "response headers"
             response = connection.getresponse()
             client._request_stats["last_http_status"] = response.status
+            tracker = current_lifecycle()
+            if tracker is not None:
+                client._request_stats["last_first_response_ms"] = max(
+                    0, round((time.monotonic() - started) * 1000),
+                )
+                tracker.observe("provider_request", "RESPONSE_HEADERS", status="RUNNING",
+                                metadata={"http_status": response.status,
+                                          "first_response_ms": client._request_stats["last_first_response_ms"]},
+                                console=True)
             def set_response_timeout():
                 # 收到 Connection: close 后，HTTPConnection 可能会解除其 socket 关联；
                 # 但 HTTPResponse 仍持有读取响应正文所需的文件或 socket。

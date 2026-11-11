@@ -63,8 +63,7 @@ class ConversationAgentExecutor:
             # Custom registries are only advertised when their permission policy
             # is injected explicitly; registration alone never grants access.
             return self.authorization_factory is not None
-        return (request.mode in {"auto", "repository", "hybrid"}
-                and isinstance(request.repository, str)
+        return (isinstance(request.repository, str)
                 and bool(request.repository.strip())
                 and request.repository.strip().casefold() != "stateless")
 
@@ -82,9 +81,11 @@ class ConversationAgentExecutor:
             raise ValueError("Tool catalog query must be non-empty and bounded.")
         if self.tool_registry_factory is None:
             registry = toolbox_registry(None, include_index=False)
-            authorization = ToolAuthorization(
-                permission_scopes=frozenset({"repository:read"}),
-            )
+            authorization = (self.authorization_factory(request, repository_id)
+                             if self.authorization_factory is not None else
+                             ToolAuthorization(
+                                 permission_scopes=frozenset({"repository:read"}),
+                             ))
         else:
             try:
                 registry = self.tool_registry_factory(None)
@@ -117,13 +118,24 @@ class ConversationAgentExecutor:
                 streaming, cancel_event=None) -> ConversationAgentExecution:
         if not getattr(dialogue_plan, "requires_agent_execution", False):
             raise ValueError("Agent execution was requested without a validated tool plan.")
-        uses_repository = bool(getattr(dialogue_plan, "use_repository", False))
+        repository_bound = (
+            isinstance(request.repository, str)
+            and bool(request.repository.strip())
+            and request.repository.strip().casefold() != "stateless"
+        )
+        # The built-in registry contains only the existing bounded repository
+        # read tools. Its availability is tied to an explicitly bound/indexed
+        # repository, not to the Planner's answer/retrieval intent flag.
+        uses_builtin_repository_tools = self.tool_registry_factory is None
+        uses_repository = (repository_bound if uses_builtin_repository_tools else
+                           bool(getattr(dialogue_plan, "use_repository", False)))
         if uses_repository and (
                 index_store is None or not isinstance(request.repository, str)
                 or not request.repository.strip()):
             raise ValueError("Repository tool execution requires the explicitly selected repository index.")
-        if not uses_repository and (
-                self.tool_registry_factory is None or self.authorization_factory is None):
+        if uses_builtin_repository_tools and not uses_repository:
+            raise ValueError("The built-in tool registry requires an explicitly bound repository.")
+        if not uses_repository and self.authorization_factory is None:
             raise ValueError("General tool execution requires an explicitly authorized tool registry.")
         if request.provider_id == "deepseek" and not request.cloud_data_authorized:
             raise ValueError("DeepSeek Agent execution requires explicit cloud-data authorization.")

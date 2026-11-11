@@ -1,8 +1,8 @@
 """面向有界产品 Agent 的意图驱动、保留证据来源的检索。
 
-本模块有意不使用 RRF，也不强制要求 Vector。
-路由会按顺序选择证据通道；不可用的可选通道会明确报告，
-不会被悄悄当作成功通道。
+本模块不使用 RRF。产品路由负责排序和关系分析；实际仓库检索始终
+结合 SQLite 词法/符号通道，并在配置时加入 Chroma 向量候选。
+不可用通道会明确报告，不会被悄悄当作成功通道。
 """
 
 from __future__ import annotations
@@ -11,10 +11,15 @@ from dataclasses import dataclass, replace
 import hashlib
 from pathlib import Path
 import re
+import sqlite3
 
 from .chunker import split_source_lines
 from .errors import StoreError
 from .evidence_roles import required_evidence_roles
+from .index_lifecycle import (
+    UnavailableVectorRetriever, derive_index_lifecycle,
+)
+from .observability import lifecycle_stage
 from .models import SearchResult
 from .package_relations import (
     PackageRelationRetriever, PackageSnapshotReadError, build_package_relation_graph,
@@ -39,6 +44,10 @@ _RELATION_STOPWORDS = {
     "callee", "callees", "call", "calls", "called", "function", "method", "class",
     "symbol", "as", "a", "an", "the", "is", "does", "from", "to",
 }
+
+
+class RepositoryEvidenceUnavailable(ValueError):
+    """A repository snapshot or identity failed verification; no source may be used."""
 
 
 @dataclass(frozen=True)
@@ -77,6 +86,7 @@ class ProductRetrievalOutcome:
     unavailable_channels: tuple[str, ...]
     parse_failures: tuple[tuple[str, str], ...]
     uncertainty: str | None
+    index_lifecycle: dict | None = None
 
 
 class ProductIntentRouter:
@@ -94,6 +104,16 @@ class ProductIntentRouter:
                 "exact_symbol", ("symbols", "lexical"), "explicit_symbol_reference",
                 "An explicit Python symbol reference is treated as an exact lookup.", "high",
             )
+        if isinstance(stripped, str):
+            words = {word.casefold() for word in re.findall(r"[A-Za-z_]+", stripped)}
+            if ("formula" in words
+                    and _contains_code_shaped_identifier(stripped)):
+                return RouteDecision(
+                    "business_implementation", ("lexical", "vector"),
+                    "formula_for_code_identifier",
+                    "A formula question names code-shaped identifiers; source relevance and hash checks remain required.",
+                    "medium",
+                )
         return self._base.route(query)
 
 
@@ -111,12 +131,17 @@ class ProductRetriever:
         self.limits = limits or ScanLimits()
         report = scan_report or scan_repository(repository, self.limits)
         if not report.complete:
-            raise ValueError("Repository scan is incomplete; product retrieval is refused.")
+            raise RepositoryEvidenceUnavailable(
+                "Repository scan is incomplete; product retrieval is refused."
+            )
         requested_root = str(Path(repository).resolve(strict=True))
         actual_root = str(report.root.resolve(strict=True))
         if actual_root.casefold() != requested_root.casefold():
-            raise ValueError("Scanner report does not belong to the requested repository.")
+            raise RepositoryEvidenceUnavailable(
+                "Scanner report does not belong to the requested repository."
+            )
         self.repository = report.root
+        self.scan_report = report
         self._candidates = {item.relative_path: item for item in report.candidates}
         self.vector_retriever = vector_retriever
         self.router = ProductIntentRouter()
@@ -130,13 +155,19 @@ class ProductRetriever:
     def _ensure_index_matches(self) -> None:
         indexed_root = self.store.metadata().get("repository")
         if not indexed_root:
-            raise ValueError("No repository index is available; index the authorized repository first.")
+            raise RepositoryEvidenceUnavailable(
+                "No repository index is available; index the authorized repository first."
+            )
         try:
             normalized = str(Path(indexed_root).resolve(strict=True))
         except (OSError, RuntimeError, ValueError):
-            raise ValueError("The current index repository is unavailable or cannot be verified.") from None
+            raise RepositoryEvidenceUnavailable(
+                "The current index repository is unavailable or cannot be verified."
+            ) from None
         if normalized.casefold() != str(self.repository).casefold():
-            raise ValueError("The index belongs to a different repository; refusing cross-repository evidence.")
+            raise RepositoryEvidenceUnavailable(
+                "The index belongs to a different repository; refusing cross-repository evidence."
+            )
 
     def _current_file(self, relative_path: str) -> tuple[str, str] | None:
         if relative_path in self._file_text_cache:
@@ -155,22 +186,31 @@ class ProductRetriever:
         return value
 
     def _indexed_file_is_current(self, relative_path: str) -> bool:
-        current = self._current_file(relative_path)
-        if current is None:
-            self._index_stale = True
-            return False
-        if self.store.indexed_file_hash(relative_path) != current[1]:
-            self._index_stale = True
-            return False
-        return True
+        with lifecycle_stage("source_hash_validation") as validation_stage:
+            current = self._current_file(relative_path)
+            if current is None:
+                self._index_stale = True
+                if validation_stage is not None:
+                    validation_stage.finish("DEGRADED", error_code="source_unavailable")
+                return False
+            if self.store.indexed_file_hash(relative_path) != current[1]:
+                self._index_stale = True
+                if validation_stage is not None:
+                    validation_stage.finish("DEGRADED", error_code="source_hash_mismatch")
+                return False
+            return True
 
     def _excerpt(self, relative_path: str, start_line: int, end_line: int) -> str:
         current = self._current_file(relative_path)
         if current is None:
-            raise ValueError("Structured result points outside the scanner-approved snapshot.")
+            raise RepositoryEvidenceUnavailable(
+                "Structured result points outside the scanner-approved snapshot."
+            )
         lines = split_source_lines(current[0])
         if not lines or start_line < 1 or end_line < start_line or end_line > len(lines):
-            raise ValueError("Structured result contains an invalid source line range.")
+            raise RepositoryEvidenceUnavailable(
+                "Structured result contains an invalid source line range."
+            )
         return "\n".join(lines[start_line - 1:end_line])
 
     @staticmethod
@@ -493,7 +533,8 @@ class ProductRetriever:
     def search(self, query: str, *, top_k: int = 5) -> ProductRetrievalOutcome:
         if isinstance(top_k, bool) or not isinstance(top_k, int) or not 1 <= top_k <= 100:
             raise ValueError("top_k must be an integer between 1 and 100.")
-        self._ensure_index_matches()
+        with lifecycle_stage("repository_index_check"):
+            self._ensure_index_matches()
         self._index_stale = False
         self._channel_failures = []
         self._file_text_cache.clear()
@@ -501,24 +542,105 @@ class ProductRetriever:
         self._relation_failures = ()
         self._relation_attempted = False
         decision = self.router.route(query)
+        index_metadata = self.store.metadata()
+        index_status = self.store.status()
+        repository_id = index_metadata.get("repository_id")
+        indexed_snapshot = self.store.file_snapshot()
+        current_snapshot = {
+            item.relative_path: (item.size_bytes, item.mtime_ns)
+            for item in self.scan_report.candidates
+        }
+        indexed_metadata = {
+            item["relative_path"]: (item["size_bytes"], item["mtime_ns"])
+            for item in indexed_snapshot
+        }
+        sqlite_snapshot_stale = current_snapshot != indexed_metadata
         required_roles = required_evidence_roles(query)
         effective_top_k = max(top_k, len(required_roles))
         channel_results = {}
         unavailable = []
+        vector_failure = None
+        vector_inspection = None
+        vector_configured = self.vector_retriever is not None
+        # The routing rule remains useful for relevance ranking and relation
+        # analysis, but it must not suppress a retrieval channel for a bound
+        # repository. Always combine authoritative SQLite candidates with the
+        # optional semantic channel when it is configured.
+        channels = list(decision.channels)
+        for channel in ("lexical", "symbols"):
+            if channel not in channels:
+                channels.append(channel)
+        if vector_configured and "vector" not in channels:
+            channels.append("vector")
+        decision = replace(decision, channels=tuple(channels))
+        vector_selected = "vector" in decision.channels and vector_configured
+        if vector_configured and isinstance(self.vector_retriever, UnavailableVectorRetriever):
+            vector_failure = {
+                "reason_code": self.vector_retriever.reason_code,
+                "error_type": self.vector_retriever.error_type,
+            }
+            unavailable.append("vector")
+        elif vector_configured:
+            inspect = getattr(self.vector_retriever, "inspect_consistency", None)
+            if callable(inspect):
+                with lifecycle_stage("vector_index_integrity"):
+                    try:
+                        vector_inspection = inspect()
+                        if (not isinstance(vector_inspection, dict)
+                                or not isinstance(vector_inspection.get("complete"), bool)):
+                            raise ValueError("Vector consistency status is invalid.")
+                    except (sqlite3.Error, StoreError):
+                        raise
+                    except Exception as exc:
+                        vector_failure = {
+                            "reason_code": "vector_integrity_check_unavailable",
+                            "error_type": type(exc).__name__,
+                        }
+        vector_incomplete = bool(
+            vector_inspection is not None and vector_inspection.get("complete") is False
+        )
         for channel in decision.channels:
             if channel == "lexical":
                 lexical_limit = 100 if decision.route == "documentation" else max(top_k, 10)
-                values = self._lexical(query, lexical_limit)
+                with lifecycle_stage("sqlite_lexical_search") as search_stage:
+                    values = self._lexical(query, lexical_limit)
+                    if search_stage is not None:
+                        search_stage.finish("COMPLETED", metadata={"sqlite_result_count": len(values)})
             elif channel == "symbols":
-                values = self._symbols(query, max(top_k, 10))
+                with lifecycle_stage("sqlite_symbol_search") as search_stage:
+                    values = self._symbols(query, max(top_k, 10))
+                    if search_stage is not None:
+                        search_stage.finish("COMPLETED", metadata={"sqlite_result_count": len(values)})
             elif channel == "package_relations":
-                values = self._package_relations(query, max(top_k, 10))
+                with lifecycle_stage("sqlite_relation_search") as search_stage:
+                    values = self._package_relations(query, max(top_k, 10))
+                    if search_stage is not None:
+                        search_stage.finish("COMPLETED", metadata={"sqlite_result_count": len(values)})
             elif channel == "vector":
                 if self.vector_retriever is None:
                     unavailable.append("vector")
                     values = []
+                elif vector_failure is not None:
+                    unavailable.append("vector")
+                    values = []
                 else:
-                    values = self._vector(query, max(top_k, 10))
+                    with lifecycle_stage("vector_retrieval") as vector_stage:
+                        try:
+                            values = self._vector(query, max(top_k, 10))
+                            if vector_stage is not None:
+                                vector_stage.finish("COMPLETED", metadata={"vector_result_count": len(values)})
+                        except (sqlite3.Error, StoreError):
+                            raise
+                        except Exception as exc:
+                            vector_failure = {
+                                "reason_code": "vector_search_unavailable",
+                                "error_type": type(exc).__name__,
+                            }
+                            unavailable.append("vector")
+                            values = []
+                            if vector_stage is not None:
+                                vector_stage.finish("DEGRADED", error_code="vector_search_unavailable",
+                                                    metadata={"error_type": type(exc).__name__})
             else:
                 unavailable.append(channel)
                 values = []
@@ -548,8 +670,9 @@ class ProductRetriever:
                         "was found; textual matches remain unverified candidates."),
             )
 
-        ordered = []
-        positions = {}
+        merged_by_key = {}
+        merged_keys = []
+        channel_keys = {channel: [] for channel in decision.channels}
         for channel in decision.channels:
             values = channel_results.get(channel, [])
             if decision.route == "documentation" and channel == "lexical":
@@ -557,21 +680,57 @@ class ProductRetriever:
                     0 if item.relative_path.casefold().endswith(_DOCUMENT_SUFFIXES) else 1,
                     -item.score, item.relative_path.casefold(), item.start_line,
                 ))
+            seen_in_channel = set()
             for item in values:
-        # 合并多个通道中相同源码范围的重复命中；
-        # 同一文件中不同代码行范围的证据可以互为补充，
-                # 例如导入语句和实际调用位置。
                 key = (item.relative_path.casefold(), item.start_line, item.end_line)
-                if key in positions:
-                    index = positions[key]
-                    ordered[index] = self._merge(ordered[index], item)
-                    continue
-                positions[key] = len(ordered)
-                ordered.append(item)
-                if len(ordered) >= effective_top_k:
-                    break
-            if len(ordered) >= effective_top_k:
+                if key in merged_by_key:
+                    merged_by_key[key] = self._merge(merged_by_key[key], item)
+                else:
+                    merged_by_key[key] = item
+                    merged_keys.append(key)
+                if key not in seen_in_channel:
+                    channel_keys[channel].append(key)
+                    seen_in_channel.add(key)
+
+        # First reserve verified candidates that cover required evidence roles.
+        # Then interleave remaining channel rankings so an early full channel
+        # cannot starve semantic or structured candidates from the final context.
+        selected_keys = []
+        selected = set()
+        covered_roles = set()
+        required_role_set = set(required_roles)
+        while required_role_set - covered_roles:
+            next_key = next((key for key in merged_keys
+                             if key not in selected
+                             and set(merged_by_key[key].evidence_roles)
+                                 & (required_role_set - covered_roles)), None)
+            if next_key is None:
                 break
+            selected.add(next_key)
+            selected_keys.append(next_key)
+            covered_roles.update(merged_by_key[next_key].evidence_roles)
+
+        channel_positions = {channel: 0 for channel in decision.channels}
+        while len(selected_keys) < effective_top_k:
+            progressed = False
+            for channel in decision.channels:
+                values = channel_keys[channel]
+                position = channel_positions[channel]
+                while position < len(values) and values[position] in selected:
+                    position += 1
+                if position >= len(values):
+                    channel_positions[channel] = position
+                    continue
+                key = values[position]
+                channel_positions[channel] = position + 1
+                progressed = True
+                selected.add(key)
+                selected_keys.append(key)
+                if len(selected_keys) >= effective_top_k:
+                    break
+            if not progressed:
+                break
+        ordered = [merged_by_key[key] for key in selected_keys]
 
         parse_failures = (
             tuple(self._relation_graph.parse_failures)
@@ -588,16 +747,49 @@ class ProductRetriever:
             uncertainty = "At least one selected static relationship is not uniquely resolved."
         if self._index_stale:
             uncertainty = "The repository changed since indexing; stale indexed evidence was excluded."
+        if vector_incomplete:
+            uncertainty = uncertainty or "The vector index is incomplete; only source-verified candidates were retained."
         if not ordered:
             uncertainty = uncertainty or "No scanner-approved evidence matched this query."
+        vector_complete = (
+            vector_inspection.get("complete")
+            if isinstance(vector_inspection, dict) else None
+        )
+        stale_index = sqlite_snapshot_stale or self._index_stale or vector_incomplete
+        lifecycle_reason = None
+        if vector_failure is not None:
+            lifecycle_reason = vector_failure["reason_code"]
+        elif vector_incomplete:
+            lifecycle_reason = "vector_index_incomplete"
+        elif sqlite_snapshot_stale or self._index_stale:
+            lifecycle_reason = "sqlite_snapshot_stale"
+        elif not vector_selected:
+            lifecycle_reason = "vector_not_used_for_this_request"
+        lifecycle = derive_index_lifecycle(
+            repository_id=repository_id,
+            sqlite_available=True,
+            indexed=bool(index_metadata.get("indexed_at") and index_status.get("database")),
+            stale=stale_index,
+            vector_requested=vector_configured,
+            vector_available=(vector_configured and vector_failure is None),
+            vector_complete=vector_complete,
+            reason_code=lifecycle_reason,
+            expected_vectors=(vector_inspection.get("expected_vectors")
+                              if isinstance(vector_inspection, dict) else None),
+            stored_vectors=(vector_inspection.get("stored_vectors")
+                            if isinstance(vector_inspection, dict) else None),
+            invalid_vectors=(vector_inspection.get("invalid_vectors")
+                             if isinstance(vector_inspection, dict) else None),
+        )
         return ProductRetrievalOutcome(
             query, PRODUCT_ROUTE_VERSION, decision, tuple(ordered),
-            tuple(unavailable), parse_failures, uncertainty,
+            tuple(unavailable), parse_failures, uncertainty, lifecycle.to_dict(),
         )
 
 
 __all__ = [
     "PRODUCT_ROUTE_VERSION", "ProductCandidate", "ProductRetrievalOutcome",
+    "RepositoryEvidenceUnavailable",
     "ProductIntentRouter", "ProductRetriever",
 ]
 
@@ -626,6 +818,16 @@ def _mentioned_code_symbol(query: str) -> str | None:
             names.append(value)
     unique = tuple(dict.fromkeys(names))
     return unique[0] if len(unique) == 1 else None
+
+
+def _contains_code_shaped_identifier(query: str) -> bool:
+    if not isinstance(query, str):
+        return False
+    return any(
+        "_" in value or any(char.isdigit() for char in value)
+        or any(char.isupper() for char in value[1:])
+        for value in re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", query)
+    )
 
 
 def _is_explicit_symbol_reference(query: object) -> bool:

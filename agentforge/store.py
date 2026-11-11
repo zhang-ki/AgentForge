@@ -274,6 +274,29 @@ class IndexStore:
         ).fetchone()
         return None if row is None else str(row[0])
 
+    def file_snapshot(self) -> tuple[dict, ...]:
+        """Return indexed file identity metadata for bounded freshness checks."""
+        rows = self.connection.execute(
+            "SELECT relative_path, content_hash, size_bytes, mtime_ns, chunk_signature FROM files "
+            "ORDER BY relative_path COLLATE NOCASE"
+        ).fetchall()
+        return tuple({
+            "relative_path": str(row["relative_path"]),
+            "content_hash": str(row["content_hash"]),
+            "size_bytes": int(row["size_bytes"]),
+            "mtime_ns": int(row["mtime_ns"]),
+            "chunk_signature": str(row["chunk_signature"]),
+        } for row in rows)
+
+    def file_chunk_counts(self) -> dict[str, int]:
+        """Return authoritative per-file chunk counts for incremental indexing."""
+        rows = self.connection.execute(
+            "SELECT files.relative_path, COUNT(chunks.id) FROM files "
+            "LEFT JOIN chunks ON chunks.file_id = files.id "
+            "GROUP BY files.id, files.relative_path"
+        ).fetchall()
+        return {str(row[0]): int(row[1]) for row in rows}
+
     def check_repository(self, root: Path, replace_repository: bool = False) -> None:
         previous = self.metadata().get("repository")
         if previous and os.path.normcase(previous) != os.path.normcase(str(root)) and not replace_repository:

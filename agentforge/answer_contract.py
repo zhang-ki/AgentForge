@@ -8,7 +8,7 @@ import re
 from .context import validate_model_citations
 from .evidence_roles import role_coverage
 from .errors import CitationValidationError, ProviderError
-from .models import Answer, BuiltContext
+from .models import Answer, BuiltContext, EvidenceProvenance
 
 
 ANSWER_CONTRACT_VERSION = "af011-answer-contract-v1"
@@ -27,6 +27,8 @@ class ContractEvidence:
     channels: tuple[str, ...]
     resolution_status: str
     evidence_roles: tuple[str, ...] = ()
+    content_hash: str | None = None
+    provenance: EvidenceProvenance | None = None
 
     @property
     def citation(self) -> str:
@@ -68,7 +70,8 @@ def _contract_evidence(context: BuiltContext, candidate_by_citation=None) -> tup
             source.source_id, source.result.relative_path,
             source.result.start_line, source.result.end_line,
             source.result.text, channels, resolution,
-            tuple(source.result.evidence_roles),
+            tuple(source.result.evidence_roles), source.result.content_hash,
+            source.result.provenance,
         ))
     return tuple(values)
 
@@ -115,8 +118,26 @@ def validate_answer_contract(contract: VerifiedAnswerContract, context: BuiltCon
                 or evidence.excerpt != source.result.text
                 or not evidence.channels
                 or evidence.resolution_status not in _RESOLUTION
-                or evidence.evidence_roles != source.result.evidence_roles):
+                or evidence.evidence_roles != source.result.evidence_roles
+                or evidence.content_hash != source.result.content_hash
+                or evidence.provenance != source.result.provenance):
             raise ProviderError("Answer evidence text or provenance is invalid.")
+        if evidence.provenance is not None:
+            provenance = evidence.provenance
+            if not isinstance(provenance, EvidenceProvenance):
+                raise ProviderError("Answer evidence tool provenance is invalid.")
+            identifiers = (provenance.repository_id, provenance.execution_id,
+                           provenance.search_call_id, provenance.tool_call_id,
+                           provenance.observation_id, provenance.tool_source_id)
+            if (provenance.source_kind != "verified_agent_read"
+                    or any(not isinstance(value, str) or not value.strip() or len(value) > 256
+                           for value in identifiers)
+                    or provenance.tool_call_id != provenance.observation_id
+                    or provenance.search_call_id == provenance.tool_call_id
+                    or not re.fullmatch(r"[0-9a-f]{64}", provenance.content_hash or "")
+                    or provenance.content_hash != source.result.content_hash
+                    or re.fullmatch(r"E[1-9]\d*", provenance.tool_source_id) is None):
+                raise ProviderError("Answer evidence tool provenance is invalid.")
         if evidence.citation in seen:
             raise ProviderError("Answer evidence contains a duplicate citation.")
         seen.add(evidence.citation)

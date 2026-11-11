@@ -223,20 +223,25 @@ def main():
         config = _call("session", "current")
         current = config["result"]
         suggestions = []
-        chroma_enabled = os.environ.get("AGENTFORGE_CHROMA_ENABLED") == "1"
+        chroma_enabled = os.environ.get("AGENTFORGE_CHROMA_ENABLED", "1") != "0"
         stream_enabled = False
+        debug_enabled = False
         dialogue_mode = "auto"
         output_budget_mode = "standard"
-        repository = config["repository"]
-        print("当前仓库：" + repository)
+        repository = config.get("repository")
+        if repository:
+            print("当前仓库：" + repository)
+        else:
+            print("当前没有活动仓库。可先使用 /repo register 路径；注册时会自动建立 SQLite 与 Chroma 索引。")
         print("普通问题会由 Planner 自动选择通用知识、仓库检索或混合回答。")
+        print("本地向量检索默认启用；Embedding 或 Chroma 不可用时会退回 SQLite 检索并提示状态。")
         print("命令：/new 标题、/list、/switch 编号、/rename 标题、/history、/delete、"
               "/repo list|register 路径|switch 编号或ID|index [ID或路径]|rebuild [ID或路径]|remove ID、"
               "/memory list|suggest|save|approve|update|revoke|sync|rebuild、/memory global list|approve ID|revoke ID、"
               "/chroma status|index|rebuild|on|off、/modellist、/model [ID|default|refresh]、"
               "/model auth set deepseek|status|remove deepseek、/thinking on|off、/effort low|high|max、"
               "/output-budget concise|standard|long|max、/cloud-consent status|revoke、"
-              "/stream on|off、/help、/exit")
+              "/stream on|off、/debug on|off、/help、/exit")
         while True:
             config = _call("session", "current")
             if config["repository"] != repository:
@@ -265,6 +270,7 @@ def main():
                     print("/output-budget concise|standard|long|max：设置当前控制台的回答预算；按所选模型能力生效")
                     print("/cloud-consent status|revoke：查看或撤销当前会话的云端数据许可")
                     print("/stream on|off：DeepSeek SSE 草稿流；最终回答仍需通过引用校验")
+                    print("/debug on|off：显示或隐藏内部请求阶段详情；诊断 JSONL 始终保留")
                     print("高级调试覆盖：/mode general|repository|hybrid|auto；默认每轮由 Planner 自动路由。")
                 elif line == "/mode":
                     print("当前路由：" + ("自动（LLM Planner）" if dialogue_mode == "auto" else dialogue_mode)
@@ -356,6 +362,12 @@ def main():
                 elif line == "/stream off":
                     stream_enabled = False
                     print("DeepSeek SSE 草稿显示已关闭。")
+                elif line == "/debug on":
+                    debug_enabled = True
+                    print("内部阶段详情已显示；诊断 JSONL 持续记录。")
+                elif line == "/debug off":
+                    debug_enabled = False
+                    print("内部阶段详情已隐藏；诊断 JSONL 持续记录。")
                 elif line == "/repo list":
                     repositories = _call("repo", "list")["repositories"]
                     for index, item in enumerate(repositories, 1):
@@ -420,12 +432,8 @@ def main():
                     result = _call("chroma", action)
                     print(json.dumps(result, ensure_ascii=False, indent=2))
                 elif line == "/chroma on":
-                    required = ("AGENTFORGE_EMBEDDING_BASE_URL", "AGENTFORGE_EMBEDDING_MODEL_ID",
-                                "AGENTFORGE_EMBEDDING_API_MODEL")
-                    if not all(os.environ.get(name) for name in required):
-                        raise ValueError("请先配置独立的本地 Embedding 服务环境变量，再启用 Chroma。")
                     chroma_enabled = True
-                    print("Chroma 代码与已批准记忆检索已启用。")
+                    print("已启用 Chroma 向量检索；服务不可用时会自动退回 SQLite 检索。")
                 elif line == "/chroma off":
                     chroma_enabled = False
                     print("Chroma 检索已关闭。")
@@ -514,8 +522,9 @@ def main():
                                      "--model", current.get("model_id", "qwen3.5-4b")])
                     else:
                         args.extend(["--provider", "offline"])
-                    if chroma_enabled:
-                        args.append("--use-chroma")
+                    args.append("--use-chroma" if chroma_enabled else "--no-chroma")
+                    if debug_enabled:
+                        args.append("--debug")
                     presentation.main(args)
             except (ValueError, KeyError, AgentForgeError, OSError, RuntimeError) as exc:
                 print(f"操作失败：{exc}")

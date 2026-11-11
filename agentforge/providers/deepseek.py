@@ -13,6 +13,8 @@ from typing import Callable
 from ..errors import ProviderError
 from ..context_assembler import ContextAssembler
 from ..models import Answer, BuiltContext
+from ..observability import (current_lifecycle, current_stage, finish_provider_stage,
+                             lifecycle_stage)
 from ..token_budget import ContextBudgetManager
 from .dialogue_protocol import (_ANSWER_SYSTEM_PROMPT, _GENERAL_SYSTEM_PROMPT,
                                 _HYBRID_SYSTEM_PROMPT,
@@ -66,6 +68,7 @@ class DeepSeekClient:
             "last_http_status": None, "last_failure_phase": None, "last_elapsed_seconds": None,
             "last_error_code": None, "last_usage": None, "last_request_id": None,
             "last_requested_output_tokens": None,
+            "last_first_response_ms": None, "last_first_delta_ms": None,
             "last_reasoning_chars": None, "last_finish_reason": None,
             "last_response_diagnostic": None, "discovery_attempted": 0,
             "discovery_succeeded": 0, "discovery_failed": 0, "credential_source": None,
@@ -122,21 +125,56 @@ class DeepSeekClient:
         timeout = self.total_timeout if timeout_seconds is None else validate_timeout(
             timeout_seconds, "request timeout", 10, self.total_timeout, inclusive_minimum=True,
         )
-        payload = self._request("POST", _CHAT_PATH, body=body,
-                                streaming=stream, on_content=on_content,
-                                timeout_seconds=timeout,
-                                max_request_bytes=max_request_bytes,
-                                max_response_bytes=max_response_bytes)
-        try:
-            completion = _parse_completion(payload)
-        except ProviderError:
-            self._stats["succeeded"] = max(0, self._stats["succeeded"] - 1)
-            self._stats["failed"] += 1
-            self._stats["last_error_code"] = "invalid_completion"
-            raise
-        if self._stats.get("last_request_id") is None and completion.request_id:
-            self._stats["last_request_id"] = completion.request_id
-        return completion
+        def request_and_parse(callback):
+            payload = self._request("POST", _CHAT_PATH, body=body,
+                                    streaming=stream, on_content=callback,
+                                    timeout_seconds=timeout,
+                                    max_request_bytes=max_request_bytes,
+                                    max_response_bytes=max_response_bytes)
+            try:
+                completion = _parse_completion(payload)
+            except ProviderError:
+                self._stats["succeeded"] = max(0, self._stats["succeeded"] - 1)
+                self._stats["failed"] += 1
+                self._stats["last_error_code"] = "invalid_completion"
+                raise
+            if self._stats.get("last_request_id") is None and completion.request_id:
+                self._stats["last_request_id"] = completion.request_id
+            return completion
+
+        if current_lifecycle() is None:
+            return request_and_parse(on_content)
+
+        parent_stage = current_stage()
+        before = self.request_stats()
+        started_ns = time.monotonic_ns()
+        first_delta_ms = [None]
+        callback = on_content
+        if stream and callable(on_content):
+            def callback(content):
+                if first_delta_ms[0] is None:
+                    first_delta_ms[0] = max(0, (time.monotonic_ns() - started_ns) // 1_000_000)
+                    self._stats["last_first_delta_ms"] = int(first_delta_ms[0])
+                    tracker = current_lifecycle()
+                    if tracker is not None:
+                        tracker.observe("provider_request", "FIRST_DELTA", status="RUNNING",
+                                        metadata={"first_delta_ms": first_delta_ms[0]}, console=True)
+                return on_content(content)
+
+        with lifecycle_stage("provider_request", metadata={
+            "provider": "deepseek", "model": body["model"],
+        }) as request_stage:
+            try:
+                completion = request_and_parse(callback)
+            except BaseException as exc:
+                finish_provider_stage(request_stage, provider="deepseek", model=body["model"],
+                                      before=before, after=self.request_stats(), error=exc,
+                                      first_delta_ms=first_delta_ms[0], parent_stage=parent_stage)
+                raise
+            finish_provider_stage(request_stage, provider="deepseek", model=body["model"],
+                                  before=before, after=self.request_stats(),
+                                  first_delta_ms=first_delta_ms[0], parent_stage=parent_stage)
+            return completion
 
     def _connect(self):
         return self.connection_factory(_API_HOST, timeout=self.connect_timeout, context=self.ssl_context)
@@ -169,6 +207,7 @@ class DeepSeekClient:
             self._stats.update({"last_http_status": None, "last_failure_phase": None,
                 "last_elapsed_seconds": None, "last_error_code": None, "last_usage": None,
                 "last_request_id": None, "last_reasoning_chars": None, "last_finish_reason": None,
+                "last_first_response_ms": None, "last_first_delta_ms": None,
                 "last_response_diagnostic": None, "last_application_failure_phase": None,
                 "last_application_error_code": None})
             self._stats["last_request_byte_limit"] = request_limit
@@ -210,6 +249,15 @@ class DeepSeekClient:
             response = connection.getresponse()
             if not discovery:
                 self._stats["last_http_status"] = response.status
+                tracker = current_lifecycle()
+                if tracker is not None:
+                    self._stats["last_first_response_ms"] = max(
+                        0, round((time.monotonic() - started) * 1000),
+                    )
+                    tracker.observe("provider_request", "RESPONSE_HEADERS", status="RUNNING",
+                                    metadata={"http_status": response.status,
+                                              "first_response_ms": self._stats["last_first_response_ms"]},
+                                    console=True)
             if 300 <= response.status < 400:
                 raise _DeepSeekFailure("redirect_rejected", "DeepSeek redirect was rejected.")
             if response.status != 200:
@@ -805,9 +853,11 @@ class DeepSeekProvider:
 
     def answer_general(self, context: BuiltContext, *, conversation=None,
                        settings=None, on_content=None,
-                       external_data_unavailable=False) -> Answer:
+                       external_data_unavailable=False,
+                       repository_evidence_unavailable=False) -> Answer:
         return self._answer_mode(context, "general", conversation, settings, on_content,
-                                 external_data_unavailable)
+                                 external_data_unavailable,
+                                 repository_evidence_unavailable)
 
     def answer_hybrid(self, context: BuiltContext, *, conversation=None,
                       settings=None, on_content=None,
@@ -816,7 +866,8 @@ class DeepSeekProvider:
                                  external_data_unavailable)
 
     def _answer_mode(self, context, mode, conversation, settings, on_content,
-                     external_data_unavailable=False):
+                     external_data_unavailable=False,
+                     repository_evidence_unavailable=False):
         thinking = self.thinking if settings is None else settings.get("thinking_enabled", self.thinking)
         effort = self.effort if settings is None else settings.get("reasoning_effort", self.effort)
         if not isinstance(thinking, bool) or (thinking and self.descriptor.supports_thinking is not True):
@@ -826,6 +877,13 @@ class DeepSeekProvider:
         if self.stream and self.descriptor.supports_streaming is not True:
             raise ProviderError("Streaming capability is unknown or unsupported; no request was sent.")
         system_prompt = _GENERAL_SYSTEM_PROMPT if mode == "general" else _HYBRID_SYSTEM_PROMPT
+        if mode == "general" and repository_evidence_unavailable:
+            system_prompt += (
+                " A repository search was attempted for this turn but produced no verified source evidence. "
+                "Do not claim what this repository implements. If the question asks about repository behavior, "
+                "say that behavior cannot be confirmed from the available sources, then answer any general "
+                "principle or explanation that can be supported by your learned knowledge."
+            )
         system_prompt = _external_data_unavailable_prompt(system_prompt, external_data_unavailable)
         if mode == "general":
             user_text = with_planner_task_outline(context, "Question:\n" + context.question)
