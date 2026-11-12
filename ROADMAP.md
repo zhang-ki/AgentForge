@@ -443,8 +443,45 @@ Phase 5.2 is closed for the declared v0.1 scope. The release review is FREEZE_EL
 
 Accepted limitation: Answer Contract remains LIMITED without independent claim-level semantic entailment verification. Provider-native streaming and a fresh full 15-scenario DeepSeek host matrix are NOT_MEASURED. The current final offline run has 0 failures/errors and 3 Windows symbolic-link permission skips. No new development phase was opened by this closure.
 
+## v0.1 no-evidence and streaming follow-up (2026-11-12)
+
+The no-evidence path and application-layer incremental display have offline behavioral coverage. Provider-native Streaming against DeepSeek, current-session cloud consent, and live no-evidence generation remain NOT_MEASURED. The completed full-suite run had one stale fixture failure; its focused correction passed forward/reverse checks, but no second full run was performed. Do not treat this phase as a clean full-regression or live-host acceptance. No additional feature phase is opened here.
+
 ## Phase 5.2 closure (2026-11-12)
 
 Phase 5.2 is closed for the declared v0.1 scope. The release review is FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS, not an unrestricted feature-completeness claim.
 
 Accepted limitation: Answer Contract remains LIMITED without independent claim-level semantic entailment verification. Provider-native streaming and a fresh full 15-scenario DeepSeek host matrix are NOT_MEASURED. The current final offline run has 0 failures/errors and 3 Windows symbolic-link permission skips. No new development phase was opened by this closure.
+
+## v0.1 Fast Track final verification — 2026-11-12
+
+Fast Track host acceptance is **BLOCKED** and release readiness is **NOT_READY**. Focused tests (26/26), compile, and diff checks passed; a full offline suite was intentionally not run. PostgreSQL 5432 and Qwen Embedding 58067 were unavailable, so the live no-evidence DeepSeek answer, Session save, and native Streaming could not be measured. No model requests were sent, no service was started/stopped, and no commit or push was made. Resume only after the user’s existing host services are available; do not reinterpret this as a product PASS or repeat the blocked run automatically.
+
+## v0.1 Fast Track host continuation — 2026-11-12 14:46 +08:00
+
+Host preflight is now PASS for PostgreSQL and Qwen Embedding, but the live no-evidence DeepSeek turn is not accepted: one application-entry invocation has no captured completion telemetry and no target turn was persisted. Native Streaming remains NOT_MEASURED. Chroma vector IDs and SQLite provenance mappings are intact, while the Chroma database file hash differs from the earlier snapshot. Release readiness remains NOT_READY; no commit or push.
+
+
+## v0.1 No-Evidence Answer Verification — 2026-11-12
+
+The current DeepSeek no-evidence general-answer path passed direct Provider and actual application-entry checks. The old truncated request cannot be reconstructed from persisted records. No product defect was reproduced, and no production repair was made. Provider-native Streaming and full offline regression remain unmeasured in this task. No phase advancement is implied.
+
+## v0.1 Final Closure — 2026-11-12
+
+Final state: core answer PASS; data protection PARTIAL; native Provider Streaming NOT_MEASURED; current /stream on behavior DEGRADED_TO_BUFFERED. No new feature phase is opened. Git delivery is deferred because the Chroma physical mutation and complete historical registry delta are not fully explained. Do not commit or push until the data-protection gate is resolved.
+
+
+## Phase 5.2.4 Final Data Integrity Forensics — 2026-11-12
+
+Result: PARTIAL. Chroma logical/source integrity and current SQLite/Session checks passed. Chroma 1.5.9 reproduced physical file mutations on isolated copies, but historic official per-file hashes/process evidence are insufficient for complete attribution. Registry row count and active identity match history, while complete row history is unavailable and five inactive temporary test registrations remain. No data repair was performed; do not freeze/push until the evidence gate is resolved.
+
+
+## V0.1 no-evidence answer repair — 2026-11-12
+
+The General no-evidence answer path now removes only unverified `[E#]` source markers before contract validation and Session persistence; evidence-backed answers retain strict source and hash checks. Targeted offline checks passed 127/127 in forward and reverse order. One DeepSeek Flash product-entry answer and fresh-process Session restore passed. Overall status remains PARTIAL because Qwen Embedding was unavailable, native Provider Streaming was not measured, and automatic repository preparation scanned the active repository during the requested no-reindex acceptance. Do not freeze or publish based on this run; no next phase was started.
+## v0.1 Final Closure — 2026-11-12
+
+Phase 5.2.5 ended PARTIAL_BLOCKED / NOT_READY. Current SQLite and isolated-copy Chroma logical integrity passed; current PostgreSQL Session integrity and remote GitHub HEAD remain unverified. Historical Chroma physical attribution and complete Registry row history remain documented limitations. No code, data, or Git history was changed. Reconsider delivery only after current read-only Session verification and remote-head verification; retain the no-delete/no-reset policy.
+## Phase 5.2.6 — v0.1 final acceptance and delivery — 2026-11-12
+
+Release gates passed with known limitations: current Session authentication/integrity, SQLite source index, Registry active binding, isolated-copy Chroma logical provenance, historical no-evidence DeepSeek and source-validation evidence, and remote branch verification. Native Provider Streaming remains NOT_MEASURED. No product code was changed in this phase. See the Phase 5.2.6 final acceptance report.

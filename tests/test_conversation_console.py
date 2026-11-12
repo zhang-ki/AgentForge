@@ -72,6 +72,85 @@ class ConversationConsoleRepositoryTests(unittest.TestCase):
         self.assertIn("--no-chroma", arguments)
         self.assertNotIn("--use-chroma", arguments)
 
+    def test_stream_on_and_off_toggle_provider_streaming_without_changing_session(self):
+        state = {"repository": r"D:\synthetic\repo", "current": {
+            "id": "conversation-stream", "title": "session", "provider_id": "deepseek",
+            "model_id": "deepseek-flash", "thinking_enabled": False,
+        }}
+
+        class Descriptor:
+            supports_streaming = True
+            display_name = "DeepSeek Flash"
+
+        class Registry:
+            def get(self, model_id):
+                self_model.assertEqual("deepseek-flash", model_id)
+                return Descriptor()
+
+            def get_for_request(self, model_id):
+                self_model.assertEqual("deepseek-flash", model_id)
+                return Descriptor()
+
+        self_model = self
+
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": state["repository"], "result": state["current"]}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("agentforge.conversation_console._registry", return_value=Registry()),
+              patch("agentforge.conversation_console.presentation.main") as ask,
+              patch("builtins.input", side_effect=["/stream on", "first", "/stream off", "second", "/exit"]),
+              redirect_stdout(output)):
+            self.assertEqual(0, conversation_console.main())
+
+        requests = [call.args[0] for call in ask.call_args_list]
+        self.assertEqual(2, len(requests))
+        self.assertIn("--stream", requests[0])
+        self.assertNotIn("--stream", requests[1])
+        self.assertTrue(all(args[args.index("--conversation-id") + 1] == "conversation-stream"
+                            for args in requests))
+        self.assertIn("草稿显示已启用", output.getvalue())
+        self.assertIn("草稿显示已关闭", output.getvalue())
+
+    def test_stream_on_with_unknown_capability_keeps_answer_path_buffered(self):
+        state = {"repository": r"D:\synthetic\repo", "current": {
+            "id": "conversation-stream-unknown", "title": "session", "provider_id": "deepseek",
+            "model_id": "deepseek-flash", "thinking_enabled": False,
+        }}
+
+        class Descriptor:
+            supports_streaming = None
+            display_name = "DeepSeek Flash"
+
+        class Registry:
+            def get(self, _model_id):
+                return Descriptor()
+
+            def get_for_request(self, _model_id):
+                return Descriptor()
+
+        def fake_call(*args):
+            if args == ("session", "current"):
+                return {"repository": state["repository"], "result": state["current"]}
+            raise AssertionError(args)
+
+        output = io.StringIO()
+        with (patch("agentforge.conversation_console._call", side_effect=fake_call),
+              patch("agentforge.conversation_console._registry", return_value=Registry()),
+              patch("agentforge.conversation_console.presentation.main") as ask,
+              patch("builtins.input", side_effect=["/stream on", "Explain TCP.", "/exit"]),
+              redirect_stdout(output)):
+            self.assertEqual(0, conversation_console.main())
+
+        arguments = ask.call_args.args[0]
+        self.assertIn("--stream", arguments)
+        self.assertEqual("conversation-stream-unknown",
+                         arguments[arguments.index("--conversation-id") + 1])
+        self.assertIn("原生 Streaming 能力尚未确认", output.getvalue())
+
     def test_debug_mode_override_keeps_same_session_and_can_return_to_auto(self):
         state = {"repository": r"D:\synthetic\repo", "current": {
             "id": "conversation-keep", "title": "session", "provider_id": "llama-server",

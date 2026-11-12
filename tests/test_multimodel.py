@@ -257,6 +257,34 @@ class MultiModelTests(unittest.TestCase):
         self.assertEqual(1, client.request_stats()["succeeded"])
         self.assertTrue(connection.closed)
 
+    def test_deepseek_stream_uses_sse_and_delivers_incremental_deltas_and_usage(self):
+        body = (
+            b'data: {"id":"stream-1","choices":[{"delta":{"content":"Hello"},"finish_reason":null}]}\n\n'
+            b'data: {"choices":[{"delta":{"content":" there!"},"finish_reason":"stop"}]}\n\n'
+            b'data: {"choices":[],"usage":{"prompt_tokens":5,"completion_tokens":2,"total_tokens":7}}\n\n'
+            b'data: [DONE]\n\n'
+        )
+        connection = Connection(Response(body=body))
+        client = DeepSeekClient("synthetic-key", connection_factory=lambda *_a, **_kw: connection)
+        chunks = []
+
+        completion = client.chat(
+            [{"role": "user", "content": "synthetic question"}],
+            model="deepseek-flash", max_output_tokens=32, stream=True,
+            on_content=chunks.append,
+        )
+
+        method, path, encoded, headers = connection.request_args
+        payload = json.loads(encoded)
+        self.assertEqual(("POST", "/chat/completions"), (method, path))
+        self.assertEqual("text/event-stream", headers["Accept"])
+        self.assertTrue(payload["stream"])
+        self.assertEqual({"include_usage": True}, payload["stream_options"])
+        self.assertEqual(["Hello", " there!"], chunks)
+        self.assertEqual("Hello there!", completion.content)
+        self.assertEqual(7, client.request_stats()["last_usage"]["total_tokens"])
+        self.assertTrue(connection.closed)
+
     def test_stream_usage_preserves_reasoning_tokens_after_normalization(self):
         from agentforge.providers.deepseek import _usage_metadata
         usage = {"completion_tokens": 40, "completion_tokens_details": {"reasoning_tokens": 31}}
@@ -1142,6 +1170,8 @@ class DeepSeekProtocolBoundaryTests(unittest.TestCase):
         self.assertEqual(4, parsed["usage"]["prompt_tokens"])
         invalid_streams = [
             (b"data: not-json\n\n", "invalid_stream_json"),
+            (b'data: {"error":{"message":"secret response detail"}}\n\n', "stream_server_error"),
+            (b'event: error\ndata: {"message":"secret event detail"}\n\n', "stream_server_error"),
             (b"data: []\n\n", "invalid_stream_chunk"),
             (b"data: {}\n\n", "invalid_stream_chunk"),
             (b'data: {"choices":[{"delta":[]}]}\n\n', "invalid_stream_delta"),
@@ -1311,9 +1341,15 @@ class DeepSeekApplicationBoundaryTests(unittest.TestCase):
         from agentforge.errors import ProviderError
         from agentforge.providers.deepseek import DeepSeekProvider
         unknown = replace(self.descriptor, supports_streaming=None, supports_thinking=None)
-        for kwargs in ({"stream": True}, {"thinking": True}):
-            with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
-                DeepSeekProvider(self.client, unknown.model_id, descriptor=unknown, **kwargs)
+        with self.assertRaises(ValueError):
+            DeepSeekProvider(self.client, unknown.model_id, descriptor=unknown, thinking=True)
+        provider = DeepSeekProvider(self.client, unknown.model_id, descriptor=unknown, stream=True)
+        self.assertFalse(provider.stream)
+        self.client.chat = Mock(return_value=self.completion("Complete buffered answer."))
+        answer = provider.answer(self.context, on_content=Mock())
+        self.assertEqual("Complete buffered answer.", answer.text)
+        self.assertFalse(self.client.chat.call_args.kwargs["stream"])
+        self.assertIsNone(self.client.chat.call_args.kwargs["on_content"])
         disabled = replace(self.descriptor, supports_thinking=False)
         provider = DeepSeekProvider(self.client, disabled.model_id, descriptor=disabled)
         self.client.chat = Mock()

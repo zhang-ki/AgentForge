@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "phase": "AgentForge Phase 5.2.6",
+  "generated_at_utc": "2026-11-12T13:54:37Z",
+  "acceptance": "PASS_WITH_KNOWN_LIMITATIONS",
+  "release_state_before_git_delivery": "FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS",
+  "git_before_delivery": {
+    "branch": "feature/auto-chroma-hybrid",
+    "head": "2dbfe9d951c481d309f534dc5c4b242f44f008d3",
+    "remote_before_commit": "2dbfe9d951c481d309f534dc5c4b242f44f008d3",
+    "protected_tag": "v0.1.0-rc1",
+    "protected_tag_commit": "026bd2978ed315d7fc39b8c3556aedc0f5cd3e37",
+    "r0_inventory": "D:\\agent\\AgentForge-acceptance\\phase5.2.6\\r0_20261112T213815_0e523e40\\PHASE5_2_6_R0_WORKTREE_INVENTORY.json",
+    "r0_inventory_sha256": "477bb940ac63947fad206d0f65f466e2d65f78140ec5d63b05884b2681de4cc0",
+    "r0_status_rows": 83,
+    "r0_staged_paths": 0,
+    "r0_modified_tracked_paths": 18,
+    "r0_untracked_files": 71,
+    "r0_hashes_recorded": 89
+  },
+  "database": {
+    "session_backend": "PostgreSQL",
+    "database": "agentforge",
+    "role": "agentforge_app",
+    "schema": "public",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "credential_source": "project DPAPI file via launchers/common.ps1::Get-ConversationDatabaseKey",
+    "credential_file_present": true,
+    "process_env_AGENTFORGE_DB_PASSWORD_present": false,
+    "user_env_AGENTFORGE_DB_PASSWORD_present": false,
+    "machine_env_AGENTFORGE_DB_PASSWORD_present": false,
+    "tcp": "PASS",
+    "authentication": "PASS",
+    "select_1": "PASS",
+    "transaction": "READ ONLY then ROLLBACK",
+    "config_repair": false,
+    "production_code_modified": false,
+    "prior_audit_root_cause": "forensic helper read the child-process environment directly and omitted the existing DPAPI loader; saved historical exception lacks SQLSTATE, so exact old exception cannot be reconstructed"
+  },
+  "session": {
+    "database_identified": "PASS",
+    "database_auth": "PASS_CURRENT",
+    "read_only_query": "PASS_CURRENT",
+    "integrity": "PASS_CURRENT",
+    "persistence": "PASS_HISTORICAL",
+    "recovery": "PASS_HISTORICAL",
+    "active_repository": "D:\\Enneuro\\code",
+    "session_id": "04cfc958-ee51-4148-b6de-65c0c038fd26",
+    "conversation_status": "active",
+    "message_count": 2,
+    "sequences": [1, 2],
+    "ids_unique": true,
+    "sequence_numbers_unique_and_monotonic": true,
+    "pending_count": 0,
+    "latest_pair_completed": true,
+    "latest_user_chars": 18,
+    "latest_user_sha256": "f66fd6471cd8caa35d64ba04abf0e10f8c3cf7e84551e1051de036bc651f2d1a",
+    "latest_assistant_chars": 87,
+    "latest_assistant_sha256": "c063194500d7412a3ce50de3a255b5ba9e1852fb7e3f0ba32a5b825e620a0681",
+    "message_bodies_logged": false,
+    "database_writes": 0
+  },
+  "sqlite": {
+    "status": "PASS_CURRENT",
+    "path": ".agentforge/data/index.sqlite3",
+    "sha256": "230fd636d199247646513f91b4b48e86ae16e84ef5b8a1ea388c772bb4f5faee",
+    "integrity_check": "ok",
+    "files": 195,
+    "chunks": 599,
+    "source_hash_matches": "195/195",
+    "chunk_recomputation_matches": "599/599",
+    "symbol_references": 15173,
+    "symbols": 1774,
+    "foreign_key_violations": 0,
+    "unsafe_paths": 0
+  },
+  "registry": {
+    "status": "PASS_CURRENT",
+    "path": ".agentforge/data/repositories.sqlite3",
+    "sha256": "530a788b84561a61ef80f7dad3ac321909374799e25d26bf34f74afaa1cfc46c",
+    "integrity_check": "ok",
+    "repositories": 7,
+    "settings": 1,
+    "unique_ids_and_paths": true,
+    "active_repository_path": "D:\\Enneuro\\code",
+    "inactive_dangling_test_rows_preserved": 5,
+    "historical_row_provenance": "PARTIAL"
+  },
+  "chroma": {
+    "status": "PASS_WITH_KNOWN_LIMITATIONS",
+    "formal_persistent_client_opened": false,
+    "isolated_byte_copy": "PASS",
+    "collection_id": "53f8a5fe-d55b-4179-8ec4-0bc1fa1ba412",
+    "collection_name": "af012_vectors_4736794c3a222cb2b27f",
+    "vectors": 599,
+    "unique_ids": 599,
+    "sqlite_source_mappings_and_hashes": "599/599",
+    "historical_physical_attribution": "PARTIAL_ACCEPTED"
+  },
+  "historical_feature_evidence": {
+    "no_evidence_deepseek_answer": "PASS_HISTORICAL",
+    "deepseek_chat_requests": {
+      "sent": 2,
+      "succeeded": 2,
+      "failed": 0,
+      "retries": 0,
+      "model_discovery": 0
+    },
+    "answer_contract": "LIMITED",
+    "fabricated_source_marker": false,
+    "evidence_source_strict_validation": "PASS_HISTORICAL",
+    "fresh_process_session_restore": "PASS_HISTORICAL",
+    "targeted_tests": {
+      "forward": "127/127 PASS_HISTORICAL",
+      "reverse": "127/127 PASS_HISTORICAL",
+      "compile": "PASS_HISTORICAL",
+      "diff_check": "PASS_HISTORICAL"
+    },
+    "full_suite_this_phase": "NOT_MEASURED"
+  },
+  "streaming": {
+    "complete_buffered_answer": "PASS_HISTORICAL",
+    "provider_native": "NOT_MEASURED_ACCEPTED"
+  },
+  "github": {
+    "proxy_listener_127_0_0_1_7897": "PASS",
+    "existing_git_proxy_config": "none",
+    "origin": "https://github.com/zhang-ki/AgentForge.git",
+    "remote_branch": "refs/heads/feature/auto-chroma-hybrid",
+    "remote_sha_before_delivery": "2dbfe9d951c481d309f534dc5c4b242f44f008d3",
+    "remote_verification": "PASS_CURRENT",
+    "global_config_modified": false
+  },
+  "protection": {
+    "deepseek_requests_this_phase": 0,
+    "embedding_requests_this_phase": 0,
+    "formal_chroma_client_opened": false,
+    "database_migrations": 0,
+    "formal_database_writes": 0,
+    "formal_chroma_writes": 0,
+    "services_started_or_stopped": false,
+    "credential_values_logged": false
+  },
+  "delivery": {
+    "selective_stage_review": "PASS_CURRENT",
+    "commit": "PENDING",
+    "push": "PENDING",
+    "post_push_local_remote_match": "PENDING"
+  },
+  "known_limitations": [
+    "Historic Chroma physical file writer attribution remains incomplete; the client-side effect was reproduced only on isolated copies.",
+    "Complete historic Repository Registry row-level baseline is unavailable; five inactive dangling test registrations are preserved.",
+    "Answer Contract remains LIMITED without independent semantic entailment verification.",
+    "Provider-native Streaming is NOT_MEASURED.",
+    "No full offline suite was rerun in Phase 5.2.6, per instruction."
+  ]
+}

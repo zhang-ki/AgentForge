@@ -355,10 +355,13 @@ def main():
                     if not current or current.get("provider_id") != "deepseek":
                         raise ValueError("当前会话模型不支持已确认的 DeepSeek 流式输出。")
                     descriptor = _registry().get_for_request(current.get("model_id", ""))
-                    if descriptor.supports_streaming is not True:
-                        raise ValueError("当前 DeepSeek 模型的流式能力未知或不支持。")
                     stream_enabled = True
-                    print("DeepSeek SSE 草稿显示已启用；草稿标为未验证，最终回答仍需通过引用校验。")
+                    if descriptor.supports_streaming is True:
+                        print("DeepSeek SSE 草稿显示已启用；草稿标为未验证，最终回答仍需通过引用校验。")
+                    elif descriptor.supports_streaming is False:
+                        print("该模型不支持原生 Streaming；仍会使用 DeepSeek 完整回答。")
+                    else:
+                        print("该模型的原生 Streaming 能力尚未确认；仍会使用 DeepSeek 完整回答。")
                 elif line == "/stream off":
                     stream_enabled = False
                     print("DeepSeek SSE 草稿显示已关闭。")

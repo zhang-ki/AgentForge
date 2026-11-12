@@ -10,7 +10,7 @@ from . import cli
 from .observability import RequestLifecycleTracker, bind_lifecycle, default_log_path
 
 
-def render_ask_result(result: dict) -> str:
+def render_ask_result(result: dict, *, include_answer: bool = True) -> str:
     """展示合同状态和请求证据，但不改变已有判定。"""
     contract = result["answer_contract"]
     status = contract["status"]
@@ -18,18 +18,32 @@ def render_ask_result(result: dict) -> str:
     provider = result.get("provider")
     if status == "refused":
         if provider in {"llama-server", "deepseek"}:
-            lines = ["未能生成通过证据校验的回答。", "模型原文（未经验证，不作为已确认答案）：",
-                     result.get("refused_output") or "（无回答）"]
+            lines = ["未能生成通过证据校验的回答。"]
+            if include_answer:
+                lines.extend(["模型原文（未经验证，不作为已确认答案）：",
+                              result.get("refused_output") or "（无回答）"])
+            else:
+                lines.append("上方流式内容是未经验证的草稿，不作为已确认答案。")
         else:
             lines = ["证据不足，未能回答。", "本次没有使用模型生成答案。"]
     elif status in ("answered", "limited"):
-        lines = ["回答：", result.get("answer") or "（无回答）"]
+        lines = (["回答：", result.get("answer") or "（无回答）"] if include_answer
+                 else ["回答内容已在上方实时显示。"])
         if status == "limited":
             lines.append("提示：这是有限结论；引用有效不代表每句话都已证明，请结合源码核对。")
     else:
         raise ValueError("Unknown answer contract status")
 
     retrieval = result.get("retrieval")
+    streaming_status = retrieval.get("streaming_status") if isinstance(retrieval, dict) else None
+    if streaming_status == "not_supported":
+        lines.append("\nStreaming 状态：模型不支持原生流式，本轮使用完整非流式回答。")
+    elif streaming_status == "not_measured":
+        lines.append("\nStreaming 状态：模型原生流式能力未确认，本轮使用完整非流式回答。")
+    elif streaming_status == "buffered_for_contract":
+        lines.append("\nStreaming 状态：回答已缓冲至合同校验完成后完整展示。")
+    elif streaming_status == "degraded_to_buffered":
+        lines.append("\nStreaming 状态：流式中断后已执行一次非流式恢复请求。")
     lifecycle = retrieval.get("index_lifecycle") if isinstance(retrieval, dict) else None
     if isinstance(lifecycle, dict):
         state = lifecycle.get("state")
@@ -141,12 +155,13 @@ def main(arguments=None) -> int:
         return 2
     output, errors = io.StringIO(), io.StringIO()
     stream_callback = None
+    streamed_pieces = []
     original_stdout = sys.stdout
     original_stderr = sys.stderr
     lifecycle = None
+    banner_written = False
     debug_enabled = "--debug" in arguments
     if "--stream" in arguments:
-        banner_written = False
         def stream_callback(piece):
             nonlocal banner_written
             if not banner_written:
@@ -154,6 +169,7 @@ def main(arguments=None) -> int:
                 banner_written = True
             original_stdout.write(piece)
             original_stdout.flush()
+            streamed_pieces.append(piece)
     labels = _request_labels(arguments)
     lifecycle = RequestLifecycleTracker(
         console_stream=original_stderr if debug_enabled else None,
@@ -179,6 +195,9 @@ def main(arguments=None) -> int:
             result = None
         if code:
             error_text = errors.getvalue().strip()
+            if banner_written:
+                original_stdout.write("\n\n草稿未完成或未通过回答校验，不能作为最终答案。\n")
+                original_stdout.flush()
             if error_text:
                 print(error_text, file=original_stderr, flush=True)
             else:
@@ -190,14 +209,39 @@ def main(arguments=None) -> int:
         try:
             if not isinstance(result, dict):
                 raise ValueError("The ask command did not return a structured result.")
-            rendered = render_ask_result(result)
+            contract = result.get("answer_contract")
+            contract_status = contract.get("status") if isinstance(contract, dict) else None
+            retrieval = result.get("retrieval")
+            streaming_status = retrieval.get("streaming_status") if isinstance(retrieval, dict) else None
+            if banner_written:
+                if streaming_status == "degraded_to_buffered":
+                    if contract_status in {"answered", "limited"}:
+                        original_stdout.write(
+                            "\n\nStreaming 已中断；上方未验证草稿已作废，以下显示 DeepSeek 完整回答。\n"
+                        )
+                    else:
+                        original_stdout.write(
+                            "\n\nStreaming 已中断；上方草稿已作废，最终回答未通过合同校验。\n"
+                        )
+                elif contract_status in {"answered", "limited"}:
+                    streamed_answer = "".join(streamed_pieces)
+                    if streamed_answer != result.get("answer"):
+                        raise ValueError("Streamed draft does not match the validated answer.")
+                    original_stdout.write("\n\n回答已通过合同校验并保存。\n")
+                elif contract_status == "refused":
+                    original_stdout.write("\n\n该草稿未通过回答合同，不能作为已确认答案。\n")
+                original_stdout.flush()
+            rendered = render_ask_result(
+                result, include_answer=(not banner_written or streaming_status == "degraded_to_buffered"),
+            )
         except (ValueError, TypeError, KeyError, AttributeError):
+            if banner_written:
+                original_stdout.write("\n\n草稿未完成或未通过回答校验，不能作为最终答案。\n")
+                original_stdout.flush()
             print("无法读取 AgentForge 的结构化结果，未显示为成功。", file=original_stderr, flush=True)
             lifecycle.finish("FAILED", error_code="invalid_cli_result")
             return 1
         print(rendered, file=original_stdout, flush=True)
-        contract = result.get("answer_contract")
-        contract_status = contract.get("status") if isinstance(contract, dict) else None
         lifecycle.finish("FAILED" if contract_status == "refused" else "COMPLETED",
                          error_code="answer_contract_refused" if contract_status == "refused" else None,
                          metadata={
@@ -208,6 +252,9 @@ def main(arguments=None) -> int:
         })
         return 0
     except BaseException as exc:
+        if banner_written:
+            original_stdout.write("\n\n草稿未完成或未通过回答校验，不能作为最终答案。\n")
+            original_stdout.flush()
         lifecycle.finish("TIMEOUT" if isinstance(exc, TimeoutError) else "FAILED",
                          error_code=_exception_code(exc))
         raise

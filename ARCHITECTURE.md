@@ -460,8 +460,47 @@ The v0.1 workflow uses the existing ConversationOrchestrator, Planner, authorize
 
 Answer Contract remains LIMITED: provenance and request-local citation linkage are checked, but independent semantic entailment is not. This is an accepted v0.1 limitation. Provider-native token streaming is NOT_MEASURED. No architecture or safety contract was weakened during final closure.
 
+## Optional repository evidence and streaming draft path (2026-11-12)
+
+For a bound repository, `ConversationOrchestrator` still attempts retrieval independently of planner tool execution. Only validated evidence enters answer context. Zero evidence or a retrieval preparation failure leads to a normal selected-provider answer attempt with an explicit unavailable signal; the general Answer Contract allows a limited answer without inventing repository citations. A clarification plan continues to skip tool execution.
+
+When DeepSeek streaming is enabled, Provider SSE deltas flow through `StreamingManager` to the console as unverified draft text. The final provider completion must exactly match the deltas before answer-contract validation and session persistence. The UI displays the validated status after persistence and does not print the answer a second time. Streaming-off remains buffered. Local tests validate these boundaries; live DeepSeek streaming is NOT_MEASURED.
+
 ## v0.1 frozen architecture status (2026-11-12)
 
 The v0.1 workflow uses the existing ConversationOrchestrator, Planner, authorized ToolRegistry, AgentExecutionEngine, SQLite-authoritative repository evidence, Chroma-derived vector candidates, ContextAssembler, Answer Contract, and Session persistence. The R4.2.3 synthetic C2 trace historically verified retrieval, Search/Read execution with bounded recovery, source/hash provenance, answer context, DeepSeek final answer, and Session restore.
 
 Answer Contract remains LIMITED: provenance and request-local citation linkage are checked, but independent semantic entailment is not. This is an accepted v0.1 limitation. Provider-native token streaming is NOT_MEASURED. No architecture or safety contract was weakened during final closure.
+
+## v0.1 Fast Track answer/streaming fallback — 2026-11-12
+
+The no-verified-evidence path continues to the configured answer provider, and provider-interface failures remain explicit rather than silently substituting OfflineProvider. Unknown/unsupported DeepSeek native Streaming uses the complete buffered-answer route. A recoverable stream interruption or completion/delta mismatch allows at most one buffered recovery through the same provider; partial draft state is invalidated, and the final answer continues through the existing Answer Contract and Session path. Focused offline tests passed 26/26. Live DeepSeek, native SSE, and Session persistence were NOT_MEASURED because PostgreSQL and Embedding host prerequisites were unavailable. No model or token budgets, evidence checks, or tool permissions were relaxed.
+
+## v0.1 Fast Track continuation — 2026-11-12
+
+No architecture or production-code change was made in this continuation. The no-evidence retrieval candidate/effective-evidence distinction was observed (5/0), but a live final answer and Session commit were not verified. Unknown Provider-native Streaming remains NOT_MEASURED. The current Chroma Collection retains the historical identity and all 599 vectors map to SQLite source hashes; physical Chroma file hash differs from the prior snapshot and remains unexplained.
+
+
+## v0.1 No-Evidence Answer Verification — 2026-11-12
+
+When retrieval yields no verified repository evidence, ConversationOrchestrator uses the general Provider answer path, then build_general_contract validates non-empty output and rejects fabricated citations while recording accepted model knowledge as limited. The product entry renders limited, and SessionService persists the completed turn with Provider usage metadata. The current DeepSeek Flash path was verified end to end; this does not claim repository grounding or native Provider streaming.
+
+## v0.1 Final Closure — 2026-11-12
+
+No production architecture changed in this closure. DeepSeek Flash capability metadata reported native Streaming as unknown, so the existing console and Provider guards kept /stream on on the buffered answer path. Two Chat calls completed and the answer was persisted; native SSE remains NOT_MEASURED. The SQLite index metadata timestamp refreshed through normal repository preparation. The Chroma collection's logical ID/provenance digest remained consistent, but a read-only PersistentClient audit altered physical files; investigate only under a separately scoped data-protection plan.
+
+
+## Phase 5.2.4 Data Integrity Findings — 2026-11-12
+
+No production architecture changed. The formal Chroma store was not opened through PersistentClient during this phase. File-level hashing and immutable-copy analysis showed 599 vectors with complete SQLite source mappings; same-version client reads mutated physical bytes on isolated copies without changing logical collection data. Repository Registry remains separate, with five inactive dangling temporary test records and no recovered full historical row baseline. Application SQLite and PostgreSQL Session were checked separately. Overall data protection remains PARTIAL.
+
+
+## V0.1 no-evidence Answer Contract repair — 2026-11-12
+
+General answers without verified repository evidence now use a dedicated sanitizer for unknown `[E#]` markers and remain `LIMITED`; this does not weaken evidence-backed validation. A non-empty cleaned answer proceeds through the normal display and persistence path; only an empty cleaned answer can request one bounded same-provider correction. When native Provider Streaming capability is unknown, the answer remains buffered until contract validation. The live run confirmed a general answer and cross-process Session restore, but also exposed that repository preparation automatically scans the bound repository; no vector changes were reported, yet this crossed the acceptance no-reindex boundary. Overall host/data-protection status is PARTIAL, not release-ready.
+## v0.1 Final Acceptance State — 2026-11-12
+
+No runtime architecture changed in Phase 5.2.5. Current SQLite remains the authoritative source index and its 195-file/599-chunk content passed read-only source/hash verification. Chroma remains a derived vector index; an isolated byte-copy confirmed all 599 source mappings. Repository preparation on a cold process scans and reparses unchanged files before persistent hash sync reports no changes. The general no-evidence path and historical Session restore passed in a prior real DeepSeek run; current Session integrity is blocked by unavailable read-only database authentication. See V0_1_FINAL_DATA_AUDIT_REPORT.md and V0_1_FINAL_CHROMA_AUDIT_REPORT.md.
+## Phase 5.2.6 final storage and release verification — 2026-11-12
+
+Session storage is PostgreSQL through the ConversationStore/SessionService path. The launcher obtains AGENTFORGE_DB_PASSWORD from the current-user DPAPI file through Get-ConversationDatabaseKey and injects it only into the Python child. The Registry and authoritative source index remain separate SQLite databases; Chroma is the derived persistent vector index. The Phase 5.2.5 Session block was an audit harness that omitted the DPAPI helper, not a production configuration failure. Phase 5.2.6 authenticated through the existing helper and verified the current Session in a read-only transaction. See V0_1_PHASE_5_2_6_DATABASE_DIAGNOSTIC.md and V0_1_PHASE_5_2_6_SESSION_AUDIT.md.

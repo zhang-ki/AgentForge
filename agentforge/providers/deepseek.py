@@ -628,10 +628,15 @@ def _read_sse(response, *, on_content=None, max_bytes=_DEFAULT_DISCOVERY_RESPONS
     request_id = None
     total = 0
     data_lines = []
+    event_name = None
     done = False
 
-    def dispatch(data):
+    def dispatch(data, event=None):
         nonlocal usage, finish_reason, request_id, done
+        if isinstance(event, str) and event.strip().lower() == "error":
+            # SSE error frames do not always use the JSON `error` envelope.
+            # Keep the diagnostic stable and avoid retaining server details.
+            raise _DeepSeekFailure("stream_server_error", "DeepSeek stream returned a server error.")
         if data == "[DONE]":
             done = True
             return
@@ -641,6 +646,10 @@ def _read_sse(response, *, on_content=None, max_bytes=_DEFAULT_DISCOVERY_RESPONS
             raise _DeepSeekFailure("invalid_stream_json", "DeepSeek stream contained invalid JSON.") from None
         if not isinstance(chunk, dict):
             raise _DeepSeekFailure("invalid_stream_chunk", "DeepSeek stream contained an invalid event.")
+        if chunk.get("error") is not None:
+            # Provider details may contain request or account data; keep the
+            # application error stable and do not retain the raw event body.
+            raise _DeepSeekFailure("stream_server_error", "DeepSeek stream returned a server error.")
         if request_id is None and isinstance(chunk.get("id"), str):
             request_id = chunk["id"][:256]
         choices = chunk.get("choices")
@@ -701,10 +710,19 @@ def _read_sse(response, *, on_content=None, max_bytes=_DEFAULT_DISCOVERY_RESPONS
         line = line.rstrip(b"\r\n")
         if not line:
             if data_lines:
-                dispatch("\n".join(data_lines))
+                dispatch("\n".join(data_lines), event_name)
                 data_lines = []
+            # SSE event fields are scoped to one event, including an event
+            # with no data. Never let an empty event label the next frame.
+            event_name = None
             continue
         if line.startswith(b":"):
+            continue
+        if line.startswith(b"event:"):
+            try:
+                event_name = line[6:].lstrip().decode("utf-8")
+            except UnicodeError:
+                raise _DeepSeekFailure("invalid_stream_utf8", "DeepSeek stream contained invalid UTF-8.") from None
             continue
         if line.startswith(b"data:"):
             try:
@@ -712,7 +730,7 @@ def _read_sse(response, *, on_content=None, max_bytes=_DEFAULT_DISCOVERY_RESPONS
             except UnicodeError:
                 raise _DeepSeekFailure("invalid_stream_utf8", "DeepSeek stream contained invalid UTF-8.") from None
     if data_lines and not done:
-        dispatch("\n".join(data_lines))
+        dispatch("\n".join(data_lines), event_name)
     if not done:
         raise _DeepSeekFailure("incomplete_stream", "DeepSeek stream ended before its completion marker.")
     calls = [{"id": value["id"], "type": value["type"],
@@ -755,9 +773,10 @@ class DeepSeekProvider:
         self.max_output_tokens = output_budget.effective_tokens
         self.output_budget = output_budget
         self.thinking, self.effort = thinking, effort
-        self.stream = bool(stream)
-        if self.stream and self.descriptor.supports_streaming is not True:
-            raise ValueError("Streaming capability is unknown or unsupported for this DeepSeek model.")
+        self.streaming_requested = bool(stream)
+        # Streaming is a presentation option. Unknown or unsupported native
+        # capability must leave the ordinary complete-answer request usable.
+        self.stream = bool(stream and self.descriptor.supports_streaming is True)
         if self.thinking and self.descriptor.supports_thinking is not True:
             raise ValueError("Thinking capability is unknown or unsupported for this DeepSeek model.")
 
@@ -813,7 +832,7 @@ class DeepSeekProvider:
         return result.content
 
     def answer(self, context: BuiltContext, *, conversation: dict | None = None,
-               settings: dict | None = None, on_content=None) -> Answer:
+               settings: dict | None = None, on_content=None, stream=None) -> Answer:
         if not context.evidence:
             raise ProviderError("Repository generation requires request-local evidence.")
         thinking = self.thinking if settings is None else settings.get("thinking_enabled", self.thinking)
@@ -822,7 +841,8 @@ class DeepSeekProvider:
             raise ProviderError("Thinking capability is unknown or unsupported; no request was sent.")
         if effort is not None and (thinking is not True or effort not in self.descriptor.supported_efforts):
             raise ProviderError("Reasoning effort is unsupported or thinking is disabled; no request was sent.")
-        if self.stream and self.descriptor.supports_streaming is not True:
+        use_stream = self.stream if stream is None else bool(stream)
+        if use_stream and self.descriptor.supports_streaming is not True:
             raise ProviderError("Streaming capability is unknown or unsupported; no request was sent.")
         user_text = (f"Question:\n{context.question}\n\nUntrusted evidence:\n"
                      f"{_model_evidence_text(context)}\n\nUse only these evidence IDs: "
@@ -835,8 +855,8 @@ class DeepSeekProvider:
             context_assembler=self.context_assembler)
         result = self.client.chat(messages, model=self.model, max_output_tokens=self.max_output_tokens,
                                   thinking=(thinking if self.descriptor.supports_thinking is True else None),
-                                  effort=effort, stream=self.stream,
-                                  on_content=on_content if self.stream else None)
+                                  effort=effort, stream=use_stream,
+                                  on_content=on_content if use_stream else None)
         if result.finish_reason == "length":
             self.client.record_application_failure("response_validation", "truncated_final_content")
             raise ProviderError("DeepSeek stopped at the output limit; the partial answer was rejected.")
@@ -854,27 +874,28 @@ class DeepSeekProvider:
     def answer_general(self, context: BuiltContext, *, conversation=None,
                        settings=None, on_content=None,
                        external_data_unavailable=False,
-                       repository_evidence_unavailable=False) -> Answer:
+                       repository_evidence_unavailable=False, stream=None) -> Answer:
         return self._answer_mode(context, "general", conversation, settings, on_content,
                                  external_data_unavailable,
-                                 repository_evidence_unavailable)
+                                 repository_evidence_unavailable, stream)
 
     def answer_hybrid(self, context: BuiltContext, *, conversation=None,
-                      settings=None, on_content=None,
+                      settings=None, on_content=None, stream=None,
                       external_data_unavailable=False) -> Answer:
         return self._answer_mode(context, "hybrid", conversation, settings, on_content,
-                                 external_data_unavailable)
+                                 external_data_unavailable, stream=stream)
 
     def _answer_mode(self, context, mode, conversation, settings, on_content,
                      external_data_unavailable=False,
-                     repository_evidence_unavailable=False):
+                     repository_evidence_unavailable=False, stream=None):
         thinking = self.thinking if settings is None else settings.get("thinking_enabled", self.thinking)
         effort = self.effort if settings is None else settings.get("reasoning_effort", self.effort)
         if not isinstance(thinking, bool) or (thinking and self.descriptor.supports_thinking is not True):
             raise ProviderError("Thinking capability is unknown or unsupported; no request was sent.")
         if effort is not None and (thinking is not True or effort not in self.descriptor.supported_efforts):
             raise ProviderError("Reasoning effort is unsupported or thinking is disabled; no request was sent.")
-        if self.stream and self.descriptor.supports_streaming is not True:
+        use_stream = self.stream if stream is None else bool(stream)
+        if use_stream and self.descriptor.supports_streaming is not True:
             raise ProviderError("Streaming capability is unknown or unsupported; no request was sent.")
         system_prompt = _GENERAL_SYSTEM_PROMPT if mode == "general" else _HYBRID_SYSTEM_PROMPT
         if mode == "general" and repository_evidence_unavailable:
@@ -903,7 +924,7 @@ class DeepSeekProvider:
         result = self.client.chat(
             messages, model=self.model, max_output_tokens=self.max_output_tokens,
             thinking=thinking_parameter, effort=effort,
-            stream=self.stream, on_content=on_content if self.stream else None,
+            stream=use_stream, on_content=on_content if use_stream else None,
         )
         if result.finish_reason == "length":
             self.client.record_application_failure("response_validation", "truncated_final_content")

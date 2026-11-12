@@ -75,6 +75,41 @@ class SessionServiceTests(unittest.TestCase):
             request_id="request-1",
         )
 
+    def test_completed_general_answer_can_be_reloaded_from_session_history(self):
+        class InMemoryConversationRepository:
+            def __init__(self):
+                self.rows = []
+
+            def append_turn(self, conversation_id, repository_id, question, answer, **_metadata):
+                self.rows.extend((
+                    {"sequence": len(self.rows) + 1, "role": "user", "content": question,
+                     "status": "completed"},
+                    {"sequence": len(self.rows) + 2, "role": "assistant", "content": answer,
+                     "status": "completed"},
+                ))
+
+            def get_messages(self, _conversation_id, _repository_id):
+                return tuple(self.rows)
+
+            @staticmethod
+            def latest_summary(_conversation_id, _repository_id):
+                return None
+
+        repository = InMemoryConversationRepository()
+        provider = Mock()
+        provider.provider_id = "deepseek"
+        provider.model = "deepseek-flash"
+        provider.request_stats.return_value = {"last_usage": {"prompt_tokens": 5}}
+        service = SessionService()
+        service.commit_completed_turn(
+            repository, "session-1", "repo-1", "how does it going?",
+            Answer("A greeting begins a conversation.", (), False), provider,
+        )
+
+        restored = service.load_context(repository, "session-1", "repo-1")
+        self.assertEqual(("user", "assistant"), tuple(turn.role for turn in restored.history))
+        self.assertEqual("A greeting begins a conversation.", restored.history[-1].content)
+
     def test_commit_forwards_content_free_request_diagnostics_only_when_provided(self):
         repository = Mock()
         provider = Mock()

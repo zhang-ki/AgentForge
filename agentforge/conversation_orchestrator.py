@@ -10,7 +10,7 @@ import sqlite3
 
 from .answer_contract import (
     build_general_contract, build_offline_contract, build_planner_stop_contract, validate_answer_contract,
-    verify_generated_answer, verify_hybrid_answer,
+    sanitize_general_source_markers, verify_generated_answer, verify_hybrid_answer,
 )
 from .context import MAX_INTERMEDIATE_EVIDENCE_BYTES, build_context
 from .conversation_context import ContextBudgetExceeded
@@ -31,7 +31,7 @@ from .dialogue_router import DialogueMode, plan_dialogue
 from .evidence_evaluator import assess_evidence
 from .planner import LLMPlanner, PlanningError
 from .session_service import SessionService
-from .streaming import ConversationCancelled, StreamingManager
+from .streaming import ConversationCancelled, StreamingManager, StreamingProtocolError
 from .observability import current_lifecycle, lifecycle_stage
 
 
@@ -305,14 +305,6 @@ class ConversationOrchestrator:
             planner_diagnostics["execution_started"] = False
         streaming.plan_ready(dialogue_plan)
         streaming.check_cancelled()
-        if dialogue_plan.clarification_required:
-            return self._planner_stop(request, state, dialogue_plan,
-                "The request needs clarification before it can be safely planned.", streaming)
-        if (dialogue_plan.requires_external_data and not dialogue_plan.use_repository
-                and not dialogue_plan.use_general_knowledge):
-            return self._planner_stop(request, state, dialogue_plan,
-                "This request needs live external data, but AgentForge has no authorized external-data tool.",
-                streaming)
         scan_report = None
         retrieval_failure_code = None
         repository_bound = (
@@ -355,6 +347,11 @@ class ConversationOrchestrator:
 
         def execute_agent_if_requested():
             nonlocal agent_execution
+            if dialogue_plan.clarification_required:
+                tracker = current_lifecycle()
+                if tracker is not None:
+                    tracker.skip("agent_execution", "planner_requested_clarification")
+                return None
             if dialogue_plan.requires_agent_execution:
                 if isinstance(planner_diagnostics, dict):
                     planner_diagnostics["execution_started"] = True
@@ -603,6 +600,7 @@ class ConversationOrchestrator:
         if provider is None:
             provider = self._create_provider(request)
             state.provider = provider
+        streaming.configure_provider_streaming(_provider_streaming_capability(request, provider))
 
         if state.store is not None:
             if conversation is None:
@@ -618,6 +616,12 @@ class ConversationOrchestrator:
         if isinstance(conversation, dict):
             conversation["input_token_budget_override"] = model_budget["input_budget"]
 
+        no_repository_evidence = not context.evidence
+        invalid_source_markers_removed = 0
+        invalid_source_marker_ids_removed = ()
+        provider_answer_text = None
+        if no_repository_evidence:
+            streaming.defer_content_until_validated()
         with lifecycle_stage("final_answer", metadata={
             "provider": request.provider_id, "model": request.model_id,
         }) as answer_stage:
@@ -631,7 +635,6 @@ class ConversationOrchestrator:
                     # Repository section cannot reject an otherwise useful
                     # general response. The general prompt still forbids
                     # unverified claims about this repository.
-                    no_repository_evidence = not context.evidence
                     answer_method = (
                         getattr(provider, "answer_general", None)
                         if no_repository_evidence else
@@ -648,10 +651,18 @@ class ConversationOrchestrator:
                         answer_kwargs["external_data_unavailable"] = dialogue_plan.requires_external_data
                     if no_repository_evidence:
                         answer_kwargs["repository_evidence_unavailable"] = bool(repository_bound)
-                    if request.stream:
+                    if streaming.enabled:
                         answer_kwargs["on_content"] = streaming.capture_provider_delta
                     streaming.check_cancelled()
-                    answer = answer_method(context, **answer_kwargs)
+                    answer = _answer_with_stream_recovery(
+                        request, provider, answer_method, context, answer_kwargs, streaming,
+                    )
+                provider_answer_text = getattr(answer, "text", None)
+                if no_repository_evidence and not getattr(answer, "offline", False):
+                    (answer, invalid_source_markers_removed,
+                     invalid_source_marker_ids_removed, provider_answer_text) = _prepare_no_evidence_answer(
+                        answer, answer_method, context, answer_kwargs, request, streaming,
+                    )
             except Exception as exc:
                 if answer_stage is not None:
                     answer_stage.finish("TIMEOUT" if isinstance(exc, TimeoutError) else "FAILED",
@@ -659,7 +670,15 @@ class ConversationOrchestrator:
                 raise
             if answer_stage is not None:
                 answer_stage.finish("COMPLETED", metadata={"answer_produced": bool(getattr(answer, "text", ""))})
-        with lifecycle_stage("answer_contract", metadata={"evidence_count": len(context.evidence)}) as contract_stage:
+        answer_mode = "GENERAL" if no_repository_evidence else "EVIDENCE_GROUNDED"
+        contract_metadata = {
+            "answer_mode": answer_mode,
+            "evidence_count": len(context.evidence),
+            "invalid_source_markers_removed": invalid_source_markers_removed,
+            "invalid_source_marker_ids_removed": list(invalid_source_marker_ids_removed),
+        }
+        state.phase_diagnostics["answer_contract"] = dict(contract_metadata)
+        with lifecycle_stage("answer_contract", metadata=contract_metadata) as contract_stage:
             try:
                 if answer.offline:
                     contract = build_offline_contract(
@@ -695,12 +714,14 @@ class ConversationOrchestrator:
                 if contract_stage is not None:
                     contract_stage.finish("FAILED", error_code=getattr(exc, "code", type(exc).__name__),
                                           metadata={"answer_contract_status": "rejected",
-                                                    "answer_produced": bool(getattr(answer, "text", ""))})
+                                                    "answer_produced": bool(getattr(answer, "text", "")),
+                                                    **contract_metadata})
                 raise
             if contract_stage is not None:
                 contract_stage.finish("COMPLETED", metadata={
                     "answer_contract_status": getattr(contract, "status", "unknown"),
                     "answer_produced": bool(getattr(answer, "text", "")),
+                    **contract_metadata,
                 })
         request_stats = (provider.request_stats()
                          if callable(getattr(provider, "request_stats", None)) else None)
@@ -725,7 +746,9 @@ class ConversationOrchestrator:
                         request.query, answer, provider, request_diagnostics=request_diagnostics,
                     )
         streaming.complete_validated(
-            answer.text, usage=request_stats.get("last_usage") if isinstance(request_stats, dict) else None,
+            answer.text,
+            usage=request_stats.get("last_usage") if isinstance(request_stats, dict) else None,
+            provider_answer=provider_answer_text,
         )
         injected_memories = _injected_memory_metadata(conversation)
         cited = tuple(citation for claim in contract.claims for citation in claim.citations)
@@ -763,8 +786,12 @@ class ConversationOrchestrator:
              ),
              "candidate_count": evidence_assessment.candidate_count,
              "evidence_count": len(context.evidence),
+             "answer_mode": answer_mode,
+             "invalid_source_markers_removed": invalid_source_markers_removed,
+             "invalid_source_marker_ids_removed": list(invalid_source_marker_ids_removed),
              "verified_tool_read_evidence_count": len(tool_evidence_by_hash),
              "retrieval_failure_code": retrieval_failure_code,
+             "streaming_status": streaming.status,
              "evidence_assessment": {
                  "candidate_count": evidence_assessment.candidate_count,
                  "relevant_candidate_count": len(evidence_assessment.relevant_candidates),
@@ -1016,6 +1043,7 @@ class ConversationOrchestrator:
                      agent_execution=None):
         provider = state.provider or self._create_provider(request)
         state.provider = provider
+        streaming.configure_provider_streaming(_provider_streaming_capability(request, provider))
         model_budget = self.dependencies.model_budget_resolver(
             provider, _resolved_answer_output(provider, request), request.context_budget,
             provider_id=request.provider_id, model_id=request.model_id,
@@ -1039,19 +1067,35 @@ class ConversationOrchestrator:
             _tool_observation_context(agent_execution.report) if agent_execution is not None else (),
         )
         answer_method = getattr(provider, "answer_general", None)
+        streaming.defer_content_until_validated()
+        invalid_source_markers_removed = 0
+        invalid_source_marker_ids_removed = ()
+        provider_answer_text = None
+        answer_kwargs = {"conversation": conversation, "settings": conversation,
+                         "external_data_unavailable": dialogue_plan.requires_external_data}
         with lifecycle_stage("final_answer", metadata={
             "provider": request.provider_id, "model": request.model_id,
         }) as answer_stage:
             try:
-                if isinstance(provider, OfflineProvider) or not callable(answer_method):
+                if isinstance(provider, OfflineProvider):
                     answer = OfflineProvider().answer(context)
                 else:
-                    kwargs = {"conversation": conversation, "settings": conversation,
-                              "external_data_unavailable": dialogue_plan.requires_external_data}
-                    if request.stream:
-                        kwargs["on_content"] = streaming.capture_provider_delta
+                    if not callable(answer_method):
+                        raise ProviderError(
+                            "The selected model provider cannot generate a general answer."
+                        )
+                    if streaming.enabled:
+                        answer_kwargs["on_content"] = streaming.capture_provider_delta
                     streaming.check_cancelled()
-                    answer = answer_method(context, **kwargs)
+                    answer = _answer_with_stream_recovery(
+                        request, provider, answer_method, context, answer_kwargs, streaming,
+                    )
+                provider_answer_text = getattr(answer, "text", None)
+                if not getattr(answer, "offline", False):
+                    (answer, invalid_source_markers_removed,
+                     invalid_source_marker_ids_removed, provider_answer_text) = _prepare_no_evidence_answer(
+                        answer, answer_method, context, answer_kwargs, request, streaming,
+                    )
             except Exception as exc:
                 if answer_stage is not None:
                     status = "CANCELLED" if isinstance(exc, ConversationCancelled) else (
@@ -1060,7 +1104,14 @@ class ConversationOrchestrator:
                 raise
             if answer_stage is not None:
                 answer_stage.finish("COMPLETED", metadata={"answer_produced": bool(getattr(answer, "text", ""))})
-        with lifecycle_stage("answer_contract", metadata={"evidence_count": 0}) as contract_stage:
+        contract_metadata = {
+            "answer_mode": "GENERAL",
+            "evidence_count": 0,
+            "invalid_source_markers_removed": invalid_source_markers_removed,
+            "invalid_source_marker_ids_removed": list(invalid_source_marker_ids_removed),
+        }
+        state.phase_diagnostics["answer_contract"] = dict(contract_metadata)
+        with lifecycle_stage("answer_contract", metadata=contract_metadata) as contract_stage:
             try:
                 contract = build_general_contract(answer)
                 validate_answer_contract(contract, context)
@@ -1072,12 +1123,14 @@ class ConversationOrchestrator:
                 if contract_stage is not None:
                     contract_stage.finish("FAILED", error_code=getattr(exc, "code", "answer_contract_failed"),
                                           metadata={"answer_contract_status": "rejected",
-                                                    "answer_produced": bool(getattr(answer, "text", ""))})
+                                                    "answer_produced": bool(getattr(answer, "text", "")),
+                                                    **contract_metadata})
                 raise
             if contract_stage is not None:
                 contract_stage.finish("COMPLETED", metadata={
                     "answer_contract_status": getattr(contract, "status", "unknown"),
                     "answer_produced": bool(getattr(answer, "text", "")),
+                    **contract_metadata,
                 })
         stats = provider.request_stats() if callable(getattr(provider, "request_stats", None)) else None
         request_diagnostics = _phase_diagnostics(state, conversation, stats)
@@ -1101,7 +1154,9 @@ class ConversationOrchestrator:
                         request.query, answer, provider, request_diagnostics=request_diagnostics,
                     )
         streaming.complete_validated(
-            answer.text, usage=stats.get("last_usage") if isinstance(stats, dict) else None,
+            answer.text,
+            usage=stats.get("last_usage") if isinstance(stats, dict) else None,
+            provider_answer=provider_answer_text,
         )
         memory_context = _injected_memory_metadata(conversation)
         index_lifecycle = (
@@ -1116,6 +1171,10 @@ class ConversationOrchestrator:
             {"mode": "general", "route": ("agent_execution" if agent_execution is not None else "general"),
              "rule": "dialogue_plan",
              "retrieval_status": "not_required",
+             "answer_mode": "GENERAL",
+             "invalid_source_markers_removed": invalid_source_markers_removed,
+             "invalid_source_marker_ids_removed": list(invalid_source_marker_ids_removed),
+             "streaming_status": streaming.status,
              "retrieval_failure_code": None,
              "retrieval_reason_code": "no_repository_bound_to_session",
              "evidence_count": 0,
@@ -1744,6 +1803,110 @@ def _resolved_answer_output(provider, request):
     if isinstance(resolved, int) and not isinstance(resolved, bool) and resolved > 0:
         return resolved
     return request.max_output_tokens
+
+
+def _provider_streaming_capability(request, provider):
+    if not request.stream:
+        return False
+    descriptor = getattr(provider, "descriptor", None)
+    capability = getattr(descriptor, "supports_streaming", None)
+    if capability is None or isinstance(capability, bool):
+        if descriptor is not None:
+            return capability
+    # Lightweight test providers may implement the streaming protocol without
+    # carrying model-registry metadata. Production DeepSeek providers do carry it.
+    return bool(getattr(provider, "stream", True))
+
+
+def _answer_with_stream_recovery(request, provider, answer_method, context, kwargs, streaming):
+    try:
+        answer = answer_method(context, **kwargs)
+        streaming.validate_provider_answer(answer.text)
+        return answer
+    except (ProviderError, StreamingProtocolError) as exc:
+        error_code = _recoverable_stream_error(provider, exc)
+        if (not request.stream or streaming.status != "streaming"
+                or getattr(provider, "provider_id", None) != "deepseek"
+                or not hasattr(provider, "descriptor") or error_code is None):
+            raise
+
+        # Exactly one recovery request is allowed. Drop the invalid partial
+        # draft and ask the same DeepSeek provider for a complete response.
+        streaming.begin_buffered_fallback(error_code)
+        recovery_kwargs = dict(kwargs)
+        recovery_kwargs.pop("on_content", None)
+        recovery_kwargs["stream"] = False
+        answer = answer_method(context, **recovery_kwargs)
+        streaming.validate_provider_answer(answer.text)
+        return answer
+
+
+def _prepare_no_evidence_answer(answer, answer_method, context, kwargs, request, streaming):
+    """Clean General-only citation markers and allow one bounded empty-answer correction."""
+    provider_answer_text = getattr(answer, "text", None)
+    normalized, removed_count, removed_ids = sanitize_general_source_markers(answer)
+    if normalized.text.strip() or normalized.offline:
+        return normalized, removed_count, removed_ids, provider_answer_text
+    if not callable(answer_method):
+        raise ProviderError("General answer was empty after citation cleanup; no correction provider is available.")
+
+    # The correction names the precise failed validation condition and retains the
+    # original question. It is one call to the same already-selected answer method.
+    if request.stream:
+        streaming.discard_deferred_draft()
+    streaming.check_cancelled()
+    correction_context = replace(
+        context,
+        question=(
+            "Original user question:\n" + context.question
+            + "\n\nCorrection required: validation error "
+              "empty_after_invalid_source_marker_cleanup. The prior response contained no usable "
+              "answer after removing source-ID markers that cannot be verified because this request "
+              "has no verified repository evidence. Answer the original question directly using "
+              "general knowledge. Do not emit source-ID markers, repository paths, or line references."
+        ),
+    )
+    correction_kwargs = dict(kwargs)
+    correction_kwargs.pop("on_content", None)
+    corrected = answer_method(correction_context, **correction_kwargs)
+    provider_answer_text = getattr(corrected, "text", None)
+    normalized, correction_removed_count, correction_removed_ids = sanitize_general_source_markers(corrected)
+    removed_count += correction_removed_count
+    removed_ids += correction_removed_ids
+    if not normalized.text.strip():
+        error = ProviderError("General answer remained empty after one bounded citation-cleanup correction.")
+        error.code = "empty_general_answer_after_correction"
+        error.diagnostic = {
+            "validation_error": "empty_after_invalid_source_marker_cleanup",
+            "correction_attempted": True,
+            "invalid_source_markers_removed": removed_count,
+        }
+        raise error
+    return normalized, removed_count, removed_ids, provider_answer_text
+
+
+def _recoverable_stream_error(provider, exc):
+    if isinstance(exc, StreamingProtocolError):
+        return "stream_mismatch"
+    if not isinstance(exc, ProviderError):
+        return None
+    stats_method = getattr(provider, "request_stats", None)
+    stats = stats_method() if callable(stats_method) else None
+    if not isinstance(stats, dict):
+        return None
+    code = stats.get("last_error_code")
+    phase = stats.get("last_failure_phase")
+    if phase == "response_body" and isinstance(code, str):
+        if (code in {"timeout", "network_error", "incomplete_stream", "stream_server_error"}
+                or code.startswith("invalid_stream_")):
+            return code
+    application_phase = stats.get("last_application_failure_phase")
+    application_code = stats.get("last_application_error_code")
+    if (application_phase == "response_validation"
+            and application_code in {"empty_final_content", "truncated_final_content",
+                                     "unexpected_finish_reason"}):
+        return application_code
+    return None
 
 
 def _phase_diagnostics(state, conversation, request_stats):

@@ -1,7 +1,8 @@
 import unittest
 
 from agentforge.answer_contract import (
-    build_general_contract, verify_generated_answer, verify_hybrid_answer,
+    build_general_contract, sanitize_general_source_markers,
+    verify_generated_answer, verify_hybrid_answer,
 )
 from agentforge.errors import CitationValidationError, ProviderError
 from agentforge.dialogue_router import DialogueMode, plan_dialogue
@@ -149,10 +150,32 @@ class DialogueContractTests(unittest.TestCase):
         self.assertEqual("general", contract.claims[0].origin)
         self.assertEqual((), contract.claims[0].citations)
 
-    def test_general_contract_rejects_model_invented_repository_citation(self):
-        for text in ("Answer with source [E1].", "See project/module.py:12-18."):
-            with self.subTest(text=text), self.assertRaises(CitationValidationError):
-                build_general_contract(Answer(text, (), False))
+    def test_general_contract_removes_unknown_source_ids_and_preserves_answer(self):
+        text = "TCP is connection-oriented, while UDP is connectionless. [E1] [e2]"
+        contract = build_general_contract(Answer(text, (), False))
+        self.assertEqual("TCP is connection-oriented, while UDP is connectionless.", contract.content)
+        self.assertEqual("limited", contract.status)
+        self.assertEqual((), contract.claims[0].citations)
+
+        cleaned, count, source_ids = sanitize_general_source_markers(Answer(text, (), False))
+        self.assertEqual(contract.content, cleaned.text)
+        self.assertEqual(2, count)
+        self.assertEqual(("E1", "E2"), source_ids)
+
+    def test_general_contract_preserves_ordinary_brackets_markdown_and_code(self):
+        text = (
+            "Use indexes [0] and [1], and read [E1](https://example.invalid/E1).\n"
+            "The literal tag is `[E1]`.\n"
+            "```text\n[E2]\n```\n"
+            "An escaped marker is \\[E3]."
+        )
+        contract = build_general_contract(Answer(text, (), False))
+        self.assertEqual(text, contract.content)
+        self.assertEqual((), contract.claims[0].citations)
+
+    def test_general_contract_still_rejects_unverified_repository_locations(self):
+        with self.assertRaises(CitationValidationError):
+            build_general_contract(Answer("See project/module.py:12-18.", (), False))
 
     def test_repository_contract_rejects_invalid_id_after_provider_returns_text(self):
         with self.assertRaises(CitationValidationError):
@@ -579,6 +602,8 @@ class ProviderDialogueModeTests(unittest.TestCase):
         hybrid = provider.answer_hybrid(DialogueContractTests()._context())
         self.assertEqual((), general.citations)
         self.assertEqual((), hybrid.citations)
+        general_system = client.chat.call_args_list[0].args[0][0]["content"]
+        self.assertIn("do not emit citation markers such as [E1]", general_system)
         contract = verify_hybrid_answer(hybrid, DialogueContractTests()._context())
         self.assertEqual(("src/fifo.py:1-3",), contract.claims[1].citations)
         self.assertEqual(2, client.chat.call_count)

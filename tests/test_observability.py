@@ -258,7 +258,10 @@ class RequestLifecycleTests(unittest.TestCase):
             def fake_cli(_arguments, stream_callback=None):
                 with lifecycle_stage("final_answer"):
                     if stream_callback:
-                        stream_callback("validated synthetic draft")
+                        # Streaming drafts must match the final answer that
+                        # receives contract validation; mismatched text is a
+                        # protocol failure, not a second answer to print.
+                        stream_callback("validated synthetic answer")
                 print(json.dumps({
                     "provider": "deepseek", "answer": "validated synthetic answer",
                     "answer_contract": {"status": "answered", "claims": [], "evidence": []},
@@ -269,8 +272,10 @@ class RequestLifecycleTests(unittest.TestCase):
             with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
                 with patch("sys.stdout", stdout), patch("sys.stderr", stderr):
                     self.assertEqual(0, main(["ask", "synthetic", "--stream", "--debug"]))
-        self.assertIn("validated synthetic draft", stdout.getvalue())
+        self.assertIn("DeepSeek 草稿（尚未通过引用验证）", stdout.getvalue())
         self.assertIn("validated synthetic answer", stdout.getvalue())
+        self.assertEqual(1, stdout.getvalue().count("validated synthetic answer"))
+        self.assertIn("回答已通过合同校验并保存", stdout.getvalue())
         self.assertIn("Generating answer", stderr.getvalue())
         self.assertNotIn("Generating answer", stdout.getvalue())
 

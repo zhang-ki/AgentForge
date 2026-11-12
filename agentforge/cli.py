@@ -136,8 +136,6 @@ def create_provider(
         )
         if thinking and descriptor.supports_thinking is not True:
             raise ValueError("Thinking capability is unknown or unsupported for this model.")
-        if stream and descriptor.supports_streaming is not True:
-            raise ValueError("Streaming capability is unknown or unsupported for this model.")
         if effort is not None and effort not in descriptor.supported_efforts:
             raise ValueError("The selected reasoning effort is not supported by this model.")
         from .providers.deepseek import DeepSeekClient, DeepSeekProvider

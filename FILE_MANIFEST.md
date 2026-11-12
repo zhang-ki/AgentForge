@@ -567,3 +567,143 @@ Selected R4.2.3 evidence filenames:
 - PHASE5_2_2_3_HOST_RUN_b20160750dad498283f5a6e4bcb1fe53.json
 - PHASE5_2_2_3_HOST_RUN_e502f6bfd9c04e7ea877e42c36315b1c.json
 - PHASE5_2_2_3_HOST_TRACE_e502f6bfd9c04e7ea877e42c36315b1c.jsonl
+
+## v0.1 no-evidence / streaming verification (2026-11-12)
+
+New reports:
+- V0_1_NO_EVIDENCE_ANSWER_FIX_REPORT.md
+- V0_1_NO_EVIDENCE_ACCEPTANCE_RESULTS.json
+- V0_1_STREAMING_AUDIT_REPORT.md
+- V0_1_STREAMING_ACCEPTANCE_RESULTS.json
+- V0_1_REGRESSION_REPORT.md
+- V0_1_RUNTIME_TRACE_LOG.txt
+- V0_1_CHANGELOG.md
+- V0_1_FULL_OFFLINE_TEST_LOG_20261112.txt
+- V0_1_REGRESSION_TEST_LOG_20261112.txt (interrupted attempt; not a completed test result)
+
+Updated status and architecture references: STATUS.md, ROADMAP.md, ARCHITECTURE.md. Source/test changes for this task are limited to conversation orchestration, streaming presentation/provider parsing, and their regression tests. Historical host traces and existing untracked files were retained.
+
+## v0.1 Fast Track final verification artifacts — 2026-11-12
+
+- `V0_1_FAST_FINAL_REPORT.md`
+- `V0_1_FAST_ACCEPTANCE_RESULTS.json`
+- `V0_1_NO_EVIDENCE_HOST_RESULT.md`
+- `V0_1_STREAMING_RESULT.md`
+- `V0_1_DATA_PROTECTION_REPORT.md`
+- `V0_1_GIT_DELIVERY_REPORT.md`
+- `V0_1_RUNTIME_TRACE_LOG.txt` (append-only; historical offline trace retained)
+
+This run did not commit, push, start/stop services, send model requests, or create/clean synthetic persistent resources. Host acceptance is BLOCKED; release readiness is NOT_READY. Full details and local-only data hashes are in the report and machine results.
+
+## v0.1 Fast Track continuation artifacts — 2026-11-12
+
+- V0_1_FAST_RESUME_20261112_REPORT.md
+- V0_1_FAST_RESUME_20261112_RESULTS.json
+
+These record the resumed host preflight, unresolved live answer/Session result, native Streaming status, and current data-protection comparison. User-local STATUS.md is ignored by Git and was not modified.
+
+
+## v0.1 No-Evidence Answer Verification — 2026-11-12
+
+This verification added reports and machine results only; no production source or tests were modified.
+- V0_1_NO_EVIDENCE_ROOT_CAUSE_REPORT.md — SHA-256 876addb51496a0d8782a6fe2bac6bb5f832184a82f048aa5fa4874b8d6218e61
+- V0_1_DEEPSEEK_DIRECT_CALL_REPORT.md — SHA-256 76754ab2309fdfeb18dd0dfdbe23b58d01946d584563be94b36fe0f042847cbf
+- V0_1_APPLICATION_E2E_REPORT.md — SHA-256 69d630a4d58f6e107288c3a8cfd09023f17d2c91b2f82942c9de3a9b2d8d2a25
+- V0_1_ANSWER_CONTRACT_AUDIT.md — SHA-256 9ea264cc46ac15092d94ada03eea7e491b570a9f187641af5523a6481686ab6b
+- V0_1_SESSION_PERSISTENCE_REPORT.md — SHA-256 939bf1f1ed131bc36f84583381380586c46cd9dd31483c2197390e62748637a3
+- V0_1_FINAL_ACCEPTANCE_RESULTS.json — SHA-256 3659cbbebc794b68c7a888aa1ebaedee01d9cb087127dd240f3a04dd0777aa7f
+
+## v0.1 Final Closure artifacts — 2026-11-12
+
+| File | SHA-256 |
+|---|---|
+| V0_1_FINAL_CLOSURE_REPORT.md | d50c1c8f979a4f4d70ad1131801fc41899faac61b7446c7e26f560a7fd26c68c |
+| V0_1_FINAL_CLOSURE_RESULTS.json | ed5d86f7215d11cc00af37aef8bd4ae7fb281ccfb9cd1479b4d72d0fdabec59d |
+| V0_1_FINAL_DATA_PROTECTION_REPORT.md | 0f41d41a50b68af8144e2cabb6f3bd102926772ec315584df1532505eecd3007 |
+| V0_1_STREAMING_FINAL_REPORT.md | 227c8df99522f87d29d5f0317166255339bdb6e413adcdbfc29ad6998b6c29d3 |
+| V0_1_FINAL_GIT_DELIVERY_REPORT.md | d270d2df78c7870f98b16201929d07a9f7ea553760e301c3b5a47cbc58693bc0 |
+| V0_1_FINAL_RUNTIME_TRACE.jsonl | 114601ebf7721c20285bc5098f79075f248e7bae88e18da291714d193643aa96 |
+| V0_1_FINAL_CLOSURE_R0_INVENTORY_20261112.json | d09ff7fd1fa4c8cc3b5200e6c7cba254efb4332a6a452e5e2ed5ce5c0a9def99 |
+| .tmp/V0_1_FINAL_CLOSURE_DB_AUDIT_20261112.py | e6d1b80b13338634120ef4681382ce88015d3cf2ef45c67f5977c8e5b5712ada |
+| .tmp/V0_1_FINAL_CLOSURE_CHROMA_SNAPSHOT_20261112.py | 330712719694b475958fb7b8060b0e608dad3c71c978d7da2de3d58831051ffa |
+
+The final status remains DATA_PROTECTION PARTIAL and Git delivery NOT_PUSHED. Existing user files and the R0 baseline were preserved. This manifest is append-only and does not include a self-hash.
+
+
+## Phase 5.2.4 Forensic Deliverables — 2026-11-12
+
+| File | SHA-256 |
+|---|---|
+| V0_1_FINAL_DATA_FORENSICS_REPORT.md | 9f9cdb4c17c253d72fdbcead348c92879a7700ac942ff13a3105b0d7059b016b |
+| V0_1_CHROMA_PHYSICAL_FORENSICS.md | 3983da4a5749122e3ecc14cca8eb50993e9351ab764ffd23fbe54f7130eefca0 |
+| V0_1_REGISTRY_HISTORY_RECONSTRUCTION.md | 68c44fcfd94574007e1d66a09865db2712514b6975a8eeb294cb68557e1c52d5 |
+| V0_1_SQLITE_SESSION_INTEGRITY_REPORT.md | d64d487a98b4959e049db577706c8b9cedeae59e1da880036a533534f1ecfbd3 |
+| V0_1_CURRENT_DATA_BASELINE.json | 3606db4d1d2206e017002e2d341446351d962d1f6a5a496428454d4179e6b3bb |
+| V0_1_DATA_PROTECTION_FINAL_RESULTS.json | 588520656b28c707483c1ef7ea8bb72703b568894c48c57e89b0078988d20212 |
+| STATUS.md (Phase 5.2.4 append) | 37e6d6a84e06dd11b5d07887cc3eb75b65ddd9061be1670612c77c87c83cea48 |
+| ROADMAP.md (Phase 5.2.4 append) | 21ff0794fd4a44c1da7534d14bedd030b35eaaf7a3d1c027f0cb4d623f28f3b6 |
+| ARCHITECTURE.md (Phase 5.2.4 append) | d7eac886e51e9a1ae9ee7d3b75ad9fb9f801a00b471145d06df6253abc155a4e |
+
+The forensic inventory hash is listed after generation. This manifest omits its own hash to avoid self-reference.
+| V0_1_FORENSIC_FILE_INVENTORY.json | 8ba4c3120cc496522a53263bb0243dd1492ad3cfc5713fce5574e06af578cb7f |
+
+
+## V0.1 Unknown Source ID / No-Evidence Answer Deliverables — 2026-11-12
+
+The SHA-256 inventory for this task's reports and machine result is appended below. The test log was created before the final host check and is preserved as-is. This manifest does not hash itself.
+| File | SHA-256 |
+|---|---|
+| V0_1_UNKNOWN_SOURCE_ID_ROOT_CAUSE_REPORT.md | 064e4714a5b6b7d0b8f64598cb300f643c829dce42d7b1b0c16d2998b5c6d1ce |
+| V0_1_UNKNOWN_SOURCE_ID_FIX_REPORT.md | 49541f6a11c83dfb90b94fed31fec8aa243e3ec5b47b5105a7bcdc7f5be79cf8 |
+| V0_1_UNKNOWN_SOURCE_ID_TEST_RESULTS.json | e1cb60a518fb8cd2f267b2ecaa7666b159536be83f674b98f91f0360b13b06cd |
+| V0_1_UNKNOWN_SOURCE_ID_TEST_LOG.txt | e8563314ea4157890cd3925deb58e8a96a5761b277a5020d3d76d956bfa7b473 |
+| V0_1_UNKNOWN_SOURCE_ID_HOST_ACCEPTANCE_REPORT.md | 35ff38b2b59629fc99a69faeaf13986e43800df15ac3f8529b9908f923540b38 |
+| V0_1_UNKNOWN_SOURCE_ID_CHANGELOG.md | a1315e1dfc1030a1efd064d4794043771710e4b6b199b6a3034b2ba37c15044d |
+| STATUS.md | edd3dc5b93d88aa21f3fb720655622444bc0d5fbbe8c7108fce0acc4c5307303 |
+| ROADMAP.md | 4eba27781bea503bb5483fc57e1865ed53fb998bb62873d2158ed98b4c542954 |
+| ARCHITECTURE.md | d8e4e9bbe4b98fed91017567b414f5b97f7606cde192d4776a27b82625572fa1 |
+| agentforge/answer_contract.py | 9666162e0f73a8c2d63fa1c800287c066098de8ccba40e52ef8162641ffa1c05 |
+| agentforge/conversation_orchestrator.py | 1dac9c251e7e6f0da1fbcdbf8869726ebb2e581a0d246150cbbcbf9ecd11530d |
+| agentforge/providers/dialogue_protocol.py | d5e2731ffe3976428e1d6344dafaa176419dd267e4c9ca981a907ea287179f73 |
+| agentforge/streaming.py | abd8db4c42bf0d79eb333085c47a0d16bfc13f4ee72c608b61fcc25ff0cdc8d3 |
+| agentforge/presentation.py | 93a93e94ee3f33cf736b054da1d285730c8f665a5cc1c66c9b6b056cd7dca7ec |
+| tests/test_dialogue_router.py | a39a1bc1b38106424a34d1f3a6c927f61176404c6c791a400248751d9670096b |
+| tests/test_streaming.py | e919eddd254b08cad9c15740b6b7669064a8ac4bf2d06a1d0dfd97f0ccc8ff7e |
+| tests/test_presentation.py | 7b64e2ae65bc413856c45306fbb18e63b8823d431d967f098ecca7f6a3055159 |
+| tests/test_session_service.py | 69a695509461a8c82195a374bddd8b43d96519c9f8ce1ce7ad122ceb423cdd71 |
+
+## Phase 5.2.5 Final Acceptance & Release Closure — 2026-11-12
+
+This closure is PARTIAL_BLOCKED / NOT_READY. Existing same-named historical acceptance JSON was preserved; the timestamped Phase 5.2.5 machine result is authoritative for this run. Hashes below are SHA-256. This append does not hash FILE_MANIFEST.md itself.
+
+| File | SHA-256 |
+|---|---|
+| V0_1_FINAL_ACCEPTANCE_REPORT.md | 62861829e7262a957f422b31b3c5670dbd4f17b8ca2b801e8d8acaf8dc281376 |
+| V0_1_FINAL_ACCEPTANCE_RESULTS_20261112T125533Z.json | 614921e85e64ad25d0b12e8ca1143868bf30355f8b6e91f7f6f1461b5130e02d |
+| V0_1_FINAL_ACCEPTANCE_RESULTS.json (pre-existing historical, preserved) | 3659cbbebc794b68c7a888aa1ebaedee01d9cb087127dd240f3a04dd0777aa7f |
+| V0_1_FINAL_DATA_AUDIT_REPORT.md | 08d060c78c641200ade5b97e886b147297aca454ecd5017b45b666e392bd3beb |
+| V0_1_FINAL_REGISTRY_AUDIT_REPORT.md | 9d069c2b73fde10da6ee712328fabe9f7cae6a8c47c074b3272bccca58d7947e |
+| V0_1_FINAL_CHROMA_AUDIT_REPORT.md | 1c1f662f26089e9f6be2c0c260781223a47baad98e5ad20dea19bcee5be466df |
+| V0_1_FINAL_KNOWN_LIMITATIONS.md | 4822af155242cfd9574faae2c1b41daaa6e6c700c2b0bf40e77e2b4510d54576 |
+| V0_1_FINAL_RELEASE_READINESS.md | 172ed5be23c204b3cbfa628f4f6659596c7c8e242255cea5e3e49e34da78e950 |
+| V0_1_FINAL_DELIVERY_REPORT.md | b008faca192657ec53973ef5578037ca0f030040b02a284980f537416cce860e |
+| STATUS.md (local ignored status log) | 402012b1bbf832a6ba4985d2ccf24bd3a2d3adde7af36ca48e0fe7debb8d10b5 |
+| ROADMAP.md | 9914711623666c189dd6885a7133c9fcef81c084a1a96c4a8ba3bb42907c8503 |
+| ARCHITECTURE.md | 1d64e6081d1faa082c51c117089a04554a28e330e34e60dc0fc1cc39ff890d0c |
+
+## Phase 5.2.6 Final Acceptance and Delivery — 2026-11-12
+
+| File | SHA-256 |
+|---|---|
+V0_1_PHASE_5_2_6_FINAL_ACCEPTANCE_REPORT.md | 0d37914efd26b29b052c82ae12aa79a9c5bc8fa2a1f54b9004bb8915a5bab3bc |
+V0_1_PHASE_5_2_6_DATABASE_DIAGNOSTIC.md | c5f1089adec3e4263d7f0a0bc0c4dac520a213937b0ba435fd198cb9e005ca09 |
+V0_1_PHASE_5_2_6_SESSION_AUDIT.md | ba0f7f0b53405ee48387983ff6a8f0fef2cdc2a354bbfbdd5b80adf7cc69ed97 |
+V0_1_PHASE_5_2_6_DATA_PROTECTION_REPORT.md | 45283e7ba835cf7ad4a1e85f166d5fa792e7ca832ee321c56665182f35d7b839 |
+V0_1_PHASE_5_2_6_GITHUB_CONNECTIVITY_REPORT.md | 90c0ca5aac1fdd25f3813560c5c530a9b89753701a437e60e4daa094a6845030 |
+V0_1_PHASE_5_2_6_FINAL_RESULTS.json | 0b341c26eff10ed97dc388619122007eeb045b9d970051fd4aaf1da6f1bab113 |
+V0_1_PHASE_5_2_6_DELIVERY_REPORT.md | 29288261b695d5f84f82f0919807a0543db82cea8c55b3ac0a66e9278b6863f9 |
+ARCHITECTURE.md | 533935a5f8defb95a683270b83d5a392a3ff2a7aec062a4438a0ae186ede14ae |
+ROADMAP.md | 0d50ddbc3c57df6ec21f06d83746b10d9be2b55376ed9a19bf10f291a793dce4 |
+STATUS.md (ignored local status) | facb478eb058cc959f303ca876872ce30bcd9c4f23e8fcf6cfe180bb925d764d |
+
+R0 external inventory SHA-256: 477bb940ac63947fad206d0f65f466e2d65f78140ec5d63b05884b2681de4cc0. This manifest omits its own hash.

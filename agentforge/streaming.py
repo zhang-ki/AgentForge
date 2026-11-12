@@ -47,6 +47,10 @@ class ConversationCancelled(AgentForgeError):
     """A conversation was cancelled at an application stage boundary."""
 
 
+class StreamingProtocolError(AgentForgeError):
+    """A provider's streamed deltas do not match its completed response."""
+
+
 class StreamingEventSink(Protocol):
     def publish(self, event: StreamingEvent) -> None: ...
 
@@ -59,14 +63,73 @@ class StreamingManager:
     def __init__(self, *, on_event=None, on_content=None, enabled=False, cancel_event=None):
         self.on_event = on_event
         self.on_content = on_content
+        self.requested_enabled = bool(enabled)
         self.enabled = bool(enabled)
+        self.native_streaming = bool(enabled)
+        self.status = "requested" if enabled else "disabled"
         self.cancel_event = cancel_event
         self._buffer = []
         self._buffer_chars = 0
+        self._defer_content_until_validated = False
+        self._deferred_streaming_status = None
         self._state = "new"
         self.execution_id = None
         self._event_sequence = 0
         self._last_agent_sequence = 0
+
+    def configure_provider_streaming(self, capability: bool | None):
+        """Use buffered answers when native provider streaming is unavailable or unknown."""
+        self._require_active()
+        if not self.requested_enabled:
+            self.enabled = False
+            self.native_streaming = False
+            self.status = "disabled"
+            return
+        if capability is True:
+            self.enabled = True
+            self.native_streaming = True
+            self.status = "streaming"
+        else:
+            self.enabled = False
+            self.native_streaming = False
+            self.status = "not_supported" if capability is False else "not_measured"
+        self._emit(StreamEventType.STATE_CHANGED, {"streaming_status": self.status})
+
+    def begin_buffered_fallback(self, error_code: str):
+        """Invalidate any partial draft before the single non-streaming recovery request."""
+        self._require_active()
+        if not self.native_streaming or self.status != "streaming":
+            raise RuntimeError("Buffered fallback requires an active native stream.")
+        self._buffer.clear()
+        self._buffer_chars = 0
+        self.enabled = False
+        self.native_streaming = False
+        self.status = "degraded_to_buffered"
+        self._emit(StreamEventType.STATE_CHANGED, {
+            "streaming_status": self.status,
+            "stream_error_code": _safe_code(error_code),
+        })
+
+    def defer_content_until_validated(self):
+        """Keep General/no-evidence provider deltas internal until the contract passes."""
+        self._require_active()
+        if not self.requested_enabled:
+            return
+        self._defer_content_until_validated = True
+        if self.enabled and self.status == "streaming":
+            self._deferred_streaming_status = "buffered_for_contract"
+            self._emit(StreamEventType.STATE_CHANGED, {
+                "streaming_status": self._deferred_streaming_status,
+                "reason_code": "general_answer_contract_validation",
+            })
+
+    def discard_deferred_draft(self):
+        """Clear a no-evidence draft before the single bounded answer correction."""
+        self._require_active()
+        if not self._defer_content_until_validated:
+            raise RuntimeError("Only a deferred answer draft can be discarded.")
+        self._buffer.clear()
+        self._buffer_chars = 0
 
     def start(self):
         if self._state != "new":
@@ -128,39 +191,60 @@ class StreamingManager:
         self._emit(StreamEventType.RETRIEVAL_PROGRESS, {"completed": completed, "total": total})
 
     def capture_provider_delta(self, text: str):
-        """Retain untrusted deltas privately; never emit them before validation."""
+        """Buffer provider deltas and, when enabled, publish them as unverified draft text."""
         self._require_active()
         if not isinstance(text, str):
             raise ValueError("Provider stream content must be text.")
+        # Empty SSE content deltas are legal (for example, when a provider
+        # sends a role-only chunk). They are not user-visible output and must
+        # not make an otherwise valid final completion fail the equality gate.
+        if not text:
+            return
         next_size = self._buffer_chars + len(text)
         if next_size > self.MAX_BUFFER_CHARS:
             raise ValueError("Provider stream exceeded the bounded response buffer.")
         self._buffer.append(text)
         self._buffer_chars = next_size
+        if self.enabled and text and not self._defer_content_until_validated:
+            self._emit(StreamEventType.CONTENT_DELTA, {
+                "characters": len(text), "draft": True, "contract_validated": False,
+            })
+            if callable(self.on_content):
+                self.on_content(text)
+
+    def validate_provider_answer(self, answer: str):
+        """Fail closed if streamed text differs from the completion to be validated."""
+        if not isinstance(answer, str):
+            raise ValueError("Provider completion must be text.")
+        if self.enabled and self._buffer and "".join(self._buffer) != answer:
+            raise StreamingProtocolError(
+                "Provider stream content did not match its completed response."
+            )
 
     def check_cancelled(self):
         event = self.cancel_event
         if event is not None and callable(getattr(event, "is_set", None)) and event.is_set():
             raise ConversationCancelled("Conversation was cancelled before completion.")
 
-    def complete_validated(self, answer: str, *, usage=None):
+    def complete_validated(self, answer: str, *, usage=None, provider_answer=None):
         self._require_active()
         self.check_cancelled()
         if not isinstance(answer, str):
             raise ValueError("Validated answer must be text.")
+        comparison = provider_answer if self._defer_content_until_validated else answer
+        if comparison is None:
+            comparison = answer
+        self.validate_provider_answer(comparison)
         self._emit(StreamEventType.FINAL_ANSWER, {
             "characters": len(answer), "contract_validated": True,
         })
-        # Publish the canonical validated answer, not concatenated provider chunks.
-        if self.enabled and answer:
-            self._emit(StreamEventType.CONTENT_DELTA, {"text": answer})
-            if callable(self.on_content):
-                self.on_content(answer)
         if usage is not None:
             self._emit(StreamEventType.USAGE, {"usage": _safe_usage(usage)})
         self._buffer.clear()
         self._buffer_chars = 0
         self._state = "completed"
+        if self.status == "streaming" and self._deferred_streaming_status is not None:
+            self.status = self._deferred_streaming_status
         self._emit(StreamEventType.COMPLETED)
 
     def suspend(self, state: str):
@@ -231,4 +315,4 @@ def _safe_code(value):
 
 
 __all__ = ["ConversationCancelled", "StreamEventType", "StreamingEvent",
-           "StreamingEventSink", "StreamingManager"]
+           "StreamingEventSink", "StreamingManager", "StreamingProtocolError"]

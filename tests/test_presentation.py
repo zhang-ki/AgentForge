@@ -46,6 +46,13 @@ class FriendlyPresentationTests(unittest.TestCase):
         self.assertIn("引用有效不代表每句话都已证明", text)
         self.assertIn("静态关系存在不确定性", text)
 
+    def test_unconfirmed_native_streaming_is_reported_as_buffered_answer(self):
+        value = payload(provider="deepseek")
+        value["retrieval"] = {"streaming_status": "not_measured"}
+        text = render_ask_result(value)
+        self.assertIn("模型原生流式能力未确认", text)
+        self.assertIn("完整非流式回答", text)
+
     def test_refused_model_output_never_becomes_verified_answer(self):
         text = render_ask_result(payload("refused", cited=False))
         self.assertIn("模型原文（未经验证", text)
@@ -158,6 +165,143 @@ class FriendlyPresentationTests(unittest.TestCase):
                     self.assertEqual(main(["ask", "q"]), expected)
             self.assertIn("回答：" if expected == 0 else "未显示为成功",
                           out.getvalue() if expected == 0 else err.getvalue())
+
+    def test_streaming_console_displays_deltas_before_completion_and_does_not_duplicate_answer(self):
+        answer = "Hello there!"
+        value = {
+            "provider": "deepseek", "execution_status": "completed", "answer": answer,
+            "answer_contract": {"status": "limited", "claims": [], "evidence": []},
+            "retrieval": {"retrieval_status": "no_evidence"},
+            "provider_request_stats": {"last_usage": {"prompt_tokens": 4, "completion_tokens": 3}},
+        }
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(_arguments, *, stream_callback=None):
+            self.assertIsNotNone(stream_callback)
+            stream_callback("Hello")
+            self.assertIn("Hello", out.getvalue(), "first delta must be visible before the next arrives")
+            stream_callback(" there!")
+            print(json.dumps(value))
+            return 0
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(0, main(["ask", "question", "--stream"]))
+
+        visible = out.getvalue()
+        self.assertIn("草稿（尚未通过引用验证）", visible)
+        self.assertIn("回答已通过合同校验并保存", visible)
+        self.assertIn("回答内容已在上方实时显示", visible)
+        self.assertEqual(1, visible.count(answer))
+        self.assertEqual("", err.getvalue())
+
+    def test_streaming_console_marks_partial_output_when_cli_fails(self):
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(_arguments, *, stream_callback=None):
+            stream_callback("incomplete draft")
+            print("provider disconnected", file=__import__("sys").stderr)
+            return 1
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(1, main(["ask", "question", "--stream"]))
+
+        self.assertIn("incomplete draft", out.getvalue())
+        self.assertIn("草稿未完成", out.getvalue())
+        self.assertIn("provider disconnected", err.getvalue())
+        self.assertNotIn("回答已通过合同校验", out.getvalue())
+
+    def test_buffered_recovery_displays_complete_answer_after_invalidating_partial_draft(self):
+        value = {
+            "provider": "deepseek", "execution_status": "completed",
+            "answer": "Complete buffered answer.",
+            "answer_contract": {"status": "limited", "claims": [], "evidence": []},
+            "retrieval": {"retrieval_status": "no_evidence",
+                          "streaming_status": "degraded_to_buffered"},
+        }
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(_arguments, *, stream_callback=None):
+            stream_callback("partial draft")
+            print(json.dumps(value))
+            return 0
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(0, main(["ask", "question", "--stream"]))
+
+        visible = out.getvalue()
+        self.assertIn("partial draft", visible)
+        self.assertIn("上方未验证草稿已作废", visible)
+        self.assertIn("回答：\nComplete buffered answer.", visible)
+        self.assertEqual(1, visible.count("Complete buffered answer."))
+        self.assertNotIn("回答内容已在上方实时显示", visible)
+        self.assertEqual("", err.getvalue())
+
+    def test_buffered_for_contract_displays_only_the_complete_sanitized_answer(self):
+        answer = "A complete general answer."
+        value = {
+            "provider": "deepseek", "execution_status": "completed", "answer": answer,
+            "answer_contract": {"status": "limited", "claims": [], "evidence": []},
+            "retrieval": {"retrieval_status": "no_evidence",
+                          "streaming_status": "buffered_for_contract",
+                          "invalid_source_markers_removed": 1,
+                          "invalid_source_marker_ids_removed": ["E1"]},
+        }
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(_arguments, *, stream_callback=None):
+            self.assertIsNotNone(stream_callback)
+            print(json.dumps(value))
+            return 0
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(0, main(["ask", "question", "--stream"]))
+
+        visible = out.getvalue()
+        self.assertEqual(1, visible.count(answer))
+        self.assertNotIn("[E1]", visible)
+        self.assertIn("回答已缓冲至合同校验完成后完整展示", visible)
+        self.assertNotIn("草稿（尚未通过引用验证）", visible)
+        self.assertEqual("", err.getvalue())
+
+    def test_streaming_console_warns_if_result_is_not_structured(self):
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(_arguments, *, stream_callback=None):
+            stream_callback("unverified draft")
+            print("not-json")
+            return 0
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(1, main(["ask", "question", "--stream"]))
+
+        self.assertIn("unverified draft", out.getvalue())
+        self.assertIn("草稿未完成或未通过回答校验", out.getvalue())
+        self.assertIn("未显示为成功", err.getvalue())
+
+    def test_streaming_off_keeps_one_shot_answer_render(self):
+        value = {
+            "provider": "deepseek", "execution_status": "completed", "answer": "Buffered answer.",
+            "answer_contract": {"status": "limited", "claims": [], "evidence": []},
+        }
+        out, err = io.StringIO(), io.StringIO()
+
+        def fake_cli(arguments):
+            self.assertNotIn("--stream", arguments)
+            print(json.dumps(value))
+            return 0
+
+        with patch("agentforge.presentation.cli.main", side_effect=fake_cli):
+            with redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(0, main(["ask", "question"]))
+
+        self.assertEqual(1, out.getvalue().count("Buffered answer."))
+        self.assertIn("回答：", out.getvalue())
+        self.assertEqual("", err.getvalue())
 
 
 class CitationPromptTests(unittest.TestCase):

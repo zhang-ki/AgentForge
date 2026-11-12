@@ -15,6 +15,7 @@ ANSWER_CONTRACT_VERSION = "af011-answer-contract-v1"
 _STATUSES = {"answered", "limited", "refused"}
 _CLAIM_KINDS = {"confirmed", "inference", "unknown"}
 _RESOLUTION = {"resolved", "ambiguous", "unresolved", "uncertain", "not_applicable"}
+_GENERAL_SOURCE_MARKER = re.compile(r"\[[Ee][1-9]\d*\]")
 
 
 @dataclass(frozen=True)
@@ -231,14 +232,179 @@ def verify_generated_answer(answer: Answer, context: BuiltContext, *, route: str
     return contract
 
 
+def _markdown_protected_ranges(text: str) -> bytearray:
+    """Mark code and Markdown links so their literal text is not parsed as a citation."""
+    protected = bytearray(len(text))
+
+    def mark(start: int, end: int) -> None:
+        protected[start:end] = b"\x01" * (end - start)
+
+    fence_char = None
+    fence_size = 0
+    offset = 0
+    for line in text.splitlines(keepends=True):
+        content = line.rstrip("\r\n")
+        if fence_char is not None:
+            mark(offset, offset + len(line))
+            closing = re.match(r"^[ \t]{0,3}(`+|~+)[ \t]*$", content)
+            if (closing and closing.group(1)[0] == fence_char
+                    and len(closing.group(1)) >= fence_size):
+                fence_char = None
+                fence_size = 0
+        else:
+            opening = re.match(r"^[ \t]{0,3}(`{3,}|~{3,})", content)
+            if opening:
+                mark(offset, offset + len(line))
+                fence_char = opening.group(1)[0]
+                fence_size = len(opening.group(1))
+        offset += len(line)
+
+    def escaped(position: int) -> bool:
+        slashes = 0
+        position -= 1
+        while position >= 0 and text[position] == "\\":
+            slashes += 1
+            position -= 1
+        return slashes % 2 == 1
+
+    # Inline code spans can contain line breaks and use equal-length backtick runs.
+    position = 0
+    while position < len(text):
+        if protected[position] or text[position] != "`" or escaped(position):
+            position += 1
+            continue
+        run_end = position + 1
+        while run_end < len(text) and text[run_end] == "`":
+            run_end += 1
+        run_size = run_end - position
+        search = run_end
+        closing_end = None
+        while search < len(text):
+            if protected[search] or text[search] != "`" or escaped(search):
+                search += 1
+                continue
+            candidate_end = search + 1
+            while candidate_end < len(text) and text[candidate_end] == "`":
+                candidate_end += 1
+            if candidate_end - search == run_size:
+                closing_end = candidate_end
+                break
+            search = candidate_end
+        if closing_end is None:
+            position = run_end
+        else:
+            mark(position, closing_end)
+            position = closing_end
+
+    reference_labels = set()
+    for definition in re.finditer(r"(?m)^[ \t]{0,3}\[([^\]\r\n]+)\]:[^\r\n]*", text):
+        reference_labels.add(definition.group(1).casefold())
+        line_end = text.find("\n", definition.start())
+        mark(definition.start(), len(text) if line_end < 0 else line_end + 1)
+
+    def find_close(start: int, opening: str, closing: str) -> int | None:
+        depth = 0
+        index = start
+        while index < len(text):
+            if protected[index]:
+                index += 1
+                continue
+            if text[index] == "\\":
+                index += 2
+                continue
+            if text[index] == opening:
+                depth += 1
+            elif text[index] == closing:
+                depth -= 1
+                if depth == 0:
+                    return index
+            index += 1
+        return None
+
+    position = 0
+    while position < len(text):
+        if protected[position] or text[position] != "[":
+            position += 1
+            continue
+        close = find_close(position, "[", "]")
+        if close is None:
+            position += 1
+            continue
+        if escaped(position):
+            mark(position, close + 1)
+            position = close + 1
+            continue
+        label = text[position + 1:close]
+        after = close + 1
+        link_end = None
+        if after < len(text) and text[after] == "(":
+            destination_end = find_close(after, "(", ")")
+            if destination_end is not None:
+                link_end = destination_end + 1
+        elif after < len(text) and text[after] == "[":
+            reference_end = find_close(after, "[", "]")
+            if reference_end is not None:
+                link_end = reference_end + 1
+        elif label.casefold() in reference_labels:
+            link_end = close + 1
+        if link_end is not None:
+            mark(position, link_end)
+            position = link_end
+        else:
+            position = close + 1
+    return protected
+
+
+def _general_validation_view(text: str) -> str:
+    protected = _markdown_protected_ranges(text)
+    return "".join(
+        char if not protected[index] or char in "\r\n" else " "
+        for index, char in enumerate(text)
+    )
+
+
+def sanitize_general_source_markers(answer: Answer) -> tuple[Answer, int, tuple[str, ...]]:
+    """Remove only unverified source-ID markers from a no-evidence General answer.
+
+    Code spans, fenced code, escaped brackets, and Markdown links remain literal.
+    This helper must not be used for evidence-grounded answers.
+    """
+    if not isinstance(answer, Answer) or not isinstance(answer.text, str):
+        raise ProviderError("General provider returned invalid answer text.")
+    if answer.citations:
+        raise CitationValidationError(
+            "A no-evidence General answer cannot carry unverified source locations.",
+            code="unverified_general_answer_citations",
+            diagnostic={"rule_id": "unverified_general_answer_citations",
+                        "validation_result": "rejected"},
+        )
+    text = answer.text
+    protected = _markdown_protected_ranges(text)
+    markers = [match for match in _GENERAL_SOURCE_MARKER.finditer(text)
+               if not protected[match.start()]]
+    source_ids = tuple(match.group(0)[1:-1].upper() for match in markers)
+    for match in reversed(markers):
+        left, right = match.start(), match.end()
+        while left > 0 and text[left - 1] in " \t":
+            left -= 1
+        while right < len(text) and text[right] in " \t":
+            right += 1
+        previous = text[left - 1] if left > 0 else ""
+        following = text[right] if right < len(text) else ""
+        separator = " " if previous.isalnum() and following.isalnum() else ""
+        text = text[:left] + separator + text[right:]
+    return Answer(text, (), answer.offline), len(markers), source_ids
+
+
 def build_general_contract(answer: Answer) -> VerifiedAnswerContract:
     """保留无仓库来源的模型回答为有限通用结论，不伪装成源码事实。"""
-    if not isinstance(answer, Answer) or not isinstance(answer.text, str) or not answer.text.strip():
-        raise ProviderError("General provider returned no answer text.")
-    # General 路径没有仓库证据，仍须拒绝模型自行提供的来源 ID 或路径位置。
-    # 这是来源合同校验，不表示通用知识已被独立证明。
+    answer, _, _ = sanitize_general_source_markers(answer)
+    if not answer.text.strip():
+        raise ProviderError("General provider returned no answer text after citation cleanup.")
+    # General mode still rejects source IDs and path locations in ordinary prose.
+    # Code, escaped markers, and Markdown links remain literal text.
     empty_context = BuiltContext("general", (), "", 0, 1)
-    validate_model_citations(answer.text, empty_context)
+    validate_model_citations(_general_validation_view(answer.text), empty_context)
     if answer.offline:
         contract = VerifiedAnswerContract(
             ANSWER_CONTRACT_VERSION, "refused", answer.text,
@@ -325,6 +491,7 @@ def verify_hybrid_answer(answer: Answer, context: BuiltContext, *,
 __all__ = [
     "ANSWER_CONTRACT_VERSION", "AnswerClaim", "ContractEvidence",
     "VerifiedAnswerContract", "build_offline_contract",
-    "build_general_contract", "build_planner_stop_contract", "validate_answer_contract", "verify_generated_answer",
+    "build_general_contract", "build_planner_stop_contract", "sanitize_general_source_markers",
+    "validate_answer_contract", "verify_generated_answer",
     "verify_hybrid_answer",
 ]
