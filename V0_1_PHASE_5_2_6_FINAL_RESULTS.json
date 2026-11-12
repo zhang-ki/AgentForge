@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "phase": "AgentForge Phase 5.2.6",
-  "generated_at_utc": "2026-11-12T13:54:37Z",
+  "generated_at_utc": "2026-11-12T13:58:05Z",
   "acceptance": "PASS_WITH_KNOWN_LIMITATIONS",
   "release_state_before_git_delivery": "FREEZE_ELIGIBLE_WITH_KNOWN_LIMITATIONS",
   "git_before_delivery": {
@@ -144,9 +144,15 @@
   },
   "delivery": {
     "selective_stage_review": "PASS_CURRENT",
-    "commit": "PENDING",
-    "push": "PENDING",
-    "post_push_local_remote_match": "PENDING"
+    "commit": "PASS_CURRENT",
+    "release_commit_sha": "5931d2686b7dd7b3f1097f282adf35fd618c6882",
+    "push": "PASS_CURRENT",
+    "pushed_branch": "feature/auto-chroma-hybrid",
+    "remote_sha_after_release_push": "5931d2686b7dd7b3f1097f282adf35fd618c6882",
+    "post_push_local_remote_match": "PASS_CURRENT",
+    "remaining_preexisting_untracked_files": 71,
+    "r0_untracked_missing": 0,
+    "r0_untracked_hash_changes": 0
   },
   "known_limitations": [
     "Historic Chroma physical file writer attribution remains incomplete; the client-side effect was reproduced only on isolated copies.",

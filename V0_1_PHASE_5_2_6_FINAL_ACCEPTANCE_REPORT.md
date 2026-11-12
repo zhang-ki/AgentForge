@@ -61,3 +61,7 @@ The saved request lifecycle shows 195 source files scanned/read, 0 process-cache
 The pre-run inventory and SHA-256 list are at D:\agent\AgentForge-acceptance\phase5.2.6\r0_20261112T213815_0e523e40\PHASE5_2_6_R0_WORKTREE_INVENTORY.json.
 
 See the database, Session, data-protection, GitHub connectivity, and delivery reports for detailed evidence. The exact Phase 5.2.6 machine result is V0_1_PHASE_5_2_6_FINAL_RESULTS.json.
+
+## Git delivery
+
+The reviewed release changes were committed and pushed to feature/auto-chroma-hybrid as 5931d2686b7dd7b3f1097f282adf35fd618c6882. A read-only remote lookup after push returned the same SHA. No force push or global configuration change was used. The 71 pre-existing untracked files remain intact and were excluded from the commit.

@@ -16,4 +16,13 @@ The R8 gates pass with the documented and explicitly accepted historical limitat
 - Unrelated historical traces, temporary files, local data, DPAPI secrets, caches, and ignored STATUS.md are excluded.
 - No force push or global proxy change is permitted.
 
-Final commit SHA, push result, final remote SHA, and remaining worktree counts are recorded below after the authorized delivery steps complete.
+
+## Git delivery result
+
+- Selective staging review: PASS_CURRENT; 25 paths included.
+- Release commit: 5931d2686b7dd7b3f1097f282adf35fd618c6882.
+- Push: PASS_CURRENT to refs/heads/feature/auto-chroma-hybrid, using a normal non-force push.
+- Post-push remote verification: PASS_CURRENT; remote SHA matched local HEAD 5931d2686b7dd7b3f1097f282adf35fd618c6882.
+- Global Git proxy settings were not changed.
+- All 71 pre-existing untracked files remain present with matching R0 SHA-256 values; none were staged.
+- The index is clean after delivery. No database or model-service operation was performed during Git delivery.

@@ -485,3 +485,5 @@ Phase 5.2.5 ended PARTIAL_BLOCKED / NOT_READY. Current SQLite and isolated-copy 
 ## Phase 5.2.6 — v0.1 final acceptance and delivery — 2026-11-12
 
 Release gates passed with known limitations: current Session authentication/integrity, SQLite source index, Registry active binding, isolated-copy Chroma logical provenance, historical no-evidence DeepSeek and source-validation evidence, and remote branch verification. Native Provider Streaming remains NOT_MEASURED. No product code was changed in this phase. See the Phase 5.2.6 final acceptance report.
+
+Git delivery completed: commit 5931d2686b7dd7b3f1097f282adf35fd618c6882 was pushed to feature/auto-chroma-hybrid; post-push remote SHA matched. Existing untracked worktree artifacts were preserved.
