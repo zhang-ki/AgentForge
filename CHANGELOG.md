@@ -16,3 +16,11 @@ Changes relevant to the prepared DeepSeek Agent v0.1 bundle. This file does not 
 - Preserve inherited Qwen environment credentials when no DPAPI Qwen key file is present.
 - Add offline behavior tests and prepare Windows quick-start, limitations, acceptance report, machine results, and a clean review package.
 - No post-change real DeepSeek run, full-suite run, coverage rerun, commit, or push was performed. Release remains **NOT_READY**.
+
+## 2026-11-13 — Phase 5.2.8-R2.1 verification closure
+
+- Current DeepSeek Flash S9T1–S9T3 recheck passed, including the prior S9T2 failure; the original pre-send exception was not retained and was not reproduced, so no speculative production change was made.
+- Cross-repository Session isolation and T1/T2/T3 context-budget checks passed. Related offline regression passed 153/153; production-package compilation and diff checks passed. The full suite was not rerun because no production or test code changed.
+- Current PostgreSQL, SQLite and Chroma logical checks passed without formal data writes. Nine acceptance Sessions were cleaned and the prior selection restored.
+- Status: `PASS_WITH_KNOWN_LIMITATIONS`. Answer Contract remains LIMITED; Provider-native SSE, tokenizer/provider input limits, historical PostgreSQL row-level attribution and Chroma physical-file attribution remain limited or unmeasured.
+- Detailed reports and raw evidence remain in the timestamped AgentForge-acceptance Phase 5.2.8-R2.1 bundle; the full 15-scenario matrix is not claimed as a single current run.
