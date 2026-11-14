@@ -504,3 +504,7 @@ No runtime architecture changed in Phase 5.2.5. Current SQLite remains the autho
 ## Phase 5.2.6 final storage and release verification — 2026-11-12
 
 Session storage is PostgreSQL through the ConversationStore/SessionService path. The launcher obtains AGENTFORGE_DB_PASSWORD from the current-user DPAPI file through Get-ConversationDatabaseKey and injects it only into the Python child. The Registry and authoritative source index remain separate SQLite databases; Chroma is the derived persistent vector index. The Phase 5.2.5 Session block was an audit harness that omitted the DPAPI helper, not a production configuration failure. Phase 5.2.6 authenticated through the existing helper and verified the current Session in a read-only transaction. See V0_1_PHASE_5_2_6_DATABASE_DIAGNOSTIC.md and V0_1_PHASE_5_2_6_SESSION_AUDIT.md.
+
+## Phase 5.3.3 delivery audit (2026-11-15)
+
+No runtime architecture change was made in this delivery phase. E1 evidence-lifecycle behavior remains in the local worktree, but its four mixed code/test files are excluded from the deliverable because the pre-E1 file contents were not archived. The GitHub branch must not be treated as containing those local changes unless a separately verified source patch is delivered.

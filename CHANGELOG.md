@@ -24,3 +24,15 @@ Changes relevant to the prepared DeepSeek Agent v0.1 bundle. This file does not 
 - Current PostgreSQL, SQLite and Chroma logical checks passed without formal data writes. Nine acceptance Sessions were cleaned and the prior selection restored.
 - Status: `PASS_WITH_KNOWN_LIMITATIONS`. Answer Contract remains LIMITED; Provider-native SSE, tokenizer/provider input limits, historical PostgreSQL row-level attribution and Chroma physical-file attribution remain limited or unmeasured.
 - Detailed reports and raw evidence remain in the timestamped AgentForge-acceptance Phase 5.2.8-R2.1 bundle; the full 15-scenario matrix is not claimed as a single current run.
+
+## 2026-11-14 — Phase 5.3.2-E1-CLOSE
+
+- Reviewed the T1–T7 contract states and retained `LIMITED` without upgrading it to PASS; confirmed the previous stale-process T1 failure remains separately recorded.
+- Created a current read-only PostgreSQL/SQLite/Registry snapshot and opened Chroma only from an isolated copy. Current logical integrity passed; formal data files were unchanged during this audit. Historical E1 physical-file attribution remains PARTIAL.
+- Preserved the existing mixed worktree. Commit and push were not performed because the E1 starting contents of previously dirty files were represented only by hashes, so the patch cannot be safely isolated.
+
+## 2026-11-15 — Phase 5.3.3 E1 delivery audit
+
+- Rechecked the 46-entry worktree against the E1-close snapshot; all 45 present files matched their archived hashes, and the previously deleted historical trace has an archived copy matching its original SHA-256.
+- Four E1-touched code/test files were already modified before E1. The E1 start preserved only hashes, so their prior contents cannot be reconstructed or safely separated. They remain uncommitted; no production or test code is included in this delivery.
+- E1 remains PARTIAL with its original LIMITED and historical data-attribution limitations. This record does not upgrade acceptance or claim the implementation is shipped.

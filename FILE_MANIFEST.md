@@ -707,3 +707,7 @@ ROADMAP.md | 9dcc5611f7b1e205675285ba96b60ac552a9e0d4c8b1f4e656536f541270796e |
 STATUS.md (ignored local status) | 92660fda49dd471ff4b661e74be3ae5c610c700647f53f5d31682556ee5b9004 |
 
 R0 external inventory SHA-256: 477bb940ac63947fad206d0f65f466e2d65f78140ec5d63b05884b2681de4cc0. This manifest omits its own hash.
+
+## Phase 5.3.3 acceptance archive (external)
+
+The Phase 5.3.3 workspace baseline, change-isolation analysis, Git delivery record, and final machine results are stored outside the project tree at `D:\agent\AgentForge-acceptance\phase5.3.3_20261115T001637+0800`. The bundle `SHA256SUMS.txt` is the authoritative integrity list. These audit artifacts are not runtime or release-package files.
